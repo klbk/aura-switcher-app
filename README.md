@@ -1,77 +1,86 @@
 ---
 tags: [aura, macos, app]
-version: 0.2
+version: 0.3
+lang: en
 ---
 
 # AURA
 
-Программа для macOS, которая исправляет текст, набранный не в той раскладке («ghbdtn» → «привет»). Живёт иконкой в строке меню, работает в фоне и сама запускается при входе в систему.
+> 🇺🇦 **Made in Ukraine.** Designed and developed in Ukraine.
+> Українська версія — [README.uk.md](README.uk.md)
+
+A macOS app that fixes text typed in the wrong keyboard layout ("ghbdtn" → "привіт"). It lives in the menu bar, runs in the background and starts automatically at login.
 
 
+## Features
 
-## Возможности
+- **Auto-correction.** Typed a word in the wrong layout and pressed Space — AURA erases the word, retypes it in the right layout and switches the layout.
+- **Double ⇧** (two quick Shift taps):
+  - text selected — converts it to the next layout (press again for the next one, in a cycle);
+  - no selection — converts the last typed word;
+  - nothing to convert — just switches the layout.
+- **Exclusions.** AURA does nothing in the apps you choose.
+- **Per-app language.** The layout is set automatically when you switch to an app (e.g. Terminal → EN). Auto-correction is off in apps with a bound language.
+- **Single instance.** A second running copy of AURA quits immediately, so text is never corrected twice.
 
-- **Автоисправление.** Набрали слово не в той раскладке и нажали пробел — AURA стирает слово и печатает его в правильной раскладке, а заодно переключает раскладку.
-- **Двойной ⇧** (два быстрых нажатия Shift):
-  - есть выделенный текст — переводит его в следующую раскладку (повторное нажатие — в следующую, по кругу);
-  - нет выделения — переводит последнее набранное слово;
-  - нечего переводить — просто переключает раскладку.
-- **Исключения.** В выбранных приложениях AURA ничего не делает.
-- **Привязка языка к приложению.** При переходе в приложение раскладка ставится автоматически (например, Terminal → EN). В приложениях с привязкой автоисправление отключено.
+## Languages
 
-## Языки
+AURA uses **every layout enabled in macOS**: System Settings → Keyboard → Input Sources → "+". New layouts are picked up instantly.
 
-AURA использует **все раскладки, включённые в macOS**: Системные настройки → Клавиатура → Источники ввода → «+». Новая раскладка подхватывается сразу.
-
-| Функция | Где работает |
+| Feature | Works with |
 |---|---|
-| Двойной ⇧ | любая обычная раскладка |
-| Автоисправление | языки со словарём macOS: английский, русский, украинский, немецкий, французский, испанский, итальянский, португальский, польский, турецкий, нидерландский, чешский, шведский, финский, румынский, венгерский, греческий, болгарский, иврит, арабский, хинди, корейский |
-| Не работает | китайский, японский (ввод через подсказки, а не через раскладку) |
+| Double ⇧ | any regular keyboard layout |
+| Auto-correction | languages with a macOS dictionary: Ukrainian, English, Russian, German, French, Spanish, Italian, Portuguese, Polish, Turkish, Dutch, Czech, Swedish, Finnish, Romanian, Hungarian, Greek, Bulgarian, Hebrew, Arabic, Hindi, Korean |
+| Not supported | Chinese, Japanese (input via candidates, not via a layout) |
 
-Между похожими раскладками (EN ↔ DE ↔ FR, RU ↔ UK) автоисправление не срабатывает — там опечатку не отличить от ошибки раскладки. Для них используйте двойной ⇧.
+Auto-correction is skipped between similar layouts (EN ↔ DE ↔ FR, UK ↔ RU): there a typo can't be told apart from a layout mistake. Use double ⇧ for those.
 
-## Меню в строке меню
+## Menu bar
 
-Иконка показывает текущий язык: `EN`, `UK`, `RU`… Строчными буквами (`en`) — AURA выключена. `⚠︎` — нет доступа.
+The icon shows the current language: `EN`, `UK`, `RU`… Lowercase (`en`) — AURA is off. `⚠︎` — no access.
 
-- **Включено** — общий выключатель.
-- **Автоисправление** — включить/выключить автоисправление (двойной ⇧ работает всегда).
-- **Не работать в этом приложении** — добавить текущее приложение в исключения.
-- **Язык для этого приложения** — привязать раскладку.
-- **Исключения / Привязки языков** — списки; клик по пункту удаляет его.
-- **Запускать при входе**.
-- **Выход**.
+- **Enabled** — master switch.
+- **Auto-correction** — on/off (double ⇧ always works).
+- **Don't work in this app** — add the current app to exclusions.
+- **Language for this app** — bind a layout.
+- **Exclusions / Language bindings** — lists; click an item to remove it.
+- **Launch at login**.
+- **Quit**.
 
-## Установка и запуск
+## Install and run
 
-1. Собрать и установить (заодно запускает):
+1. Build and install (also launches it):
    ```
    ~/Repo/aura/build.sh
    ```
-   Нужен Xcode или Command Line Tools (`swiftc`). Программа ставится в `/Applications/AURA.app`.
-2. Дать доступ: Системные настройки → Конфиденциальность и безопасность → **Универсальный доступ** → включить AURA. Пока доступа нет, в меню `⚠︎`; после включения AURA заработает сама, без перезапуска.
-3. Дальше запускается сама при входе. Вручную — Spotlight (⌘Пробел) → «AURA».
+   Requires Xcode or Command Line Tools (`swiftc`). Installs to `/Applications/AURA.app`.
+2. Grant access: System Settings → Privacy & Security → **Accessibility** → enable AURA. Until then the menu shows `⚠︎`; once enabled, AURA starts working by itself, no restart needed.
+3. After that it starts at login. Manually — Spotlight (⌘Space) → "AURA".
 
-## Если что-то не так
+Archive for other Macs: `~/Repo/aura/build.sh --release` → `dist/AURA-<version>.zip`.
 
-- **Не исправляет, иконка `⚠︎`** — нет доступа, см. шаг 2. Если доступ включён, но не работает: выключите и снова включите AURA в списке «Универсальный доступ».
-- **Неправильно исправила** — удалите программу из этого приложения через «Не работать в этом приложении» или отключите автоисправление; двойной ⇧ вернёт слово.
-- **Что-то подвисает** — иконка → «Выход», или в Терминале `pkill AURA`.
-- **Удалить совсем** — «Выход», снять «Запускать при входе», удалить `/Applications/AURA.app`.
+## Troubleshooting
 
-## Как устроено
+- **Doesn't correct, icon shows `⚠︎`** — no access, see step 2. If access is on but nothing works: toggle AURA off and on in the Accessibility list.
+- **Wrong correction** — add the app to exclusions or turn auto-correction off; double ⇧ brings the word back.
+- **Something hangs** — icon → "Quit", or `pkill AURA` in Terminal.
+- **Uninstall** — "Quit", uncheck "Launch at login", delete `/Applications/AURA.app`.
 
-- Один файл на Swift: `~/Repo/aura/main.swift` (git-репозиторий), сборка — `build.sh` там же. Без внешних зависимостей.
-- Нажатия читаются через `CGEventTap` в режиме **только чтение**: система не ждёт AURA, поэтому программа не может подвесить клавиатуру или мышь (ранняя версия могла — это исправлено).
-- Таблицы символов строятся из самих раскладок macOS (`UCKeyTranslate`), поэтому любая раскладка поддерживается без ручной настройки.
-- Проверка слов — системная проверка орфографии (`NSSpellChecker`), выполняется после того, как пробел уже напечатан.
-- Замена текста — синтетические нажатия: Backspace × длина слова, затем печать исправленного текста.
-- Выделенный текст берётся через Accessibility API, а если приложение его не отдаёт — через ⌘C с восстановлением буфера обмена.
-- Настройки хранятся в `UserDefaults` (`com.chernov.aura`).
+## How it works
 
-## Ограничения
+- A single Swift file: `~/Repo/aura/main.swift` (private repo https://github.com/klbk/aura), build script `build.sh` next to it. No external dependencies. Universal build: Apple Silicon + Intel.
+- Keystrokes are read with a **listen-only** `CGEventTap`: the system never waits for AURA, so it can't freeze the keyboard or mouse.
+- Character tables are built from the macOS layouts themselves (`UCKeyTranslate`), so any layout works without manual setup.
+- Word checking uses the system spell checker (`NSSpellChecker`), after the Space has already been typed.
+- Replacement uses synthetic keystrokes: Backspace × word length, then the corrected text.
+- Selected text comes from the Accessibility API, or via ⌘C with clipboard restore if the app doesn't expose it.
+- Settings are stored in `UserDefaults` (`com.chernov.aura`).
 
-- Только macOS 13+. Windows возможен (не сделан); на iPhone/iPad/Android — только как отдельная клавиатура, практической пользы мало.
-- Автоисправление видит только набор подряд: после клика мышью, стрелок или сочетаний с ⌘/⌥/⌃ текущее слово забывается.
-- В полях пароля и некоторых приложениях (терминалы, игры) поведение может отличаться — добавьте их в исключения.
+## Limitations
+
+- macOS 13+ only. Windows is possible (not done); on iPhone/iPad/Android only as a separate keyboard, with little practical value.
+- Auto-correction only sees continuous typing: a mouse click, arrow keys or ⌘/⌥/⌃ shortcuts reset the current word.
+- Password fields and some apps (terminals, games) may behave differently — add them to exclusions.
+
+---
+🇺🇦 AURA — made in Ukraine.
