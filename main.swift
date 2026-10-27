@@ -8,7 +8,13 @@ import ApplicationServices
 let kMagic: Int64 = 0x4B535754 // marks our own synthetic events
 func langName(_ code: String) -> String { Locale(identifier: uiCode()).localizedString(forLanguageCode: code)?.capitalized ?? code }
 
-struct Key: Hashable { let code: UInt16; let shift: Bool }
+/// A key press. `ch` is the character it actually produced (from the event), which tells which layout
+/// was really active — more reliable than asking the system from a background app. Not part of equality.
+struct Key: Hashable {
+    let code: UInt16; let shift: Bool; var ch: Character? = nil
+    static func == (a: Key, b: Key) -> Bool { a.code == b.code && a.shift == b.shift }
+    func hash(into h: inout Hasher) { h.combine(code); h.combine(shift) }
+}
 
 final class Layout {
     let lang: String
@@ -187,6 +193,10 @@ final class Engine {
     func index(_ lang: String?) -> Int { layouts.firstIndex { $0.lang == lang } ?? 0 }
     func select(_ l: Layout) { TISSelectInputSource(l.source) }
 
+    /// The first spell check in a language loads its dictionary (can take a moment). If that happens
+    /// while the user types on, the correction is skipped — so load all dictionaries up front.
+    func warmUpDictionaries() { for l in layouts { _ = isWord("aura", l.lang) } }
+
     // MARK: tap
 
     func start() -> Bool {
@@ -259,7 +269,11 @@ final class Engine {
         default:
             if codes.contains(code) {
                 if trailing > 0 || !lastWord.isEmpty { lastWord = []; trailing = 0 }
-                word.append(Key(code: code, shift: f.contains(.maskShift) || f.contains(.maskAlphaShift)))
+                var len = 0
+                var buf = [UniChar](repeating: 0, count: 4)
+                e.keyboardGetUnicodeString(maxStringLength: 4, actualStringLength: &len, unicodeString: &buf)
+                let ch = len == 1 ? Unicode.Scalar(buf[0]).map(Character.init) : nil
+                word.append(Key(code: code, shift: f.contains(.maskShift) || f.contains(.maskAlphaShift), ch: ch))
             } else { reset() }
         }
     }
@@ -268,8 +282,9 @@ final class Engine {
         // user kept typing meanwhile — skip
         guard lastWord == keys, word.isEmpty, trailing == 1, let fix = autoFix(keys) else { return }
         let out = fix.layout.text(keys)
+        let typed = typedLayout(keys)?.text(keys)
         // UK/RU word spelled the same in both layouts: text is already right, only switch the layout
-        if out != layout(currentLang())?.text(keys) { replace(count: keys.count + 1, with: out + " ") }
+        if out != typed { replace(count: keys.count + 1, with: out + " ") }
         select(fix.layout)
         Sounds.play(Sounds.auto)
     }
@@ -287,8 +302,19 @@ final class Engine {
 
     func isLatin(_ s: String) -> Bool { s.unicodeScalars.allSatisfy { $0.value < 0x250 } }
 
+    /// Layout the word was really typed in: the one whose characters match what the key events produced
+    /// (prefers the system's current layout when several match, e.g. UK/RU words without і/ы).
+    func typedLayout(_ keys: [Key]) -> Layout? {
+        let sys = layout(currentLang())
+        let actual = String(keys.compactMap(\.ch))
+        guard actual.count == keys.count else { return sys }
+        let matches = layouts.filter { $0.text(keys) == actual }
+        if let sys, matches.contains(where: { $0 === sys }) { return sys }
+        return matches.first ?? sys
+    }
+
     func autoFix(_ keys: [Key]) -> (layout: Layout, Void)? {
-        guard keys.count >= 2, let cur = layout(currentLang()) else { return nil }
+        guard keys.count >= 2, let cur = typedLayout(keys) else { return nil }
         let typed = cur.text(keys)
         if settings.words.contains(typed.lowercased()) || isWord(typed, cur.lang) { return nil }
         let start = index(cur.lang)
@@ -424,7 +450,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         DistributedNotificationCenter.default().addObserver(forName: NSNotification.Name(kTISNotifySelectedKeyboardInputSourceChanged as String),
                                                             object: nil, queue: .main) { _ in self.updateTitle() }
         DistributedNotificationCenter.default().addObserver(forName: NSNotification.Name(kTISNotifyEnabledKeyboardInputSourcesChanged as String),
-                                                            object: nil, queue: .main) { _ in engine.layouts = loadLayouts(); engine.codes = engine.allCodes }
+                                                            object: nil, queue: .main) { _ in engine.layouts = loadLayouts(); engine.codes = engine.allCodes; engine.warmUpDictionaries() }
         NSWorkspace.shared.notificationCenter.addObserver(forName: NSWorkspace.didActivateApplicationNotification,
                                                           object: nil, queue: .main) { note in
             guard let app = note.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication,
@@ -437,6 +463,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         let opts = [kAXTrustedCheckOptionPrompt.takeUnretainedValue(): true] as CFDictionary
         AXIsProcessTrustedWithOptions(opts)
         startTap()
+        // the selection-changed notification is sometimes missed — re-check the indicator twice a second
+        Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { _ in self.updateTitle() }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1) { engine.warmUpDictionaries() }
     }
 
     func startTap() {
@@ -450,7 +479,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     func updateTitle() {
         guard engine.tap != nil else { return }
         let l = displayCode(currentLang())
-        item.button?.title = s.enabled ? l : l.lowercased()
+        let title = s.enabled ? l : l.lowercased()
+        if item.button?.title != title { item.button?.title = title }
     }
 
     func add(_ m: NSMenu, _ title: String, _ on: Bool? = nil, enabled: Bool = true, _ action: (() -> Void)? = nil) {

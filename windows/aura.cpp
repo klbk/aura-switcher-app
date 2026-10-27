@@ -301,6 +301,10 @@ static bool isWord(const wstring& w, const wstring& locale) {
 
 static bool isLatin(const wstring& s) { for (wchar_t c : s) if (c >= 0x250) return false; return true; }
 
+// The first spell check in a language loads its dictionary (can take a moment). If that happens
+// while the user types on, the correction is skipped — so load all dictionaries up front.
+static void warmUpDictionaries() { for (auto& l : layouts) isWord(L"aura", l.locale); }
+
 static int autoFixTarget(const vector<Key>& keys) {
     if (keys.size() < 2 || layouts.empty()) return -1;
     int cur = layoutIndex(fgLayout());
@@ -704,7 +708,7 @@ static LRESULT CALLBACK wndProc(HWND h, UINT msg, WPARAM wp, LPARAM lp) {
     case WM_AUTO: { auto* s = (Snapshot*)lp; if (active) onAuto(s); delete s; return 0; }
     case WM_DSHIFT: { auto* s = (Snapshot*)lp; if (active) onDoubleShift(s); delete s; return 0; }
     case WM_TIMER: refreshActive(); updateTray(); return 0;
-    case WM_INPUTLANGCHANGE: case WM_SETTINGCHANGE: layouts = loadLayouts(); updateTray(true); return 0;
+    case WM_INPUTLANGCHANGE: case WM_SETTINGCHANGE: layouts = loadLayouts(); warmUpDictionaries(); updateTray(true); return 0;
     case WM_DESTROY: PostQuitMessage(0); return 0;
     }
     if (msg == WM_TASKBARCREATED) { Shell_NotifyIconW(NIM_ADD, &nid); updateTray(true); return 0; }
@@ -726,6 +730,7 @@ int WINAPI wWinMain(HINSTANCE inst, HINSTANCE, PWSTR, int) {
 
     layouts = loadLayouts();
     disableStickyPrompt();
+    warmUpDictionaries();
     if (regGet(L"loginSet", L"") != L"1") { setLogin(true); regSet(L"loginSet", L"1"); }
 
     nid.cbSize = sizeof(nid); nid.hWnd = hwndMain; nid.uID = 1;
