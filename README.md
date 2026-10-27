@@ -11,6 +11,7 @@ lang: en
 
 A macOS app that fixes text typed in the wrong keyboard layout ("ghbdtn" → "привіт"). It lives in the menu bar, runs in the background and starts automatically at login.
 
+Quick start — [docs/INSTALL-mac.md](docs/INSTALL-mac.md).
 
 ## Features
 
