@@ -44,6 +44,7 @@ The icon shows the current language: `EN`, `УК`, `РУ`… — each language i
 
 - **Enabled** — master switch.
 - **Auto-correction** — on/off (double ⇧ always works).
+- **Sound** — a short beep: one tone on auto-correction, two on double ⇧. Same on Mac and Windows.
 - **Don't work in this app** — add the current app to exclusions.
 - **Language for this app** — bind a layout.
 - **Exclusions / Language bindings** — lists; click an item to remove it.
@@ -84,7 +85,8 @@ Archive for other Macs: `~/Repo/aura/build.sh --release` → `dist/AURA-<version
 
 - Windows 10/11, x64 and ARM64 (ARM64 not tested yet). Archives: `~/Repo/aura/dist/AURA-0.4-windows-x64.zip` (regular PCs, ~190 KB) and `AURA-0.4-windows.zip` (both builds, `x64` and `arm64` folders). No installer — copy `AURA.exe` anywhere and run it.
 - Build on a Mac: `~/Repo/aura/windows/build.sh` (needs Zig, located in `~/.local/zig`).
-- Same features and menu as on Mac. The tray icon shows the language code (blue background, yellow letters; grey — disabled). Click the icon for the menu.
+- Same features and menu as on Mac. The tray icon shows the language code: yellow letters on a rounded blue tile (grey — disabled), drawn at the exact tray size so it stays sharp.
+  ![tray](docs/tray-preview.png) Click the icon for the menu.
 - Double ⇧ works the same as on Mac. To stop the "Sticky Keys" prompt after a few double ⇧, AURA turns off only its shortcut (5× Shift) while running. Not saved: quitting AURA or rebooting restores it.
 - No permissions needed. Autostart via registry (`HKCU\…\Run`), settings in `HKCU\Software\AURA`.
 - Word checking uses the built-in Windows spell checker; works for languages installed in Windows (Settings → Time & language → Language).

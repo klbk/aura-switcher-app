@@ -16,6 +16,9 @@
 #include <shellapi.h>
 #include <objbase.h>
 #include <spellcheck.h>
+#include <mmsystem.h>
+#include <algorithm>
+#include <cmath>
 #include <atomic>
 #include <map>
 #include <string>
@@ -28,7 +31,7 @@ using std::vector;
 
 static const ULONG_PTR kMagic = 0x4B535754;  // marks our own synthetic input
 enum { WM_TRAY = WM_APP + 1, WM_AUTO, WM_DSHIFT };
-enum { ID_ENABLED = 1, ID_AUTO, ID_EXCLUDE, ID_NOBIND, ID_LOGIN, ID_UI_SYS, ID_UI_EN, ID_UI_UK, ID_QUIT,
+enum { ID_ENABLED = 1, ID_AUTO, ID_SOUND, ID_EXCLUDE, ID_NOBIND, ID_LOGIN, ID_UI_SYS, ID_UI_EN, ID_UI_UK, ID_QUIT,
        ID_BIND0 = 100, ID_EXDEL0 = 200, ID_BDDEL0 = 300 };
 
 // MARK: - Settings (HKCU\Software\AURA)
@@ -57,12 +60,13 @@ static wstring join(const vector<wstring>& v) { wstring r; for (auto& s : v) r +
 struct Settings {
     bool enabled = regGet(L"enabled", L"1") == L"1";
     bool autoFix = regGet(L"auto", L"1") == L"1";
+    bool sound = regGet(L"sound", L"1") == L"1";
     wstring uiLang = regGet(L"uiLang", L"");            // "" = system
     vector<wstring> excluded = split(regGet(L"excluded", L""));
     std::map<wstring, wstring> bindings;                // exe name → locale name
     Settings() { for (auto& p : split(regGet(L"bindings", L""))) { size_t e = p.find(L'='); if (e != wstring::npos) bindings[p.substr(0, e)] = p.substr(e + 1); } }
     void save() {
-        regSet(L"enabled", enabled ? L"1" : L"0"); regSet(L"auto", autoFix ? L"1" : L"0");
+        regSet(L"enabled", enabled ? L"1" : L"0"); regSet(L"auto", autoFix ? L"1" : L"0"); regSet(L"sound", sound ? L"1" : L"0");
         regSet(L"uiLang", uiLang); regSet(L"excluded", join(excluded));
         vector<wstring> b; for (auto& kv : bindings) b.push_back(kv.first + L"=" + kv.second); regSet(L"bindings", join(b));
     }
@@ -361,8 +365,37 @@ static void convertSelection(const wstring& text) {
     selectLayout(layouts[dst]);
 }
 
+// MARK: - Sounds (synthesized, identical on Mac and Windows)
+// Short soft sine blips: one tone for auto-correction, two rising tones for double ⇧.
+
+static vector<BYTE> blip(std::initializer_list<double> freqs) {
+    const int rate = 44100, toneLen = rate * 45 / 1000, gap = rate * 25 / 1000;
+    vector<short> pcm; int i = 0;
+    for (double f : freqs) {
+        if (i++) pcm.insert(pcm.end(), gap, 0);
+        for (int n = 0; n < toneLen; n++) {
+            double env = std::min(1.0, n / 200.0) * std::min(1.0, (toneLen - n) / 800.0);  // no clicks
+            pcm.push_back(short(sin(2 * 3.14159265358979 * f * n / rate) * env * 0.22 * 32767));
+        }
+    }
+    vector<BYTE> w;
+    auto u32 = [&](DWORD v) { for (int b = 0; b < 4; b++) w.push_back(BYTE(v >> (8 * b))); };
+    auto u16 = [&](WORD v) { w.push_back(BYTE(v)); w.push_back(BYTE(v >> 8)); };
+    auto tag = [&](const char* t) { w.insert(w.end(), t, t + 4); };
+    tag("RIFF"); u32(DWORD(36 + pcm.size() * 2)); tag("WAVE"); tag("fmt ");
+    u32(16); u16(1); u16(1); u32(rate); u32(rate * 2); u16(2); u16(16);
+    tag("data"); u32(DWORD(pcm.size() * 2));
+    const BYTE* p = (const BYTE*)pcm.data(); w.insert(w.end(), p, p + pcm.size() * 2);
+    return w;
+}
+static const vector<BYTE> sndAuto = blip({1175}), sndShift = blip({880, 1320});
+static void playSound(const vector<BYTE>& s) {
+    if (S.sound) PlaySoundW((LPCWSTR)s.data(), nullptr, SND_MEMORY | SND_ASYNC | SND_NODEFAULT);
+}
+
 static void onDoubleShift(Snapshot* s) {
     if (layouts.empty()) return;
+    playSound(sndShift);
     if (!s->keys.empty()) {
         const Layout& n = layouts[(layoutIndex(fgLayout()) + 1) % layouts.size()];
         replaceText(int(s->keys.size()) + s->trailing, n.text(s->keys) + wstring(s->trailing, L' '));
@@ -381,6 +414,7 @@ static void onAuto(Snapshot* s) {
     // UK/RU word spelled the same in both layouts: text is already right, only switch the layout
     if (out != layouts[layoutIndex(fgLayout())].text(s->keys)) replaceText(int(s->keys.size()) + 1, out + L" ");
     selectLayout(layouts[j]);
+    playSound(sndAuto);
 }
 
 // MARK: - Tray
@@ -388,22 +422,48 @@ static void onAuto(Snapshot* s) {
 static NOTIFYICONDATAW nid = {};
 static wstring shownCode;
 
+// Tray icon: language code in yellow on a rounded Ukrainian-blue tile (grey when off).
+// Drawn at the exact tray size for the current DPI (Windows blurs a scaled-down icon),
+// supersampled 4× for smooth letters and rounded corners.
 static HICON makeTextIcon(const wstring& text, bool on) {
-    const int sz = 32;
-    BITMAPINFO bi = {}; bi.bmiHeader = {sizeof(BITMAPINFOHEADER), sz, -sz, 1, 32, BI_RGB};
-    void* bits; HDC dc = CreateCompatibleDC(nullptr);
-    HBITMAP color = CreateDIBSection(dc, &bi, DIB_RGB_COLORS, &bits, nullptr, 0);
-    HGDIOBJ old = SelectObject(dc, color);
-    RECT rc{0, 0, sz, sz};
-    HBRUSH bg = CreateSolidBrush(on ? RGB(0x2f, 0x8b, 0xff) : RGB(0x70, 0x70, 0x78));
-    FillRect(dc, &rc, bg); DeleteObject(bg);
-    HFONT f = CreateFontW(22, 0, 0, 0, FW_BOLD, 0, 0, 0, DEFAULT_CHARSET, 0, 0, CLEARTYPE_QUALITY, 0, L"Segoe UI");
-    HGDIOBJ of = SelectObject(dc, f);
-    SetBkMode(dc, TRANSPARENT); SetTextColor(dc, on ? RGB(0xff, 0xd5, 0x00) : RGB(0xff, 0xff, 0xff));
-    DrawTextW(dc, text.c_str(), -1, &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
-    SelectObject(dc, of); DeleteObject(f);
-    for (int i = 0; i < sz * sz; i++) ((DWORD*)bits)[i] |= 0xFF000000;  // GDI leaves alpha 0
-    SelectObject(dc, old); DeleteDC(dc);
+    const int sz = GetSystemMetricsForDpi(SM_CXSMICON, GetDpiForSystem()), k = 4, big = sz * k;
+    const COLORREF bgc = on ? RGB(0x00, 0x57, 0xb7) : RGB(0x6b, 0x72, 0x80), fg = on ? RGB(0xff, 0xd5, 0x00) : RGB(0xff, 0xff, 0xff);
+
+    BITMAPINFO bi = {}; bi.bmiHeader = {sizeof(BITMAPINFOHEADER), big, -big, 1, 32, BI_RGB};
+    void* src; HDC dc = CreateCompatibleDC(nullptr);
+    HBITMAP hb = CreateDIBSection(dc, &bi, DIB_RGB_COLORS, &src, nullptr, 0);
+    HGDIOBJ old = SelectObject(dc, hb);
+    RECT rc{0, 0, big, big};
+    HBRUSH br = CreateSolidBrush(bgc); FillRect(dc, &rc, br); DeleteObject(br);
+    SetBkMode(dc, TRANSPARENT); SetTextColor(dc, fg);
+    // largest bold font that fits ~88% of the width
+    for (int h = big * 3 / 4; h > 4; h -= k) {
+        HFONT f = CreateFontW(-h, 0, 0, 0, FW_HEAVY, 0, 0, 0, DEFAULT_CHARSET, 0, 0, ANTIALIASED_QUALITY, 0, L"Segoe UI");
+        HGDIOBJ of = SelectObject(dc, f);
+        RECT m{0, 0, 0, 0}; DrawTextW(dc, text.c_str(), -1, &m, DT_CALCRECT | DT_SINGLELINE);
+        if (m.right <= big * 88 / 100) { DrawTextW(dc, text.c_str(), -1, &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE); SelectObject(dc, of); DeleteObject(f); break; }
+        SelectObject(dc, of); DeleteObject(f);
+    }
+
+    BITMAPINFO si = {}; si.bmiHeader = {sizeof(BITMAPINFOHEADER), sz, -sz, 1, 32, BI_RGB};
+    void* dst; HBITMAP color = CreateDIBSection(dc, &si, DIB_RGB_COLORS, &dst, nullptr, 0);
+    const double r = big * 0.24;  // corner radius
+    auto inside = [&](double x, double y) {
+        double cx = x < r ? r : x > big - r ? big - r : x, cy = y < r ? r : y > big - r ? big - r : y;
+        return (x - cx) * (x - cx) + (y - cy) * (y - cy) <= r * r;
+    };
+    for (int y = 0; y < sz; y++) for (int x = 0; x < sz; x++) {
+        unsigned rs = 0, gs = 0, bs = 0, in = 0;
+        for (int j = 0; j < k; j++) for (int i = 0; i < k; i++) {
+            int X = x * k + i, Y = y * k + j;
+            DWORD p = ((DWORD*)src)[Y * big + X];
+            rs += (p >> 16) & 255; gs += (p >> 8) & 255; bs += p & 255;
+            in += inside(X + 0.5, Y + 0.5);
+        }
+        unsigned n = k * k;
+        ((DWORD*)dst)[y * sz + x] = ((in * 255 / n) << 24) | ((rs / n) << 16) | ((gs / n) << 8) | (bs / n);
+    }
+    SelectObject(dc, old); DeleteObject(hb); DeleteDC(dc);
     HBITMAP mask = CreateBitmap(sz, sz, 1, 1, nullptr);
     ICONINFO ii{TRUE, 0, 0, mask, color};
     HICON icon = CreateIconIndirect(&ii);
@@ -457,6 +517,7 @@ static void showMenu() {
     };
     item(m, ID_ENABLED, L_(L"Enabled", L"Увімкнено"), S.enabled);
     item(m, ID_AUTO, L_(L"Auto-correction", L"Автовиправлення"), S.autoFix, S.enabled);
+    item(m, ID_SOUND, L_(L"Sound", L"Звук"), S.sound, S.enabled);
     AppendMenuW(m, MF_SEPARATOR, 0, nullptr);
 
     if (!menuExe.empty()) {
@@ -502,6 +563,7 @@ static void showMenu() {
 
     if (cmd == ID_ENABLED) { S.enabled = !S.enabled; }
     else if (cmd == ID_AUTO) { S.autoFix = !S.autoFix; }
+    else if (cmd == ID_SOUND) { S.sound = !S.sound; playSound(sndAuto); }
     else if (cmd == ID_EXCLUDE) {
         if (S.isExcluded(menuExe)) { vector<wstring> r; for (auto& e : S.excluded) if (_wcsicmp(e.c_str(), menuExe.c_str())) r.push_back(e); S.excluded = r; }
         else S.excluded.push_back(menuExe);

@@ -82,6 +82,39 @@ final class Settings {
     var excluded: [String] { get { d.stringArray(forKey: "excluded") ?? [] } set { d.set(newValue, forKey: "excluded") } }
     var bindings: [String: String] { get { d.dictionary(forKey: "bindings") as? [String: String] ?? [:] } set { d.set(newValue, forKey: "bindings") } }
     var uiLang: String? { get { d.string(forKey: "uiLang") } set { d.set(newValue, forKey: "uiLang") } } // nil = system
+    var sound: Bool { get { d.object(forKey: "sound") as? Bool ?? true } set { d.set(newValue, forKey: "sound") } }
+}
+
+// MARK: - Sounds (synthesized, identical on Mac and Windows)
+
+enum Sounds {
+    /// Short soft sine blips: one tone for auto-correction, two rising tones for double ⇧.
+    static func blip(_ freqs: [Double]) -> Data {
+        let rate = 44100, toneLen = rate * 45 / 1000, gap = rate * 25 / 1000
+        var pcm: [Int16] = []
+        for (i, f) in freqs.enumerated() {
+            if i > 0 { pcm += [Int16](repeating: 0, count: gap) }
+            for n in 0..<toneLen {
+                let t = Double(n) / Double(rate)
+                let env = min(1, Double(n) / 200) * min(1, Double(toneLen - n) / 800)  // no clicks
+                pcm.append(Int16(sin(2 * .pi * f * t) * env * 0.22 * 32767))
+            }
+        }
+        var d = Data()
+        func u32(_ v: Int) { var x = UInt32(v).littleEndian; d.append(Data(bytes: &x, count: 4)) }
+        func u16(_ v: Int) { var x = UInt16(v).littleEndian; d.append(Data(bytes: &x, count: 2)) }
+        d.append("RIFF".data(using: .ascii)!); u32(36 + pcm.count * 2); d.append("WAVEfmt ".data(using: .ascii)!)
+        u32(16); u16(1); u16(1); u32(rate); u32(rate * 2); u16(2); u16(16)
+        d.append("data".data(using: .ascii)!); u32(pcm.count * 2)
+        pcm.withUnsafeBufferPointer { d.append(Data(buffer: $0)) }
+        return d
+    }
+    static let auto = NSSound(data: blip([1175]))
+    static let shift = NSSound(data: blip([880, 1320]))
+    static func play(_ s: NSSound?) {
+        guard engine.settings.sound, let s else { return }
+        s.stop(); s.play()
+    }
 }
 
 // MARK: - Localization (English, Ukrainian; Russian system → Ukrainian)
@@ -100,6 +133,7 @@ let uiStrings: [String: [String]] = [ // key: [en, uk]
     "login": ["Launch at login", "Запускати під час входу"],
     "hint": ["Double ⇧ — convert word/selection", "Подвійний ⇧ — змінити мову слова/виділення"],
     "uiLang": ["Menu language", "Мова меню"],
+    "sound": ["Sound", "Звук"],
     "system": ["System", "Системна"],
     "quit": ["Quit", "Вихід"],
 ]
@@ -223,6 +257,7 @@ final class Engine {
         // UK/RU word spelled the same in both layouts: text is already right, only switch the layout
         if out != layout(currentLang())?.text(keys) { replace(count: keys.count + 1, with: out + " ") }
         select(fix.layout)
+        Sounds.play(Sounds.auto)
     }
 
     // MARK: auto detection
@@ -258,6 +293,7 @@ final class Engine {
     // MARK: double shift
 
     func doubleShift() {
+        Sounds.play(Sounds.shift)
         if let sel = axSelectedText(), !sel.isEmpty { convertSelection(sel); return }
         let keys = word.isEmpty ? lastWord : word
         if !keys.isEmpty { cycleWord(keys, trailing: word.isEmpty ? trailing : 0); return }
@@ -419,6 +455,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         m.removeAllItems()
         add(m, L("enabled"), s.enabled) { self.s.enabled.toggle(); self.updateTitle() }
         add(m, L("auto"), s.auto, enabled: s.enabled) { self.s.auto.toggle() }
+        add(m, L("sound"), s.sound, enabled: s.enabled) { self.s.sound.toggle(); if self.s.sound { Sounds.play(Sounds.auto) } }
         if engine.tap == nil { add(m, L("access"), enabled: true) {
             NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility")!) } }
         m.addItem(.separator())
