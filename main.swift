@@ -83,6 +83,15 @@ final class Settings {
     var bindings: [String: String] { get { d.dictionary(forKey: "bindings") as? [String: String] ?? [:] } set { d.set(newValue, forKey: "bindings") } }
     var uiLang: String? { get { d.string(forKey: "uiLang") } set { d.set(newValue, forKey: "uiLang") } } // nil = system
     var sound: Bool { get { d.object(forKey: "sound") as? Bool ?? true } set { d.set(newValue, forKey: "sound") } }
+    /// user's words that are never auto-corrected (slang like «хз», «ща»), stored lowercased
+    var words: [String] { get { d.stringArray(forKey: "words") ?? [] } set { d.set(newValue, forKey: "words") } }
+}
+
+/// "хз, ща яж" → ["хз", "ща", "яж"]
+func parseWords(_ s: String) -> [String] {
+    var seen = Set<String>()
+    return s.lowercased().components(separatedBy: CharacterSet(charactersIn: ",;\n ").union(.whitespaces))
+        .filter { !$0.isEmpty && seen.insert($0).inserted }
 }
 
 // MARK: - Sounds (synthesized, identical on Mac and Windows)
@@ -134,6 +143,11 @@ let uiStrings: [String: [String]] = [ // key: [en, uk]
     "hint": ["Double ⇧ — convert word/selection", "Подвійний ⇧ — змінити мову слова/виділення"],
     "uiLang": ["Menu language", "Мова меню"],
     "sound": ["Sound", "Звук"],
+    "words": ["Word exceptions…", "Слова-винятки…"],
+    "wordsInfo": ["AURA will never auto-correct these words. Separate them with commas.",
+                  "Ці слова AURA ніколи не виправлятиме автоматично. Через кому."],
+    "save": ["Save", "Зберегти"],
+    "cancel": ["Cancel", "Скасувати"],
     "system": ["System", "Системна"],
     "quit": ["Quit", "Вихід"],
 ]
@@ -276,7 +290,7 @@ final class Engine {
     func autoFix(_ keys: [Key]) -> (layout: Layout, Void)? {
         guard keys.count >= 2, let cur = layout(currentLang()) else { return nil }
         let typed = cur.text(keys)
-        if isWord(typed, cur.lang) { return nil }
+        if settings.words.contains(typed.lowercased()) || isWord(typed, cur.lang) { return nil }
         let start = index(cur.lang)
         for i in 1..<max(layouts.count, 1) {
             let l = layouts[(start + i) % layouts.count]
@@ -451,6 +465,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         return FileManager.default.displayName(atPath: url.path).replacingOccurrences(of: ".app", with: "")
     }
 
+    func editWords() {
+        let a = NSAlert()
+        a.messageText = L("words").replacingOccurrences(of: "…", with: "")
+        a.informativeText = L("wordsInfo")
+        let field = NSTextField(frame: NSRect(x: 0, y: 0, width: 320, height: 24))
+        field.stringValue = s.words.joined(separator: ", ")
+        field.placeholderString = "хз, ща, яж"
+        a.accessoryView = field
+        a.addButton(withTitle: L("save")); a.addButton(withTitle: L("cancel"))
+        a.window.initialFirstResponder = field
+        NSApp.activate(ignoringOtherApps: true)
+        if a.runModal() == .alertFirstButtonReturn { s.words = parseWords(field.stringValue) }
+    }
+
     func menuNeedsUpdate(_ m: NSMenu) {
         m.removeAllItems()
         add(m, L("enabled"), s.enabled) { self.s.enabled.toggle(); self.updateTitle() }
@@ -493,6 +521,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         add(m, L("login"), login) {
             if login { try? SMAppService.mainApp.unregister() } else { try? SMAppService.mainApp.register() }
         }
+        add(m, L("words")) { self.editWords() }
         let uiMenu = NSMenu()
         add(uiMenu, L("system"), s.uiLang == nil) { self.s.uiLang = nil }
         add(uiMenu, "English", s.uiLang == "en") { self.s.uiLang = "en" }

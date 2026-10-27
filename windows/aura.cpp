@@ -17,6 +17,7 @@
 #include <objbase.h>
 #include <spellcheck.h>
 #include <mmsystem.h>
+#include <commctrl.h>
 #include <algorithm>
 #include <cmath>
 #include <atomic>
@@ -31,7 +32,7 @@ using std::vector;
 
 static const ULONG_PTR kMagic = 0x4B535754;  // marks our own synthetic input
 enum { WM_TRAY = WM_APP + 1, WM_AUTO, WM_DSHIFT };
-enum { ID_ENABLED = 1, ID_AUTO, ID_SOUND, ID_EXCLUDE, ID_NOBIND, ID_LOGIN, ID_UI_SYS, ID_UI_EN, ID_UI_UK, ID_QUIT,
+enum { ID_ENABLED = 1, ID_AUTO, ID_SOUND, ID_WORDS, ID_EXCLUDE, ID_NOBIND, ID_LOGIN, ID_UI_SYS, ID_UI_EN, ID_UI_UK, ID_QUIT,
        ID_BIND0 = 100, ID_EXDEL0 = 200, ID_BDDEL0 = 300 };
 
 // MARK: - Settings (HKCU\Software\AURA)
@@ -63,16 +64,29 @@ struct Settings {
     bool sound = regGet(L"sound", L"1") == L"1";
     wstring uiLang = regGet(L"uiLang", L"");            // "" = system
     vector<wstring> excluded = split(regGet(L"excluded", L""));
+    vector<wstring> words = split(regGet(L"words", L""));  // never auto-corrected («хз», «ща»), lowercased
     std::map<wstring, wstring> bindings;                // exe name → locale name
     Settings() { for (auto& p : split(regGet(L"bindings", L""))) { size_t e = p.find(L'='); if (e != wstring::npos) bindings[p.substr(0, e)] = p.substr(e + 1); } }
     void save() {
         regSet(L"enabled", enabled ? L"1" : L"0"); regSet(L"auto", autoFix ? L"1" : L"0"); regSet(L"sound", sound ? L"1" : L"0");
-        regSet(L"uiLang", uiLang); regSet(L"excluded", join(excluded));
+        regSet(L"uiLang", uiLang); regSet(L"excluded", join(excluded)); regSet(L"words", join(words));
         vector<wstring> b; for (auto& kv : bindings) b.push_back(kv.first + L"=" + kv.second); regSet(L"bindings", join(b));
     }
     bool isExcluded(const wstring& exe) { for (auto& e : excluded) if (!_wcsicmp(e.c_str(), exe.c_str())) return true; return false; }
+    bool isUserWord(const wstring& w) { for (auto& x : words) if (!_wcsicmp(x.c_str(), w.c_str())) return true; return false; }
 };
 static Settings S;
+
+static wstring lower(wstring s) { CharLowerBuffW(s.data(), DWORD(s.size())); return s; }
+
+// "хз, ща яж" → {"хз", "ща", "яж"}
+static vector<wstring> parseWords(const wstring& s) {
+    vector<wstring> r; wstring cur;
+    auto flush = [&] { if (!cur.empty()) { cur = lower(cur); bool dup = false; for (auto& x : r) dup |= x == cur; if (!dup) r.push_back(cur); cur.clear(); } };
+    for (wchar_t c : s) { if (c == L',' || c == L';' || iswspace(c)) flush(); else cur += c; }
+    flush();
+    return r;
+}
 
 // MARK: - Localization (English, Ukrainian; Russian system → Ukrainian)
 
@@ -291,7 +305,7 @@ static int autoFixTarget(const vector<Key>& keys) {
     if (keys.size() < 2 || layouts.empty()) return -1;
     int cur = layoutIndex(fgLayout());
     wstring typed = layouts[cur].text(keys);
-    if (isWord(typed, layouts[cur].locale)) return -1;
+    if (S.isUserWord(typed) || isWord(typed, layouts[cur].locale)) return -1;
     for (size_t i = 1; i < layouts.size(); i++) {
         int j = int((cur + i) % layouts.size());
         wstring t = layouts[j].text(keys);
@@ -509,6 +523,63 @@ static wstring langName(const wstring& locale) {
     return locale;
 }
 
+// MARK: - Word exceptions dialog (small modal window, no resources)
+
+static LRESULT CALLBACK wordsProc(HWND h, UINT msg, WPARAM wp, LPARAM lp) {
+    if (msg == WM_COMMAND && (LOWORD(wp) == IDOK || LOWORD(wp) == IDCANCEL)) { SetWindowLongPtrW(h, GWLP_USERDATA, LOWORD(wp)); return 0; }
+    if (msg == WM_CLOSE) { SetWindowLongPtrW(h, GWLP_USERDATA, IDCANCEL); return 0; }
+    return DefWindowProcW(h, msg, wp, lp);
+}
+
+static void editWords() {
+    static bool registered = false;
+    HINSTANCE inst = GetModuleHandleW(nullptr);
+    if (!registered) {
+        WNDCLASSW wc = {}; wc.lpfnWndProc = wordsProc; wc.hInstance = inst; wc.lpszClassName = L"AURAWords";
+        wc.hbrBackground = GetSysColorBrush(COLOR_WINDOW); wc.hCursor = LoadCursorW(nullptr, IDC_ARROW);
+        wc.hIcon = LoadIconW(inst, MAKEINTRESOURCEW(1));
+        RegisterClassW(&wc); registered = true;
+    }
+    int dpi = GetDpiForSystem(); auto D = [&](int v) { return MulDiv(v, dpi, 96); };
+    NONCLIENTMETRICSW ncm = {sizeof(ncm)}; SystemParametersInfoW(SPI_GETNONCLIENTMETRICS, sizeof(ncm), &ncm, 0);
+    ncm.lfMessageFont.lfHeight = -D(14);
+    HFONT font = CreateFontIndirectW(&ncm.lfMessageFont);
+
+    RECT rc{0, 0, D(420), D(150)};
+    AdjustWindowRectEx(&rc, WS_CAPTION | WS_SYSMENU, FALSE, WS_EX_DLGMODALFRAME);
+    int w = rc.right - rc.left, hgt = rc.bottom - rc.top;
+    POINT p; GetCursorPos(&p);
+    HMONITOR mon = MonitorFromPoint(p, MONITOR_DEFAULTTONEAREST); MONITORINFO mi = {sizeof(mi)}; GetMonitorInfoW(mon, &mi);
+    int x = (mi.rcWork.left + mi.rcWork.right - w) / 2, y = (mi.rcWork.top + mi.rcWork.bottom - hgt) / 3;
+    HWND dlg = CreateWindowExW(WS_EX_DLGMODALFRAME | WS_EX_TOPMOST, L"AURAWords", L_(L"AURA — word exceptions", L"AURA — слова-винятки"),
+                               WS_CAPTION | WS_SYSMENU, x, y, w, hgt, nullptr, nullptr, inst, nullptr);
+    auto ctl = [&](const wchar_t* cls, const wchar_t* text, DWORD style, int cx, int cy, int cw, int ch, int id) {
+        HWND c = CreateWindowExW(0, cls, text, WS_CHILD | WS_VISIBLE | style, D(cx), D(cy), D(cw), D(ch), dlg, (HMENU)(INT_PTR)id, inst, nullptr);
+        SendMessageW(c, WM_SETFONT, (WPARAM)font, TRUE);
+        return c;
+    };
+    ctl(L"STATIC", L_(L"AURA will never auto-correct these words. Separate them with commas.",
+                      L"Ці слова AURA ніколи не виправлятиме автоматично. Через кому."), 0, 16, 14, 388, 40, 0);
+    wstring cur; for (size_t i = 0; i < S.words.size(); i++) cur += (i ? L", " : L"") + S.words[i];
+    HWND edit = ctl(L"EDIT", cur.c_str(), WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL, 16, 60, 388, 28, 100);
+    SendMessageW(edit, EM_SETCUEBANNER, TRUE, (LPARAM)L"хз, ща, яж");
+    ctl(L"BUTTON", L_(L"Save", L"Зберегти"), WS_TABSTOP | BS_DEFPUSHBUTTON, 204, 106, 96, 30, IDOK);
+    ctl(L"BUTTON", L_(L"Cancel", L"Скасувати"), WS_TABSTOP, 308, 106, 96, 30, IDCANCEL);
+
+    ShowWindow(dlg, SW_SHOW); SetForegroundWindow(dlg); SetFocus(edit);
+    SendMessageW(edit, EM_SETSEL, 0, -1);
+    MSG m;
+    while (!GetWindowLongPtrW(dlg, GWLP_USERDATA) && GetMessageW(&m, nullptr, 0, 0) > 0) {
+        if (!IsDialogMessageW(dlg, &m)) { TranslateMessage(&m); DispatchMessageW(&m); }
+    }
+    if (GetWindowLongPtrW(dlg, GWLP_USERDATA) == IDOK) {
+        int len = GetWindowTextLengthW(edit); wstring buf(len + 1, 0);
+        GetWindowTextW(edit, buf.data(), len + 1); buf.resize(len);
+        S.words = parseWords(buf);
+    }
+    DestroyWindow(dlg); DeleteObject(font);
+}
+
 static void showMenu() {
     menuExe = fgExe();
     HMENU m = CreatePopupMenu();
@@ -547,6 +618,7 @@ static void showMenu() {
     AppendMenuW(m, MF_SEPARATOR, 0, nullptr);
 
     item(m, ID_LOGIN, L_(L"Launch at login", L"Запускати під час входу"), loginEnabled());
+    item(m, ID_WORDS, L_(L"Word exceptions…", L"Слова-винятки…"));
     HMENU um = CreatePopupMenu();
     item(um, ID_UI_SYS, L_(L"System", L"Системна"), S.uiLang.empty());
     item(um, ID_UI_EN, L"English", S.uiLang == L"en");
@@ -575,6 +647,7 @@ static void showMenu() {
     }
     else if (cmd >= ID_BDDEL0 && cmd < ID_BDDEL0 + menuBdDel.size()) S.bindings.erase(menuBdDel[cmd - ID_BDDEL0]);
     else if (cmd == ID_LOGIN) setLogin(!loginEnabled());
+    else if (cmd == ID_WORDS) editWords();
     else if (cmd == ID_UI_SYS) S.uiLang = L"";
     else if (cmd == ID_UI_EN) S.uiLang = L"en";
     else if (cmd == ID_UI_UK) S.uiLang = L"uk";

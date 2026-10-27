@@ -48,6 +48,7 @@ The icon shows the current language: `EN`, `УК`, `РУ`… — each language i
 - **Don't work in this app** — add the current app to exclusions.
 - **Language for this app** — bind a layout.
 - **Exclusions / Language bindings** — lists; click an item to remove it.
+- **Word exceptions…** — your words AURA never auto-corrects (slang like «хз», «ща», «яж»). Comma-separated; double ⇧ still works on them.
 - **Launch at login**.
 - **Menu language** — System / English / Українська. "System": Ukrainian or Russian system → Ukrainian, any other → English.
 - **Quit**.
