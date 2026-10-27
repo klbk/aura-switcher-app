@@ -88,8 +88,21 @@ struct Layout {
     std::map<Key, wchar_t> toChar;
     std::map<wchar_t, Key> toKey;
     wstring text(const vector<Key>& keys) const { wstring s; for (auto& k : keys) { auto it = toChar.find(k); if (it != toChar.end()) s += it->second; } return s; }
-    wstring code() const { wstring c = locale.substr(0, 2); for (auto& ch : c) ch = towupper(ch); return c; }
+    wstring code() const;
 };
+
+// Language code written in the language's own script: en → EN, uk → УК, ru → РУ, el → ΕΛ
+static wstring displayCode(const wstring& locale) {
+    static const std::map<wstring, wstring> native = {
+        {L"uk", L"УК"}, {L"ru", L"РУ"}, {L"be", L"БЕ"}, {L"bg", L"БГ"}, {L"sr", L"СР"}, {L"mk", L"МК"}, {L"kk", L"ҚЗ"}, {L"ky", L"КЫ"},
+        {L"tg", L"ТҶ"}, {L"mn", L"МН"}, {L"el", L"ΕΛ"}, {L"ka", L"ქა"}, {L"hy", L"ՀՅ"}, {L"he", L"עב"}, {L"ar", L"عر"}, {L"fa", L"فا"}};
+    wstring c = locale.substr(0, 2);
+    auto it = native.find(c);
+    if (it != native.end()) return it->second;
+    for (auto& ch : c) ch = towupper(ch);
+    return c;
+}
+wstring Layout::code() const { return displayCode(locale); }
 
 static bool isLetterVk(BYTE vk) {
     return (vk >= 'A' && vk <= 'Z') || (vk >= '0' && vk <= '9') || (vk >= VK_OEM_1 && vk <= VK_OEM_3) || (vk >= VK_OEM_4 && vk <= VK_OEM_8) || vk == VK_OEM_102;
@@ -466,8 +479,7 @@ static void showMenu() {
     HMENU bm = CreatePopupMenu(); menuBdDel.clear();
     if (S.bindings.empty()) item(bm, 0, L_(L"Empty", L"Порожньо"), false, false);
     for (auto& kv : S.bindings) {
-        wstring c = kv.second.substr(0, 2); for (auto& ch : c) ch = towupper(ch);
-        item(bm, UINT(ID_BDDEL0 + menuBdDel.size()), L"✕ " + kv.first + L" → " + c);
+        item(bm, UINT(ID_BDDEL0 + menuBdDel.size()), L"✕ " + kv.first + L" → " + displayCode(kv.second));
         menuBdDel.push_back(kv.first);
     }
     AppendMenuW(m, MF_POPUP, (UINT_PTR)bm, L_(L"Language bindings", L"Прив'язки мов"));

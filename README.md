@@ -40,7 +40,7 @@ Auto-correction is skipped between similar Latin layouts (EN ↔ DE ↔ FR): the
 
 ## Menu bar
 
-The icon shows the current language: `EN`, `UK`, `RU`… Lowercase (`en`) — AURA is off. `⚠︎` — no access.
+The icon shows the current language: `EN`, `УК`, `РУ`… — each language in its own script (`ΕΛ` for Greek, `DE` for German). Lowercase (`en`, `ук`) — AURA is off. `⚠︎` — no access.
 
 - **Enabled** — master switch.
 - **Auto-correction** — on/off (double ⇧ always works).

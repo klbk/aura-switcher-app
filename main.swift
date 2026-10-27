@@ -63,6 +63,14 @@ func sourceLang(_ src: TISInputSource) -> String? {
     return langs?.first.map { String($0.prefix(2)) }
 }
 
+/// Language code written in the language's own script: en → EN, uk → УК, ru → РУ, el → ΕΛ
+let nativeCodes = ["uk": "УК", "ru": "РУ", "be": "БЕ", "bg": "БГ", "sr": "СР", "mk": "МК", "kk": "ҚЗ", "ky": "КЫ",
+                   "tg": "ТҶ", "mn": "МН", "el": "ΕΛ", "ka": "ქა", "hy": "ՀՅ", "he": "עב", "ar": "عر", "fa": "فا"]
+func displayCode(_ lang: String?) -> String {
+    guard let lang else { return "--" }
+    return nativeCodes[lang] ?? lang.uppercased()
+}
+
 func currentLang() -> String? { sourceLang(TISCopyCurrentKeyboardInputSource().takeRetainedValue()) }
 
 // MARK: - Settings
@@ -391,7 +399,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     func updateTitle() {
         guard engine.tap != nil else { return }
-        let l = (currentLang() ?? "--").uppercased()
+        let l = displayCode(currentLang())
         item.button?.title = s.enabled ? l : l.lowercased()
     }
 
@@ -439,7 +447,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         let bMenu = NSMenu()
         if s.bindings.isEmpty { add(bMenu, L("empty")) }
         for (b, l) in s.bindings.sorted(by: { $0.key < $1.key }) {
-            add(bMenu, "✕ \(appName(b)) → \(l.uppercased())") { self.s.bindings[b] = nil }
+            add(bMenu, "✕ \(appName(b)) → \(displayCode(l))") { self.s.bindings[b] = nil }
         }
         let bi = NSMenuItem(title: L("bindings"), action: nil, keyEquivalent: ""); bi.submenu = bMenu; m.addItem(bi)
         m.addItem(.separator())
