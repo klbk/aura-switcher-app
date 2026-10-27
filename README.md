@@ -79,9 +79,9 @@ Archive for other Macs: `~/Repo/aura/build.sh --release` → `dist/AURA-<version
 - Selected text comes from the Accessibility API, or via ⌘C with clipboard restore if the app doesn't expose it.
 - Settings are stored in `UserDefaults` (`com.chernov.aura`).
 
-## Windows (beta, not yet tested on Windows)
+## Windows (beta, tested on Windows x64)
 
-- Windows 10/11, x64 and ARM64. Archive: `~/Repo/aura/dist/AURA-0.4-windows.zip` (`x64` and `arm64` folders, one `AURA.exe` each, ~300 KB). No installer — copy `AURA.exe` anywhere and run it.
+- Windows 10/11, x64 and ARM64 (ARM64 not tested yet). Archives: `~/Repo/aura/dist/AURA-0.4-windows-x64.zip` (regular PCs, ~190 KB) and `AURA-0.4-windows.zip` (both builds, `x64` and `arm64` folders). No installer — copy `AURA.exe` anywhere and run it.
 - Build on a Mac: `~/Repo/aura/windows/build.sh` (needs Zig, located in `~/.local/zig`).
 - Same features and menu as on Mac. The tray icon shows the language code (blue background, yellow letters; grey — disabled). Click the icon for the menu.
 - Double ⇧ works the same as on Mac. To stop the "Sticky Keys" prompt after a few double ⇧, AURA turns off only its shortcut (5× Shift) while running. Not saved: quitting AURA or rebooting restores it.
