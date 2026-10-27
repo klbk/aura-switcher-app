@@ -6,7 +6,7 @@ lang: en
 
 # AURA
 
-> 🇺🇦 **Made in Ukraine.** Designed and developed in Ukraine.
+> 🇺🇦  Designed and developed in Ukraine.
 > Українська версія — [README.uk.md](README.uk.md)
 
 A macOS app that fixes text typed in the wrong keyboard layout ("ghbdtn" → "привіт"). It lives in the menu bar, runs in the background and starts automatically at login.
@@ -77,9 +77,21 @@ Archive for other Macs: `~/Repo/aura/build.sh --release` → `dist/AURA-<version
 - Selected text comes from the Accessibility API, or via ⌘C with clipboard restore if the app doesn't expose it.
 - Settings are stored in `UserDefaults` (`com.chernov.aura`).
 
+## Windows (beta, not yet tested on Windows)
+
+- Windows 10/11, x64 and ARM64. Archive: `~/Repo/aura/dist/AURA-0.4-windows.zip` (`x64` and `arm64` folders, one `AURA.exe` each, ~300 KB). No installer — copy `AURA.exe` anywhere and run it.
+- Build on a Mac: `~/Repo/aura/windows/build.sh` (needs Zig, located in `~/.local/zig`).
+- Same features and menu as on Mac. The tray icon shows the language code (blue background, yellow letters; grey — disabled). Click the icon for the menu.
+- No permissions needed. Autostart via registry (`HKCU\…\Run`), settings in `HKCU\Software\AURA`.
+- Word checking uses the built-in Windows spell checker; works for languages installed in Windows (Settings → Time & language → Language).
+- Selected text is read only via Ctrl+C (clipboard is restored).
+- Can't see keystrokes in apps running as administrator (a Windows restriction).
+- Windows SmartScreen warns about an unknown publisher: "More info" → "Run anyway". Only code signing removes it.
+- How it works: `windows/aura.cpp`, a single C++/Win32 file. The keyboard hook runs on its own thread and only records keystrokes; checking and replacement happen on the main thread, so typing never lags.
+
 ## Limitations
 
-- macOS 13+ only. Windows is possible (not done); on iPhone/iPad/Android only as a separate keyboard, with little practical value.
+- macOS 13+ and Windows 10/11. On iPhone/iPad/Android only as a separate keyboard, with little practical value.
 - Auto-correction only sees continuous typing: a mouse click, arrow keys or ⌘/⌥/⌃ shortcuts reset the current word.
 - Password fields and some apps (terminals, games) may behave differently — add them to exclusions.
 
