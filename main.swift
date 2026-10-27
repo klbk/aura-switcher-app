@@ -6,7 +6,7 @@ import ApplicationServices
 // MARK: - Layouts
 
 let kMagic: Int64 = 0x4B535754 // marks our own synthetic events
-func langName(_ code: String) -> String { Locale.current.localizedString(forLanguageCode: code)?.capitalized ?? code }
+func langName(_ code: String) -> String { Locale(identifier: uiCode()).localizedString(forLanguageCode: code)?.capitalized ?? code }
 
 struct Key: Hashable { let code: UInt16; let shift: Bool }
 
@@ -73,7 +73,36 @@ final class Settings {
     var auto: Bool { get { d.object(forKey: "auto") as? Bool ?? true } set { d.set(newValue, forKey: "auto") } }
     var excluded: [String] { get { d.stringArray(forKey: "excluded") ?? [] } set { d.set(newValue, forKey: "excluded") } }
     var bindings: [String: String] { get { d.dictionary(forKey: "bindings") as? [String: String] ?? [:] } set { d.set(newValue, forKey: "bindings") } }
+    var uiLang: String? { get { d.string(forKey: "uiLang") } set { d.set(newValue, forKey: "uiLang") } } // nil = system
 }
+
+// MARK: - Localization (English, Ukrainian; Russian system → Ukrainian)
+
+let uiStrings: [String: [String]] = [ // key: [en, uk]
+    "enabled": ["Enabled", "Увімкнено"],
+    "auto": ["Auto-correction", "Автовиправлення"],
+    "access": ["⚠︎ Grant access: Accessibility", "⚠︎ Надайте доступ: Універсальний доступ"],
+    "app": ["App: ", "Програма: "],
+    "exclude": ["Don't work in this app", "Не працювати в цій програмі"],
+    "noBinding": ["No binding", "Без прив'язки"],
+    "appLang": ["Language for this app", "Мова для цієї програми"],
+    "empty": ["Empty", "Порожньо"],
+    "exclusions": ["Exclusions", "Винятки"],
+    "bindings": ["Language bindings", "Прив'язки мов"],
+    "login": ["Launch at login", "Запускати під час входу"],
+    "hint": ["Double ⇧ — convert word/selection", "Подвійний ⇧ — змінити мову слова/виділення"],
+    "uiLang": ["Menu language", "Мова меню"],
+    "system": ["System", "Системна"],
+    "quit": ["Quit", "Вихід"],
+]
+
+func uiCode() -> String {
+    if let l = engine.settings.uiLang { return l }
+    let sys = Locale.preferredLanguages.first?.prefix(2) ?? "en"
+    return sys == "uk" || sys == "ru" ? "uk" : "en"
+}
+
+func L(_ key: String) -> String { uiStrings[key]?[uiCode() == "uk" ? 1 : 0] ?? key }
 
 // MARK: - Engine
 
@@ -374,48 +403,53 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     func menuNeedsUpdate(_ m: NSMenu) {
         m.removeAllItems()
-        add(m, "Включено", s.enabled) { self.s.enabled.toggle(); self.updateTitle() }
-        add(m, "Автоисправление", s.auto, enabled: s.enabled) { self.s.auto.toggle() }
-        if engine.tap == nil { add(m, "⚠︎ Дайте доступ: Универсальный доступ", enabled: true) {
+        add(m, L("enabled"), s.enabled) { self.s.enabled.toggle(); self.updateTitle() }
+        add(m, L("auto"), s.auto, enabled: s.enabled) { self.s.auto.toggle() }
+        if engine.tap == nil { add(m, L("access"), enabled: true) {
             NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility")!) } }
         m.addItem(.separator())
 
         let id = engine.frontBundle
-        add(m, "Приложение: \(appName(id))")
+        add(m, L("app") + appName(id))
         let ex = s.excluded.contains(id)
-        add(m, "Не работать в этом приложении", ex) {
+        add(m, L("exclude"), ex) {
             self.s.excluded = ex ? self.s.excluded.filter { $0 != id } : self.s.excluded + [id]
         }
         let langMenu = NSMenu()
-        add(langMenu, "Без привязки", s.bindings[id] == nil) { self.s.bindings[id] = nil }
+        add(langMenu, L("noBinding"), s.bindings[id] == nil) { self.s.bindings[id] = nil }
         for l in engine.layouts {
             add(langMenu, langName(l.lang), s.bindings[id] == l.lang) { self.s.bindings[id] = l.lang; engine.select(l) }
         }
-        let li = NSMenuItem(title: "Язык для этого приложения", action: nil, keyEquivalent: "")
+        let li = NSMenuItem(title: L("appLang"), action: nil, keyEquivalent: "")
         li.submenu = langMenu
         m.addItem(li)
         m.addItem(.separator())
 
         let exMenu = NSMenu()
-        if s.excluded.isEmpty { add(exMenu, "Пусто") }
+        if s.excluded.isEmpty { add(exMenu, L("empty")) }
         for e in s.excluded { add(exMenu, "✕ \(appName(e))") { self.s.excluded = self.s.excluded.filter { $0 != e } } }
-        let ei = NSMenuItem(title: "Исключения", action: nil, keyEquivalent: ""); ei.submenu = exMenu; m.addItem(ei)
+        let ei = NSMenuItem(title: L("exclusions"), action: nil, keyEquivalent: ""); ei.submenu = exMenu; m.addItem(ei)
 
         let bMenu = NSMenu()
-        if s.bindings.isEmpty { add(bMenu, "Пусто") }
+        if s.bindings.isEmpty { add(bMenu, L("empty")) }
         for (b, l) in s.bindings.sorted(by: { $0.key < $1.key }) {
             add(bMenu, "✕ \(appName(b)) → \(l.uppercased())") { self.s.bindings[b] = nil }
         }
-        let bi = NSMenuItem(title: "Привязки языков", action: nil, keyEquivalent: ""); bi.submenu = bMenu; m.addItem(bi)
+        let bi = NSMenuItem(title: L("bindings"), action: nil, keyEquivalent: ""); bi.submenu = bMenu; m.addItem(bi)
         m.addItem(.separator())
 
         let login = SMAppService.mainApp.status == .enabled
-        add(m, "Запускать при входе", login) {
+        add(m, L("login"), login) {
             if login { try? SMAppService.mainApp.unregister() } else { try? SMAppService.mainApp.register() }
         }
-        add(m, "Двойной ⇧ — сменить язык слова/выделения")
+        let uiMenu = NSMenu()
+        add(uiMenu, L("system"), s.uiLang == nil) { self.s.uiLang = nil }
+        add(uiMenu, "English", s.uiLang == "en") { self.s.uiLang = "en" }
+        add(uiMenu, "Українська", s.uiLang == "uk") { self.s.uiLang = "uk" }
+        let ui = NSMenuItem(title: L("uiLang"), action: nil, keyEquivalent: ""); ui.submenu = uiMenu; m.addItem(ui)
+        add(m, L("hint"))
         add(m, "AURA \(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "") beta")
-        add(m, "Выход") { NSApp.terminate(nil) }
+        add(m, L("quit")) { NSApp.terminate(nil) }
     }
 }
 

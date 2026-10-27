@@ -45,6 +45,7 @@ The icon shows the current language: `EN`, `UK`, `RU`… Lowercase (`en`) — AU
 - **Language for this app** — bind a layout.
 - **Exclusions / Language bindings** — lists; click an item to remove it.
 - **Launch at login**.
+- **Menu language** — System / English / Українська. "System": Ukrainian or Russian system → Ukrainian, any other → English.
 - **Quit**.
 
 ## Install and run
