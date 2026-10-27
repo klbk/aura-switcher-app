@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AURA — розкладка виправляється сама</title>
+<meta name="description" content="AURA сама виправляє текст, набраний не в тій розкладці. macOS і Windows. Українська розробка.">
+<link rel="icon" href="icon.svg">
+<style>
+  :root { --bg:#0f1430; --card:#1b2247; --line:#2a3366; --blue:#2f8bff; --yellow:#ffd500; --text:#fff; --muted:#a9b3d6; }
+  * { box-sizing:border-box; margin:0; }
+  body { background:var(--bg); color:var(--text); font:17px/1.55 -apple-system, "Segoe UI", Roboto, Arial, sans-serif; }
+  a { color:inherit; }
+  .wrap { max-width:1080px; margin:0 auto; padding:0 24px; }
+  header { display:flex; justify-content:space-between; align-items:center; padding:20px 0; }
+  .brand { display:flex; align-items:center; gap:10px; font-weight:800; font-size:20px; letter-spacing:.5px; }
+  .brand img { width:34px; height:34px; }
+  .lang button { background:none; border:1px solid var(--line); color:var(--muted); padding:6px 12px; border-radius:8px; cursor:pointer; font:inherit; font-size:14px; }
+  .lang button.on { color:var(--bg); background:var(--yellow); border-color:var(--yellow); font-weight:700; }
+
+  .hero > *, .grid3 > *, .plat > *, .steps > * { min-width:0; }
+  .hero { display:grid; grid-template-columns:1fr 1fr; gap:48px; align-items:center; padding:56px 0 72px; }
+  .hero h1 { font-size:56px; line-height:1.08; font-weight:800; }
+  .hero h1 em { color:var(--yellow); font-style:normal; }
+  .hero p { color:var(--muted); font-size:20px; margin:20px 0 32px; }
+  .btns { display:flex; gap:12px; flex-wrap:wrap; }
+  .btn { display:inline-flex; align-items:center; gap:8px; padding:14px 22px; border-radius:12px; font-weight:700; text-decoration:none; }
+  .btn.primary { background:var(--yellow); color:var(--bg); }
+  .btn.secondary { background:var(--card); border:1px solid var(--line); }
+  .btn small { font-weight:400; opacity:.75; }
+  .note { color:var(--muted); font-size:14px; margin-top:14px; }
+
+  .demo { background:var(--card); border-radius:24px; padding:32px; box-shadow:0 30px 80px rgba(0,0,0,.35); }
+  .demo .bar { display:flex; gap:7px; margin-bottom:24px; }
+  .demo .bar i { width:12px; height:12px; border-radius:50%; background:var(--line); }
+  .demo .text { font-size:34px; font-weight:700; min-height:52px; white-space:nowrap; }
+  .demo .text .wrong { color:var(--muted); }
+  .demo .text .right { color:var(--yellow); }
+  .demo .text .caret { display:inline-block; width:3px; height:36px; background:var(--blue); vertical-align:-6px; margin-left:2px; animation:blink 1s steps(1) infinite; }
+  .demo .status { margin-top:20px; display:flex; align-items:center; gap:10px; color:var(--muted); font-size:15px; }
+  .demo .chip { background:var(--blue); color:#fff; font-weight:800; border-radius:6px; padding:2px 8px; font-size:13px; min-width:36px; text-align:center; transition:background .2s; }
+  .demo .chip.fixed { background:var(--yellow); color:var(--bg); }
+  @keyframes blink { 50% { opacity:0; } }
+
+  section { padding:64px 0; }
+  h2 { font-size:36px; font-weight:800; margin-bottom:32px; }
+  .grid3 { display:grid; grid-template-columns:repeat(3,1fr); gap:20px; }
+  .card { background:var(--card); border-radius:20px; padding:28px; }
+  .card .ic { width:52px; height:52px; border-radius:50%; display:grid; place-items:center; font-size:24px; font-weight:800; color:var(--bg); background:var(--blue); margin-bottom:18px; }
+  .card:nth-child(2) .ic { background:var(--yellow); }
+  .card h3 { font-size:21px; margin-bottom:8px; }
+  .card p { color:var(--muted); }
+  kbd { background:var(--bg); border:1px solid var(--line); border-radius:6px; padding:1px 7px; font:inherit; font-size:14px; }
+
+  .plat { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+  .plat h3 { font-size:24px; margin-bottom:12px; }
+  .plat .card:first-child h3 { color:var(--yellow); }
+  .plat .card:last-child h3 { color:var(--blue); }
+  .plat ul { color:var(--muted); padding-left:20px; }
+  .plat li { margin:6px 0; }
+
+  .steps { counter-reset:s; display:grid; grid-template-columns:repeat(3,1fr); gap:20px; }
+  .steps .card { position:relative; padding-top:64px; }
+  .steps .card::before { counter-increment:s; content:counter(s); position:absolute; top:22px; left:28px; width:30px; height:30px; border-radius:50%; background:var(--line); display:grid; place-items:center; font-weight:800; font-size:15px; }
+
+  footer { border-top:1px solid var(--line); padding:40px 0 56px; text-align:center; color:var(--muted); }
+  .flag { display:inline-block; width:30px; height:20px; border-radius:3px; background:linear-gradient(#0057b7 50%, #ffd500 50%); vertical-align:-4px; margin-right:8px; }
+  footer strong { color:var(--text); font-size:20px; }
+
+  @media (max-width:820px) {
+    .hero { grid-template-columns:1fr; padding-top:24px; }
+    .hero h1 { font-size:40px; }
+    .grid3, .plat, .steps { grid-template-columns:1fr; }
+    .demo .text { font-size:28px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand"><img src="icon.svg" alt="">AURA</div>
+    <div class="lang"><button data-l="uk">УК</button> <button data-l="en">EN</button></div>
+  </header>
+
+  <div class="hero">
+    <div>
+      <h1 data-t="h1"></h1>
+      <p data-t="lead"></p>
+      <div class="btns">
+        <a class="btn primary" href="../dist/AURA-0.4-mac.zip" download><span data-t="dlMac"></span> <small>macOS 13+</small></a>
+        <a class="btn secondary" href="../dist/AURA-0.4-windows-x64.zip" download><span data-t="dlWin"></span> <small>10/11</small></a>
+      </div>
+      <div class="note" data-t="note"></div>
+    </div>
+    <div class="demo" aria-hidden="true">
+      <div class="bar"><i></i><i></i><i></i></div>
+      <div class="text" id="demoText"></div>
+      <div class="status"><span class="chip" id="demoChip">EN</span><span id="demoStatus"></span></div>
+    </div>
+  </div>
+</div>
+
+<section><div class="wrap">
+  <h2 data-t="fTitle"></h2>
+  <div class="grid3">
+    <div class="card"><div class="ic">→</div><h3 data-t="f1h"></h3><p data-t="f1p"></p></div>
+    <div class="card"><div class="ic">↔</div><h3 data-t="f2h"></h3><p data-t="f2p"></p></div>
+    <div class="card"><div class="ic">■</div><h3 data-t="f3h"></h3><p data-t="f3p"></p></div>
+  </div>
+</div></section>
+
+<section><div class="wrap">
+  <h2 data-t="pTitle"></h2>
+  <div class="plat">
+    <div class="card"><h3>macOS</h3><ul data-t="pMac"></ul></div>
+    <div class="card"><h3>Windows</h3><ul data-t="pWin"></ul></div>
+  </div>
+</div></section>
+
+<section><div class="wrap">
+  <h2 data-t="iTitle"></h2>
+  <div class="steps">
+    <div class="card"><h3 data-t="s1h"></h3><p data-t="s1p"></p></div>
+    <div class="card"><h3 data-t="s2h"></h3><p data-t="s2p"></p></div>
+    <div class="card"><h3 data-t="s3h"></h3><p data-t="s3p"></p></div>
+  </div>
+</div></section>
+
+<footer><div class="wrap">
+  <p><span class="flag"></span><strong data-t="made"></strong></p>
+  <p style="margin-top:10px" data-t="foot"></p>
+</div></footer>
+
+<script>
+const T = {
+  uk: {
+    title: "AURA — розкладка виправляється сама",
+    h1: "Пишіть.<br><em>Розкладку</em> AURA виправить сама",
+    lead: "Набрали «ghbdtn» замість «привіт»? AURA помітить і виправить одразу після пробілу. Для macOS і Windows.",
+    dlMac: "Завантажити для Mac", dlWin: "Для Windows",
+    note: "Бета 0.4 · безкоштовно · без реєстрації",
+    demoWrong: "Мова не та…", demoFixed: "Виправлено після пробілу",
+    fTitle: "Що вміє AURA",
+    f1h: "Автовиправлення", f1p: "Набрали слово не в тій розкладці — після пробілу воно стає правильним, а розкладка перемикається.",
+    f2h: "Подвійний Shift", f2p: "Двічі натисніть <kbd>Shift</kbd> — останнє слово або виділений текст перекладеться в іншу розкладку.",
+    f3h: "Мова для програми", f3p: "Terminal — завжди EN, Telegram — УК. А в програмах-винятках AURA просто мовчить.",
+    pTitle: "Mac і Windows — однакові звички",
+    pMac: "<li>Apple Silicon і Intel</li><li>Код мови в рядку меню: EN, УК, РУ…</li><li>Не гальмує й не підвішує введення</li>",
+    pWin: "<li>x64 і ARM64, без встановлення</li><li>Код мови в треї</li><li>Ті самі клавіші, що й на Mac</li>",
+    iTitle: "Запуск за хвилину",
+    s1h: "Завантажте", s1p: "Розпакуйте архів. На Mac перетягніть AURA у «Програми», на Windows просто запустіть AURA.exe.",
+    s2h: "Дозвольте", s2p: "На Mac: Системні параметри → Конфіденційність і безпека → Універсальний доступ → AURA. На Windows нічого не потрібно.",
+    s3h: "Пишіть", s3p: "Код мови з'явиться вгорі (Mac) або в треї (Windows). Далі AURA працює сама.",
+    made: "Зроблено в Україні",
+    foot: "AURA — щоб думати про текст, а не про розкладку. Нічого не надсилає в інтернет: усе працює на вашому пристрої."
+  },
+  en: {
+    title: "AURA — your keyboard layout fixes itself",
+    h1: "Just type.<br>AURA fixes the <em>layout</em>",
+    lead: "Typed “ghbdtn” instead of “привіт”? AURA notices and fixes it right after Space. For macOS and Windows.",
+    dlMac: "Download for Mac", dlWin: "For Windows",
+    note: "Beta 0.4 · free · no sign-up",
+    demoWrong: "Wrong layout…", demoFixed: "Fixed after Space",
+    fTitle: "What AURA does",
+    f1h: "Auto-correction", f1p: "Typed a word in the wrong layout — after Space it becomes right, and the layout switches.",
+    f2h: "Double Shift", f2p: "Press <kbd>Shift</kbd> twice — the last word or the selected text is converted to another layout.",
+    f3h: "Per-app language", f3p: "Terminal — always EN, Telegram — УК. In excluded apps AURA simply stays quiet.",
+    pTitle: "Mac and Windows — same habits",
+    pMac: "<li>Apple Silicon and Intel</li><li>Language code in the menu bar: EN, УК, РУ…</li><li>Never slows down or freezes your input</li>",
+    pWin: "<li>x64 and ARM64, no installer</li><li>Language code in the tray</li><li>Same keys as on Mac</li>",
+    iTitle: "Up and running in a minute",
+    s1h: "Download", s1p: "Unzip the archive. On Mac drag AURA into Applications, on Windows just run AURA.exe.",
+    s2h: "Allow", s2p: "On Mac: System Settings → Privacy & Security → Accessibility → AURA. Nothing needed on Windows.",
+    s3h: "Type", s3p: "The language code appears in the menu bar (Mac) or the tray (Windows). AURA does the rest.",
+    made: "Made in Ukraine",
+    foot: "AURA — think about your text, not your keyboard layout. Sends nothing online: everything runs on your device."
+  }
+};
+
+let lang = localStorage.getItem("lang") || (/^(uk|ru)/.test(navigator.language) ? "uk" : "en");
+function setLang(l) {
+  lang = l; localStorage.setItem("lang", l);
+  document.documentElement.lang = l; document.title = T[l].title;
+  document.querySelectorAll("[data-t]").forEach(e => e.innerHTML = T[l][e.dataset.t]);
+  document.querySelectorAll(".lang button").forEach(b => b.classList.toggle("on", b.dataset.l === l));
+}
+document.querySelectorAll(".lang button").forEach(b => b.onclick = () => setLang(b.dataset.l));
+setLang(lang);
+
+// demo: type the word in the wrong layout, then AURA fixes it after Space
+const words = [["ghbdtn", "привіт", "УК"], ["ntrcn", "текст", "УК"], ["руддщ", "hello", "EN"]];
+const text = document.getElementById("demoText"), chip = document.getElementById("demoChip"), status = document.getElementById("demoStatus");
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+(async function loop() {
+  for (let i = 0; ; i = (i + 1) % words.length) {
+    const [wrong, right, code] = words[i];
+    chip.textContent = code === "EN" ? "УК" : "EN"; chip.classList.remove("fixed"); status.textContent = "";
+    for (let n = 0; n <= wrong.length; n++) { text.innerHTML = `<span class="wrong">${wrong.slice(0, n)}</span><span class="caret"></span>`; await sleep(140); }
+    status.textContent = T[lang].demoWrong; await sleep(700);
+    text.innerHTML = `<span class="right">${right}</span>&nbsp;<span class="caret"></span>`;
+    chip.textContent = code; chip.classList.add("fixed"); status.textContent = T[lang].demoFixed;
+    await sleep(2200);
+  }
+})();
+</script>
+</body>
+</html>

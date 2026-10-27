@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#141a33"/><stop offset="1" stop-color="#080a14"/>
+    </linearGradient>
+    <marker id="hy" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="3" markerHeight="3" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#ffd500"/></marker>
+    <marker id="hb" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="3" markerHeight="3" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#2f8bff"/></marker>
+    <filter id="glow" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="20"/></filter>
+  </defs>
+  <rect x="100" y="100" width="824" height="824" rx="185" fill="url(#bg)"/>
+  <g filter="url(#glow)" opacity=".7">
+    <text x="372" y="600" font-family="SF Pro Display, Helvetica Neue, Arial" font-weight="800" font-size="250" fill="#2f8bff" text-anchor="middle">Я</text>
+    <text x="652" y="600" font-family="SF Pro Display, Helvetica Neue, Arial" font-weight="800" font-size="250" fill="#ffd500" text-anchor="middle">R</text>
+  </g>
+  <line x1="512" y1="320" x2="512" y2="704" stroke="#fff" stroke-opacity=".8" stroke-width="6" stroke-linecap="round"/>
+  <text x="372" y="600" font-family="SF Pro Display, Helvetica Neue, Arial" font-weight="800" font-size="250" fill="#2f8bff" text-anchor="middle">Я</text>
+  <text x="652" y="600" font-family="SF Pro Display, Helvetica Neue, Arial" font-weight="800" font-size="250" fill="#ffd500" text-anchor="middle">R</text>
+  <path d="M320,300 Q512,175 704,300" fill="none" stroke="#ffd500" stroke-width="30" stroke-linecap="round" marker-end="url(#hy)"/>
+  <path d="M704,724 Q512,849 320,724" fill="none" stroke="#2f8bff" stroke-width="30" stroke-linecap="round" marker-end="url(#hb)"/>
+</svg>
