@@ -527,6 +527,24 @@ static void CALLBACK onForeground(HWINEVENTHOOK, DWORD, HWND, LONG, LONG, DWORD,
         for (auto& l : layouts) if (l.locale == b->second) { selectLayout(l); break; }
 }
 
+// MARK: - Sticky Keys prompt
+// Windows pops up "Sticky Keys" after 5 Shift presses — three double-⇧ in a row.
+// Turn off only that shortcut, only for this session (not saved), and restore it on quit.
+
+static STICKYKEYS savedSticky = {sizeof(STICKYKEYS)};
+static bool stickyChanged = false;
+
+static void disableStickyPrompt() {
+    if (!SystemParametersInfoW(SPI_GETSTICKYKEYS, sizeof(savedSticky), &savedSticky, 0)) return;
+    if (!(savedSticky.dwFlags & SKF_HOTKEYACTIVE)) return;
+    STICKYKEYS sk = savedSticky;
+    sk.dwFlags &= ~(SKF_HOTKEYACTIVE | SKF_CONFIRMHOTKEY);
+    stickyChanged = SystemParametersInfoW(SPI_SETSTICKYKEYS, sizeof(sk), &sk, 0) != 0;  // no SPIF_UPDATEINIFILE: not persisted
+}
+static void restoreStickyPrompt() {
+    if (stickyChanged) SystemParametersInfoW(SPI_SETSTICKYKEYS, sizeof(savedSticky), &savedSticky, 0);
+}
+
 // MARK: - Window
 
 static UINT WM_TASKBARCREATED;
@@ -560,6 +578,7 @@ int WINAPI wWinMain(HINSTANCE inst, HINSTANCE, PWSTR, int) {
     hwndMain = CreateWindowW(L"AURA", L"AURA", 0, 0, 0, 0, 0, nullptr, nullptr, inst, nullptr);
 
     layouts = loadLayouts();
+    disableStickyPrompt();
     if (regGet(L"loginSet", L"") != L"1") { setLogin(true); regSet(L"loginSet", L"1"); }
 
     nid.cbSize = sizeof(nid); nid.hWnd = hwndMain; nid.uID = 1;
@@ -576,6 +595,7 @@ int WINAPI wWinMain(HINSTANCE inst, HINSTANCE, PWSTR, int) {
     MSG m;
     while (GetMessageW(&m, nullptr, 0, 0) > 0) { TranslateMessage(&m); DispatchMessageW(&m); }
     Shell_NotifyIconW(NIM_DELETE, &nid);
+    restoreStickyPrompt();
     for (auto& kv : checkers) if (kv.second) kv.second->Release();
     if (factory) factory->Release();
     CoUninitialize();

@@ -84,6 +84,7 @@ Archive for other Macs: `~/Repo/aura/build.sh --release` → `dist/AURA-<version
 - Windows 10/11, x64 and ARM64. Archive: `~/Repo/aura/dist/AURA-0.4-windows.zip` (`x64` and `arm64` folders, one `AURA.exe` each, ~300 KB). No installer — copy `AURA.exe` anywhere and run it.
 - Build on a Mac: `~/Repo/aura/windows/build.sh` (needs Zig, located in `~/.local/zig`).
 - Same features and menu as on Mac. The tray icon shows the language code (blue background, yellow letters; grey — disabled). Click the icon for the menu.
+- Double ⇧ works the same as on Mac. To stop the "Sticky Keys" prompt after a few double ⇧, AURA turns off only its shortcut (5× Shift) while running. Not saved: quitting AURA or rebooting restores it.
 - No permissions needed. Autostart via registry (`HKCU\…\Run`), settings in `HKCU\Software\AURA`.
 - Word checking uses the built-in Windows spell checker; works for languages installed in Windows (Settings → Time & language → Language).
 - Selected text is read only via Ctrl+C (clipboard is restored).
