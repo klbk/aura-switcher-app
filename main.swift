@@ -211,7 +211,9 @@ final class Engine {
     func autoCorrect(_ keys: [Key]) {
         // user kept typing meanwhile — skip
         guard lastWord == keys, word.isEmpty, trailing == 1, let fix = autoFix(keys) else { return }
-        replace(count: keys.count + 1, with: fix.layout.text(keys) + " ")
+        let out = fix.layout.text(keys)
+        // UK/RU word spelled the same in both layouts: text is already right, only switch the layout
+        if out != layout(currentLang())?.text(keys) { replace(count: keys.count + 1, with: out + " ") }
         select(fix.layout)
     }
 
@@ -226,6 +228,8 @@ final class Engine {
                                      inSpellDocumentWithTag: 0, wordCount: nil).location == NSNotFound
     }
 
+    func isLatin(_ s: String) -> Bool { s.unicodeScalars.allSatisfy { $0.value < 0x250 } }
+
     func autoFix(_ keys: [Key]) -> (layout: Layout, Void)? {
         guard keys.count >= 2, let cur = layout(currentLang()) else { return nil }
         let typed = cur.text(keys)
@@ -234,9 +238,11 @@ final class Engine {
         for i in 1..<max(layouts.count, 1) {
             let l = layouts[(start + i) % layouts.count]
             let t = l.text(keys)
-            // skip near-identical layouts (QWERTY/QWERTZ/AZERTY, RU/UK): typos there aren't layout mistakes
+            // near-identical Latin layouts (QWERTY/QWERTZ/AZERTY): a typo there isn't a layout mistake.
+            // Cyrillic UK/RU differ in few keys but that's exactly what users mix up, so they're allowed.
             let same = zip(t, typed).filter { $0 == $1 }.count
-            if t.count == keys.count, same * 2 <= keys.count, isWord(t, l.lang) { return (l, ()) }
+            if isLatin(t), isLatin(typed), same * 2 > keys.count { continue }
+            if t.count == keys.count, isWord(t, l.lang) { return (l, ()) }
         }
         return nil
     }

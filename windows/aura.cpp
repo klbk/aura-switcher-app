@@ -268,6 +268,8 @@ static bool isWord(const wstring& w, const wstring& locale) {
     return clean;
 }
 
+static bool isLatin(const wstring& s) { for (wchar_t c : s) if (c >= 0x250) return false; return true; }
+
 static int autoFixTarget(const vector<Key>& keys) {
     if (keys.size() < 2 || layouts.empty()) return -1;
     int cur = layoutIndex(fgLayout());
@@ -276,9 +278,11 @@ static int autoFixTarget(const vector<Key>& keys) {
     for (size_t i = 1; i < layouts.size(); i++) {
         int j = int((cur + i) % layouts.size());
         wstring t = layouts[j].text(keys);
-        // skip near-identical layouts (QWERTY/QWERTZ/AZERTY, RU/UK): typos there aren't layout mistakes
+        // near-identical Latin layouts (QWERTY/QWERTZ/AZERTY): a typo there isn't a layout mistake.
+        // Cyrillic UK/RU differ in few keys but that's exactly what users mix up, so they're allowed.
         size_t same = 0; for (size_t p = 0; p < t.size() && p < typed.size(); p++) same += t[p] == typed[p];
-        if (t.size() == keys.size() && same * 2 <= keys.size() && isWord(t, layouts[j].locale)) return j;
+        if (isLatin(t) && isLatin(typed) && same * 2 > keys.size()) continue;
+        if (t.size() == keys.size() && isWord(t, layouts[j].locale)) return j;
     }
     return -1;
 }
@@ -360,7 +364,9 @@ static void onAuto(Snapshot* s) {
     if (!S.autoFix || S.bindings.count(fgExe())) return;
     int j = autoFixTarget(s->keys);
     if (j < 0 || seq.load() != s->seq) return;  // user kept typing meanwhile — skip
-    replaceText(int(s->keys.size()) + 1, layouts[j].text(s->keys) + L" ");
+    wstring out = layouts[j].text(s->keys);
+    // UK/RU word spelled the same in both layouts: text is already right, only switch the layout
+    if (out != layouts[layoutIndex(fgLayout())].text(s->keys)) replaceText(int(s->keys.size()) + 1, out + L" ");
     selectLayout(layouts[j]);
 }
 
