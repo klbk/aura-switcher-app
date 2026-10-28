@@ -147,6 +147,8 @@ const T = {
   }
 };
 
+if (typeof MORE !== "undefined") Object.assign(T, MORE);  // i18n-more.js: the rest of AURA's languages
+
 function detectLang() {
   const saved = localStorage.getItem("lang");
   if (saved && T[saved]) return saved;
@@ -161,7 +163,7 @@ function detectLang() {
 let lang = detectLang();
 function setLang(l) {
   lang = l; localStorage.setItem("lang", l);
-  document.documentElement.lang = l; document.title = T[l].title;
+  document.documentElement.lang = l; document.documentElement.dir = T[l].dir || "ltr"; document.title = T[l].title;
   document.querySelectorAll("[data-t]").forEach(e => e.innerHTML = T[l][e.dataset.t]);
   const sel = document.getElementById("langSel"); if (sel) sel.value = l;
 }
@@ -182,6 +184,7 @@ const words = {
   es: [["рщдф", "hola", "УК", "ES"], ["ghbdtn", "привіт", "ES", "УК"], ["пкфсшфі", "gracias", "УК", "ES"]],
   fr: [["ищтощгк", "bonjour", "УК", "FR"], ["ghbdtn", "привіт", "FR", "УК"], ["ійдге", "salut", "УК", "FR"]], // AZERTY keys
 };
+if (typeof MORE_WORDS !== "undefined") Object.assign(words, MORE_WORDS);
 const $ = id => document.getElementById(id);
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 (async function loop() {

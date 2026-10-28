@@ -52,7 +52,7 @@ h1 .hl { background:linear-gradient(90deg,var(--blue),var(--yellow)); -webkit-ba
 .dots { display:flex; gap:7px; } .dots i { width:12px; height:12px; border-radius:50%; background:#2a2d3d; }
 .chip { font-weight:800; font-size:12px; border-radius:6px; padding:2px 8px; background:#2a2d3d; color:#fff; transition:.25s; }
 .chip.fixed { background:var(--yellow); color:#111; box-shadow:0 0 20px rgba(255,213,0,.5); }
-.screen { padding:48px 40px 40px; text-align:left; }
+.screen { padding:48px 40px 40px; text-align:start; }
 #demoText { font-size:clamp(34px,5vw,54px); font-weight:700; letter-spacing:-.02em; min-height:72px; white-space:nowrap; }
 #demoText .wrong { color:#6b7192; } #demoText .right { color:#fff; }
 .caret { display:inline-block; width:3px; height:.9em; background:var(--blue); vertical-align:-.1em; margin-left:3px; animation:blink 1s steps(1) infinite; }
@@ -166,6 +166,7 @@ footer strong { color:var(--text); }
   <div><span class="flag"></span><strong data-t="made"></strong></div>
   <div data-t="foot"></div>
 </div></footer>
+<script src="i18n-more.js"></script>
 <script src="shared.js"></script>
 </body>
 </html>
