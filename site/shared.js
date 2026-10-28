@@ -1,0 +1,196 @@
+// Texts, language switch and the typing demo for the AURA site.
+// Site languages: uk, en, pl, de, es, fr. Russian browsers get Ukrainian (as in the app).
+const T = {
+  uk: {
+    name: "Українська", title: "AURA — розкладка виправляється сама",
+    badge: "Бета 0.4 · безкоштовно · без реєстрації",
+    h1: "Пишіть.<br>Розкладку <span class=\"hl\">AURA</span> виправить сама",
+    lead: "Набрали «ghbdtn» замість «привіт»? AURA помітить і виправить одразу після пробілу. Для macOS і Windows.",
+    dlMac: "Завантажити для Mac", dlWin: "Для Windows",
+    demoWrong: "Не та розкладка…", demoFixed: "Виправлено після пробілу",
+    fTitle: "Все, що потрібно. Нічого зайвого",
+    f1h: "Автовиправлення", f1p: "Набрали слово не в тій розкладці — після пробілу воно стає правильним, а розкладка перемикається.",
+    f2h: "Подвійний Shift", f2p: "Двічі натисніть <kbd>Shift</kbd> — останнє слово або виділений текст перекладеться в іншу розкладку.",
+    f3h: "Мова для програми", f3p: "Terminal — завжди EN, Telegram — УК. А в програмах-винятках AURA просто мовчить.",
+    f4h: "Приватно", f4p: "Нічого не надсилає в інтернет. Усе працює на вашому пристрої.",
+    f5h: "22 мови", f5p: "Українська, англійська, німецька, польська, грецька… Усі розкладки вашої системи.",
+    f6h: "Легка", f6p: "Менше 1 МБ, не гальмує набір і не підвішує систему.",
+    pTitle: "Mac і Windows — однакові звички",
+    pMac: "<li>Apple Silicon і Intel</li><li>Код мови в рядку меню: EN, УК, РУ…</li><li>macOS 13 і новіші</li>",
+    pWin: "<li>x64 і ARM64, без встановлення</li><li>Код мови в треї</li><li>Ті самі клавіші, що й на Mac</li>",
+    iTitle: "Запуск за хвилину",
+    s1h: "Завантажте", s1p: "Розпакуйте архів. На Mac перетягніть AURA у «Програми», на Windows просто запустіть AURA.exe.",
+    s2h: "Дозвольте", s2p: "На Mac: Системні параметри → Конфіденційність і безпека → Універсальний доступ → AURA.",
+    s3h: "Пишіть", s3p: "Код мови з'явиться вгорі (Mac) або в треї (Windows). Далі AURA працює сама.",
+    ctaH: "Спробуйте AURA сьогодні", ctaP: "Безкоштовна бета для macOS і Windows.",
+    made: "Зроблено в Україні", foot: "AURA — щоб думати про текст, а не про розкладку."
+  },
+  en: {
+    name: "English", title: "AURA — your keyboard layout fixes itself",
+    badge: "Beta 0.4 · free · no sign-up",
+    h1: "Just type.<br><span class=\"hl\">AURA</span> fixes the layout",
+    lead: "Typed “ghbdtn” instead of “привіт”? AURA notices and fixes it right after Space. For macOS and Windows.",
+    dlMac: "Download for Mac", dlWin: "For Windows",
+    demoWrong: "Wrong layout…", demoFixed: "Fixed after Space",
+    fTitle: "Everything you need. Nothing you don't",
+    f1h: "Auto-correction", f1p: "Typed a word in the wrong layout — after Space it becomes right, and the layout switches.",
+    f2h: "Double Shift", f2p: "Press <kbd>Shift</kbd> twice — the last word or the selected text is converted to another layout.",
+    f3h: "Per-app language", f3p: "Terminal — always EN, Telegram — УК. In excluded apps AURA simply stays quiet.",
+    f4h: "Private", f4p: "Sends nothing online. Everything runs on your device.",
+    f5h: "22 languages", f5p: "Ukrainian, English, German, Polish, Greek… Every layout on your system.",
+    f6h: "Lightweight", f6p: "Under 1 MB, never slows down your typing or freezes the system.",
+    pTitle: "Mac and Windows — same habits",
+    pMac: "<li>Apple Silicon and Intel</li><li>Language code in the menu bar: EN, УК, DE…</li><li>macOS 13 and later</li>",
+    pWin: "<li>x64 and ARM64, no installer</li><li>Language code in the tray</li><li>Same keys as on Mac</li>",
+    iTitle: "Up and running in a minute",
+    s1h: "Download", s1p: "Unzip the archive. On Mac drag AURA into Applications, on Windows just run AURA.exe.",
+    s2h: "Allow", s2p: "On Mac: System Settings → Privacy & Security → Accessibility → AURA.",
+    s3h: "Type", s3p: "The language code appears in the menu bar (Mac) or the tray (Windows). AURA does the rest.",
+    ctaH: "Try AURA today", ctaP: "Free beta for macOS and Windows.",
+    made: "Made in Ukraine", foot: "AURA — think about your text, not your keyboard layout."
+  },
+  pl: {
+    name: "Polski", title: "AURA — układ klawiatury poprawia się sam",
+    badge: "Beta 0.4 · za darmo · bez rejestracji",
+    h1: "Po prostu pisz.<br><span class=\"hl\">AURA</span> poprawi układ",
+    lead: "Wpisałeś „ghbdtn” zamiast „привіт”? AURA to zauważy i poprawi zaraz po spacji. Dla macOS i Windows.",
+    dlMac: "Pobierz na Maca", dlWin: "Na Windows",
+    demoWrong: "Zły układ…", demoFixed: "Poprawione po spacji",
+    fTitle: "Wszystko, czego potrzebujesz. Nic zbędnego",
+    f1h: "Autokorekta", f1p: "Słowo wpisane w złym układzie po spacji staje się poprawne, a układ się przełącza.",
+    f2h: "Podwójny Shift", f2p: "Naciśnij dwa razy <kbd>Shift</kbd> — ostatnie słowo lub zaznaczony tekst przejdzie na inny układ.",
+    f3h: "Język dla aplikacji", f3p: "Terminal — zawsze EN, Telegram — УК. W wykluczonych aplikacjach AURA po prostu milczy.",
+    f4h: "Prywatnie", f4p: "Niczego nie wysyła do internetu. Wszystko działa na Twoim urządzeniu.",
+    f5h: "22 języki", f5p: "Ukraiński, angielski, niemiecki, polski, grecki… Każdy układ w Twoim systemie.",
+    f6h: "Lekka", f6p: "Poniżej 1 MB, nie spowalnia pisania i nie zawiesza systemu.",
+    pTitle: "Mac i Windows — te same nawyki",
+    pMac: "<li>Apple Silicon i Intel</li><li>Kod języka na pasku menu: EN, УК, PL…</li><li>macOS 13 i nowsze</li>",
+    pWin: "<li>x64 i ARM64, bez instalacji</li><li>Kod języka w zasobniku</li><li>Te same klawisze co na Macu</li>",
+    iTitle: "Gotowe w minutę",
+    s1h: "Pobierz", s1p: "Rozpakuj archiwum. Na Macu przeciągnij AURA do Aplikacji, na Windows po prostu uruchom AURA.exe.",
+    s2h: "Zezwól", s2p: "Na Macu: Ustawienia systemowe → Prywatność i ochrona → Dostępność → AURA.",
+    s3h: "Pisz", s3p: "Kod języka pojawi się na pasku menu (Mac) lub w zasobniku (Windows). Resztą zajmie się AURA.",
+    ctaH: "Wypróbuj AURA już dziś", ctaP: "Darmowa beta dla macOS i Windows.",
+    made: "Stworzono w Ukrainie", foot: "AURA — myśl o tekście, nie o układzie klawiatury."
+  },
+  de: {
+    name: "Deutsch", title: "AURA — das Tastaturlayout korrigiert sich selbst",
+    badge: "Beta 0.4 · kostenlos · ohne Anmeldung",
+    h1: "Einfach tippen.<br><span class=\"hl\">AURA</span> korrigiert das Layout",
+    lead: "„ghbdtn“ statt „привіт“ getippt? AURA bemerkt es und korrigiert es direkt nach der Leertaste. Für macOS und Windows.",
+    dlMac: "Für Mac laden", dlWin: "Für Windows",
+    demoWrong: "Falsches Layout…", demoFixed: "Nach der Leertaste korrigiert",
+    fTitle: "Alles, was du brauchst. Nichts Überflüssiges",
+    f1h: "Autokorrektur", f1p: "Ein Wort im falschen Layout getippt — nach der Leertaste ist es richtig, und das Layout wechselt.",
+    f2h: "Doppel-Shift", f2p: "Drücke zweimal <kbd>Shift</kbd> — das letzte Wort oder der markierte Text wechselt in ein anderes Layout.",
+    f3h: "Sprache pro App", f3p: "Terminal — immer EN, Telegram — УК. In ausgeschlossenen Apps bleibt AURA einfach still.",
+    f4h: "Privat", f4p: "Sendet nichts ins Internet. Alles läuft auf deinem Gerät.",
+    f5h: "22 Sprachen", f5p: "Ukrainisch, Englisch, Deutsch, Polnisch, Griechisch… Jedes Layout deines Systems.",
+    f6h: "Leicht", f6p: "Unter 1 MB, bremst dein Tippen nicht und friert das System nie ein.",
+    pTitle: "Mac und Windows — gleiche Gewohnheiten",
+    pMac: "<li>Apple Silicon und Intel</li><li>Sprachcode in der Menüleiste: EN, УК, DE…</li><li>macOS 13 und neuer</li>",
+    pWin: "<li>x64 und ARM64, ohne Installation</li><li>Sprachcode im Infobereich</li><li>Dieselben Tasten wie auf dem Mac</li>",
+    iTitle: "In einer Minute startklar",
+    s1h: "Laden", s1p: "Archiv entpacken. Auf dem Mac AURA in „Programme“ ziehen, unter Windows einfach AURA.exe starten.",
+    s2h: "Erlauben", s2p: "Auf dem Mac: Systemeinstellungen → Datenschutz & Sicherheit → Bedienungshilfen → AURA.",
+    s3h: "Tippen", s3p: "Der Sprachcode erscheint in der Menüleiste (Mac) oder im Infobereich (Windows). Den Rest macht AURA.",
+    ctaH: "Probiere AURA noch heute", ctaP: "Kostenlose Beta für macOS und Windows.",
+    made: "Hergestellt in der Ukraine", foot: "AURA — denk an deinen Text, nicht an dein Tastaturlayout."
+  },
+  es: {
+    name: "Español", title: "AURA — la distribución del teclado se corrige sola",
+    badge: "Beta 0.4 · gratis · sin registro",
+    h1: "Solo escribe.<br><span class=\"hl\">AURA</span> corrige la distribución",
+    lead: "¿Escribiste «ghbdtn» en lugar de «привіт»? AURA lo detecta y lo corrige justo después del espacio. Para macOS y Windows.",
+    dlMac: "Descargar para Mac", dlWin: "Para Windows",
+    demoWrong: "Distribución equivocada…", demoFixed: "Corregido tras el espacio",
+    fTitle: "Todo lo que necesitas. Nada más",
+    f1h: "Autocorrección", f1p: "¿Escribiste una palabra con la distribución equivocada? Tras el espacio queda bien y la distribución cambia.",
+    f2h: "Doble Shift", f2p: "Pulsa <kbd>Shift</kbd> dos veces: la última palabra o el texto seleccionado pasa a otra distribución.",
+    f3h: "Idioma por app", f3p: "Terminal — siempre EN, Telegram — УК. En las apps excluidas AURA no hace nada.",
+    f4h: "Privada", f4p: "No envía nada a internet. Todo funciona en tu dispositivo.",
+    f5h: "22 idiomas", f5p: "Ucraniano, inglés, alemán, polaco, griego… Todas las distribuciones de tu sistema.",
+    f6h: "Ligera", f6p: "Menos de 1 MB, nunca ralentiza la escritura ni bloquea el sistema.",
+    pTitle: "Mac y Windows — los mismos hábitos",
+    pMac: "<li>Apple Silicon e Intel</li><li>Código de idioma en la barra de menús: EN, УК, ES…</li><li>macOS 13 o posterior</li>",
+    pWin: "<li>x64 y ARM64, sin instalación</li><li>Código de idioma en la bandeja</li><li>Las mismas teclas que en Mac</li>",
+    iTitle: "Listo en un minuto",
+    s1h: "Descarga", s1p: "Descomprime el archivo. En Mac arrastra AURA a Aplicaciones; en Windows ejecuta AURA.exe.",
+    s2h: "Permite", s2p: "En Mac: Ajustes del Sistema → Privacidad y seguridad → Accesibilidad → AURA.",
+    s3h: "Escribe", s3p: "El código de idioma aparece en la barra de menús (Mac) o en la bandeja (Windows). AURA hace el resto.",
+    ctaH: "Prueba AURA hoy", ctaP: "Beta gratuita para macOS y Windows.",
+    made: "Hecho en Ucrania", foot: "AURA — piensa en tu texto, no en la distribución del teclado."
+  },
+  fr: {
+    name: "Français", title: "AURA — la disposition du clavier se corrige toute seule",
+    badge: "Bêta 0.4 · gratuit · sans inscription",
+    h1: "Tapez, tout simplement.<br><span class=\"hl\">AURA</span> corrige la disposition",
+    lead: "Vous avez tapé « ghbdtn » au lieu de « привіт » ? AURA le remarque et corrige juste après l’espace. Pour macOS et Windows.",
+    dlMac: "Télécharger pour Mac", dlWin: "Pour Windows",
+    demoWrong: "Mauvaise disposition…", demoFixed: "Corrigé après l’espace",
+    fTitle: "Tout ce qu’il faut. Rien de superflu",
+    f1h: "Correction auto", f1p: "Un mot tapé dans la mauvaise disposition devient correct après l’espace, et la disposition change.",
+    f2h: "Double Maj", f2p: "Appuyez deux fois sur <kbd>Shift</kbd> : le dernier mot ou le texte sélectionné passe dans une autre disposition.",
+    f3h: "Langue par app", f3p: "Terminal — toujours EN, Telegram — УК. Dans les apps exclues, AURA ne fait rien.",
+    f4h: "Privée", f4p: "N’envoie rien sur Internet. Tout fonctionne sur votre appareil.",
+    f5h: "22 langues", f5p: "Ukrainien, anglais, allemand, polonais, grec… Toutes les dispositions de votre système.",
+    f6h: "Légère", f6p: "Moins de 1 Mo, ne ralentit jamais la frappe ni le système.",
+    pTitle: "Mac et Windows — les mêmes habitudes",
+    pMac: "<li>Apple Silicon et Intel</li><li>Code de langue dans la barre des menus : EN, УК, FR…</li><li>macOS 13 et plus récent</li>",
+    pWin: "<li>x64 et ARM64, sans installation</li><li>Code de langue dans la zone de notification</li><li>Les mêmes touches que sur Mac</li>",
+    iTitle: "Prêt en une minute",
+    s1h: "Téléchargez", s1p: "Décompressez l’archive. Sur Mac, glissez AURA dans Applications ; sur Windows, lancez AURA.exe.",
+    s2h: "Autorisez", s2p: "Sur Mac : Réglages Système → Confidentialité et sécurité → Accessibilité → AURA.",
+    s3h: "Tapez", s3p: "Le code de langue apparaît dans la barre des menus (Mac) ou la zone de notification (Windows). AURA s’occupe du reste.",
+    ctaH: "Essayez AURA dès aujourd’hui", ctaP: "Bêta gratuite pour macOS et Windows.",
+    made: "Fabriqué en Ukraine", foot: "AURA — pensez à votre texte, pas à la disposition du clavier."
+  }
+};
+
+function detectLang() {
+  const saved = localStorage.getItem("lang");
+  if (saved && T[saved]) return saved;
+  for (const l of navigator.languages || [navigator.language]) {
+    const c = l.slice(0, 2).toLowerCase();
+    if (c === "ru") return "uk";
+    if (T[c]) return c;
+  }
+  return "en";
+}
+
+let lang = detectLang();
+function setLang(l) {
+  lang = l; localStorage.setItem("lang", l);
+  document.documentElement.lang = l; document.title = T[l].title;
+  document.querySelectorAll("[data-t]").forEach(e => e.innerHTML = T[l][e.dataset.t]);
+  const sel = document.getElementById("langSel"); if (sel) sel.value = l;
+}
+const sel = document.getElementById("langSel");
+if (sel) {
+  sel.innerHTML = Object.keys(T).map(k => `<option value="${k}">${T[k].name}</option>`).join("");
+  sel.onchange = () => setLang(sel.value);
+}
+setLang(lang);
+
+// demo: a word typed in the wrong layout, fixed after Space — in different alphabets
+const words = [
+  ["ghbdtn", "привіт", "EN", "УК"],     // Ukrainian typed on English layout
+  ["kalhmera", "καλημερα", "EN", "ΕΛ"], // Greek
+  ["руддщ", "hello", "УК", "EN"],       // English typed on Ukrainian layout
+  ["akuo", "שלום", "EN", "עב"],         // Hebrew
+];
+const $ = id => document.getElementById(id);
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+(async function loop() {
+  const text = $("demoText"), chip = $("demoChip"), status = $("demoStatus");
+  if (!text) return;
+  for (let i = 0; ; i = (i + 1) % words.length) {
+    const [wrong, right, from, to] = words[i];
+    chip.textContent = from; chip.classList.remove("fixed"); status.textContent = "";
+    for (let n = 0; n <= wrong.length; n++) { text.innerHTML = `<span class="wrong">${wrong.slice(0, n)}</span><span class="caret"></span>`; await sleep(120); }
+    status.textContent = T[lang].demoWrong; await sleep(700);
+    text.innerHTML = `<span class="right" dir="auto">${right}</span>&nbsp;<span class="caret"></span>`;
+    chip.textContent = to; chip.classList.add("fixed"); status.textContent = T[lang].demoFixed;
+    await sleep(2400);
+  }
+})();
