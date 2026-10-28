@@ -42,6 +42,8 @@ nav .wrap { display:flex; align-items:center; justify-content:space-between; hei
 .btn.sm { padding:8px 14px; font-size:14px; border-radius:10px; }
 .btn.light { background:var(--text); color:var(--bg); box-shadow:0 8px 30px rgba(255,255,255,.15); }
 .btn.ghost { border:1px solid var(--line); background:var(--card); }
+.btn.coffee { border:1px solid rgba(255,213,0,.45); background:rgba(255,213,0,.08); color:var(--yellow); }
+.btn.coffee:hover { background:rgba(255,213,0,.16); box-shadow:0 8px 30px rgba(255,213,0,.15); }
 
 header.hero { position:relative; text-align:center; padding:96px 0 40px; }
 header.hero > .wrap { position:relative; z-index:1; }
@@ -116,6 +118,7 @@ footer strong { color:var(--text); }
   <div class="brand"><img src="icon.svg" alt="">AURA Switcher</div>
   <div class="navr">
     <div class="langsel" id="langSel"><button class="langbtn" aria-haspopup="listbox"><span aria-hidden="true">🌐</span><span id="langName"></span></button><div class="langlist" role="listbox"></div></div>
+    <a class="btn coffee sm" href="https://donatello.to/aura-switcher" target="_blank" rel="noopener" title="Donatello">☕</a>
     <a class="btn light sm" href="https://github.com/klbk/aura-switcher/releases/latest/download/AURA-Switcher-mac.zip" data-t="dlMac"></a>
   </div>
 </div></nav>
@@ -129,6 +132,7 @@ footer strong { color:var(--text); }
     <div class="cta">
       <a class="btn light" href="https://github.com/klbk/aura-switcher/releases/latest/download/AURA-Switcher-mac.zip"><span data-t="dlMac"></span></a>
       <a class="btn ghost" href="https://github.com/klbk/aura-switcher/releases/latest/download/AURA-Switcher-windows-x64.zip">⊞ <span data-t="dlWin"></span></a>
+      <a class="btn coffee" href="https://donatello.to/aura-switcher" target="_blank" rel="noopener">☕ <span data-t="donate"></span></a>
     </div>
     <div class="window" aria-hidden="true">
       <div class="menubar"><div class="dots"><i></i><i></i><i></i></div><span class="chip" id="demoChip">EN</span></div>
@@ -166,7 +170,7 @@ footer strong { color:var(--text); }
   </div>
   <div class="final">
     <h2 data-t="ctaH"></h2><p data-t="ctaP"></p>
-    <div class="cta"><a class="btn light" href="https://github.com/klbk/aura-switcher/releases/latest/download/AURA-Switcher-mac.zip"><span data-t="dlMac"></span></a><a class="btn ghost" href="https://github.com/klbk/aura-switcher/releases/latest/download/AURA-Switcher-windows-x64.zip">⊞ <span data-t="dlWin"></span></a></div>
+    <div class="cta"><a class="btn light" href="https://github.com/klbk/aura-switcher/releases/latest/download/AURA-Switcher-mac.zip"><span data-t="dlMac"></span></a><a class="btn ghost" href="https://github.com/klbk/aura-switcher/releases/latest/download/AURA-Switcher-windows-x64.zip">⊞ <span data-t="dlWin"></span></a><a class="btn coffee" href="https://donatello.to/aura-switcher" target="_blank" rel="noopener">☕ <span data-t="donate"></span></a></div>
     <p class="support"><span data-t="supportP"></span> <a href="https://donatello.to/aura-switcher" target="_blank" rel="noopener">☕ <span data-t="donate"></span></a></p>
   </div>
 </div></section>
