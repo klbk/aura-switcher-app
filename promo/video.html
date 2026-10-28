@@ -1,0 +1,68 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+*{box-sizing:border-box;margin:0}
+html,body{width:1080px;height:1920px;overflow:hidden;background:#07080f;color:#f4f5fb;font-family:-apple-system,"SF Pro Display",sans-serif}
+.au{position:absolute;inset:0;filter:blur(120px);opacity:.6}
+.au i{position:absolute;border-radius:50%}
+.au i:nth-child(1){width:700px;height:600px;left:-150px;top:150px;background:#1d4ed8}
+.au i:nth-child(2){width:600px;height:500px;right:-150px;top:350px;background:#7c3aed}
+.au i:nth-child(3){width:500px;height:400px;left:300px;top:1300px;background:#eab308;opacity:.5}
+.scene{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center}
+.cap{margin-top:380px;height:330px;padding:0 70px;font-size:76px;font-weight:800;line-height:1.12;letter-spacing:-.02em;text-align:center}
+.win{width:940px;border-radius:40px;border:2px solid rgba(255,255,255,.12);background:linear-gradient(180deg,rgba(255,255,255,.08),rgba(255,255,255,.03));box-shadow:0 60px 160px rgba(0,0,0,.6);overflow:hidden}
+.bar{height:96px;display:flex;align-items:center;justify-content:space-between;padding:0 36px;border-bottom:2px solid rgba(255,255,255,.08)}
+.dots{display:flex;gap:16px}.dots b{width:24px;height:24px;border-radius:50%;background:#2a2d3d}
+.chip{font-weight:800;font-size:38px;padding:8px 22px;border-radius:14px;background:#2a2d3d;color:#cfd3e6}
+.chip.uk{background:#ffd500;color:#0b0d18;box-shadow:0 0 50px rgba(255,213,0,.7)}
+.chip.en{background:#3b8cff;color:#fff;box-shadow:0 0 50px rgba(59,140,255,.7)}
+.body{padding:70px 56px;min-height:470px}
+.txt{font-size:92px;font-weight:700;line-height:1.15;letter-spacing:-.02em;word-break:break-word}
+.bad{color:#ff6b6b}.ok{color:#ffd500;text-shadow:0 0 40px rgba(255,213,0,.6)}.en2{color:#5aa2ff;text-shadow:0 0 40px rgba(59,140,255,.6)}
+.sel{background:rgba(59,140,255,.45);border-radius:10px}
+.caret{display:inline-block;width:8px;height:86px;background:#3b8cff;vertical-align:-10px;margin-left:6px}
+.status{margin-top:36px;font-size:40px;color:#9aa0b8;height:50px}
+.keys{display:flex;gap:40px;margin-top:90px;height:170px}
+.key{width:260px;height:150px;border-radius:30px;display:grid;place-items:center;font-size:52px;font-weight:800;background:linear-gradient(180deg,#2b2f44,#1b1e2d);border:2px solid rgba(255,255,255,.14);box-shadow:0 12px 0 #0e1019}
+.key.on{transform:translateY(10px);box-shadow:0 2px 0 #0e1019;background:linear-gradient(180deg,#3b8cff,#2563eb)}
+.brand{position:absolute;bottom:120px;left:0;right:0;display:flex;justify-content:center;align-items:center;gap:22px;font-size:46px;font-weight:700;color:#cfd3e6}
+.brand img{width:70px}
+.final{justify-content:center;text-align:center}
+.final img{width:380px;margin-bottom:50px}
+.final h1{font-size:120px;font-weight:800;letter-spacing:-.03em}
+.final .p{font-size:52px;color:#cfd3e6;margin-top:30px;line-height:1.35}
+.final .u{margin-top:70px;font-size:48px;font-weight:700;padding:26px 46px;border-radius:24px;background:#f4f5fb;color:#07080f}
+.flag{display:inline-block;width:56px;height:38px;border-radius:6px;background:linear-gradient(#0057b7 50%,#ffd500 50%);vertical-align:-4px;margin-right:14px}
+</style></head><body>
+<div class="au"><i></i><i></i><i></i></div>
+<div id="root"></div>
+<script>
+const P = new URLSearchParams(location.search), t = +P.get("t") || 0;
+const typed = (s, t0, cps = 0.13) => s.slice(0, Math.max(0, Math.min(s.length, Math.floor((t - t0) / cps) + 1)));
+const fade = (a, b) => Math.max(0, Math.min(1, (t - a) / .3, (b - t) / .3));
+const caret = t % 0.9 < 0.55 ? '<span class="caret"></span>' : '<span class="caret" style="opacity:0"></span>';
+const win = (chip, cls, html, status = "") => `<div class="win"><div class="bar"><div class="dots"><b></b><b></b><b></b></div><span class="chip ${cls}">${chip}</span></div>
+  <div class="body"><div class="txt">${html}${caret}</div><div class="status">${status}</div></div></div>`;
+const brand = `<div class="brand"><img src="icon.svg">AURA Switcher</div>`;
+let h = "";
+if (t < 2.6) {            // 1: the pain
+  const s = t < .3 ? "" : typed("ghbdtn? zr cghfdb", .3, .1);
+  h = `<div class="scene" style="opacity:${fade(-1, 2.6)}"><div class="cap">Знову не та розкладка? 😩</div>${win("EN", "", `<span class="bad">${s}</span>`)}${brand}</div>`;
+} else if (t < 6.8) {     // 2: auto-fix after Space
+  let html, chip = "EN", cls = "", st = "";
+  if (t < 3.6) html = typed("ghbdtn", 2.8, .13);
+  else { chip = "УК"; cls = t < 4.6 ? "uk" : ""; st = "✓ Виправлено після пробілу";
+         html = `<span class="ok">привіт</span> ` + (t > 4.4 ? typed("як справи?", 4.4, .12) : ""); }
+  h = `<div class="scene" style="opacity:${fade(2.6, 6.8)}"><div class="cap">AURA виправляє сама — одразу після пробілу</div>${win(chip, cls, html, st)}${brand}</div>`;
+} else if (t < 9.9) {     // 3: double Shift
+  let w = typed("руддщ", 7.1, .13), chip = "УК", cls = "", st = "", on1 = t > 8.1 && t < 8.3, on2 = t > 8.45 && t < 8.65;
+  if (t > 7.8 && t < 8.7) w = `<span class="sel">${w}</span>`;
+  if (t >= 8.7) { w = `<span class="en2">hello</span>`; chip = "EN"; cls = t < 9.5 ? "en" : ""; st = "✓ Двічі ⇧"; }
+  h = `<div class="scene" style="opacity:${fade(6.8, 9.9)}"><div class="cap">Або двічі ⇧ — і текст в іншій розкладці</div>${win(chip, cls, "привіт, " + w, st)}
+    <div class="keys"><div class="key ${on1 ? "on" : ""}">⇧ Shift</div><div class="key ${on2 ? "on" : ""}">⇧ Shift</div></div>${brand}</div>`;
+} else {                  // 4: final card
+  h = `<div class="scene final" style="opacity:${fade(9.9, 99)}"><img src="icon.svg"><h1>AURA Switcher</h1>
+    <div class="p">Mac · Windows · безкоштовно<br>Відкритий код · без реклами</div>
+    <div class="p" style="margin-top:40px"><span class="flag"></span>Зроблено в Україні</div>
+    <div class="u">klbk.github.io/aura-switcher</div></div>`;
+}
+document.getElementById("root").innerHTML = h;
+</script></body></html>
