@@ -172,20 +172,25 @@ if (sel) {
 }
 setLang(lang);
 
-// demo: a word typed in the wrong layout, fixed after Space — in different alphabets
-const words = [
-  ["ghbdtn", "привіт", "EN", "УК"],     // Ukrainian typed on English layout
-  ["kalhmera", "καλημερα", "EN", "ΕΛ"], // Greek
-  ["руддщ", "hello", "УК", "EN"],       // English typed on Ukrainian layout
-  ["akuo", "שלום", "EN", "עב"],         // Hebrew
-];
+// demo: a word typed in the wrong layout, fixed after Space — examples match the visitor's language
+// [typed, fixed, layout it was typed in, layout AURA switches to]; Ukrainian layout = ЙЦУКЕН on QWERTY keys
+const words = {
+  uk: [["ghbdtn", "привіт", "EN", "УК"], ["руддщ", "hello", "УК", "EN"], ["ntrcn", "текст", "EN", "УК"]],
+  en: [["руддщ", "hello", "УК", "EN"], ["kalhmera", "καλημερα", "EN", "ΕΛ"], ["ghbdtn", "привіт", "EN", "УК"], ["akuo", "שלום", "EN", "עב"]],
+  pl: [["вщикн", "dobry", "УК", "PL"], ["ghbdtn", "привіт", "PL", "УК"], ["цшефь", "witam", "УК", "PL"]],
+  de: [["рфддщ", "hallo", "УК", "DE"], ["ghbdtn", "привіт", "DE", "УК"], ["вфтлу", "danke", "УК", "DE"]],
+  es: [["рщдф", "hola", "УК", "ES"], ["ghbdtn", "привіт", "ES", "УК"], ["пкфсшфі", "gracias", "УК", "ES"]],
+  fr: [["ищтощгк", "bonjour", "УК", "FR"], ["ghbdtn", "привіт", "FR", "УК"], ["ійдге", "salut", "УК", "FR"]], // AZERTY keys
+};
 const $ = id => document.getElementById(id);
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 (async function loop() {
   const text = $("demoText"), chip = $("demoChip"), status = $("demoStatus");
   if (!text) return;
-  for (let i = 0; ; i = (i + 1) % words.length) {
-    const [wrong, right, from, to] = words[i];
+  for (let i = 0, cur = lang; ; i++) {
+    if (cur !== lang) { cur = lang; i = 0; }  // language switched — start its own examples
+    const list = words[lang] || words.en;
+    const [wrong, right, from, to] = list[i % list.length];
     chip.textContent = from; chip.classList.remove("fixed"); status.textContent = "";
     for (let n = 0; n <= wrong.length; n++) { text.innerHTML = `<span class="wrong">${wrong.slice(0, n)}</span><span class="caret"></span>`; await sleep(120); }
     status.textContent = T[lang].demoWrong; await sleep(700);
