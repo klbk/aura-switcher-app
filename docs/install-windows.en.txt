@@ -18,4 +18,5 @@ HOW TO USE
 
 • Like it? Support: https://donatello.to/aura-switcher ☕
 Open source: https://github.com/klbk/aura-switcher-app
-Found a bug? Tell us what happened and in which app.
+Found a bug? Email auraswitcher@gmail.com what happened and in which app
+(or use "Report a problem…" in the app menu).

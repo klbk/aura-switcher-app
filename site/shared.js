@@ -174,6 +174,11 @@ const SUPPORT = {
   ko: ["후원하기", "AURA Switcher가 마음에 드시나요? 커피 한 잔으로 개발을 후원해 주세요."],
 };
 for (const k in SUPPORT) if (T[k]) { T[k].donate = SUPPORT[k][0]; T[k].supportP = SUPPORT[k][1]; }
+// contact link
+const CONTACT = { uk: "Написати нам", en: "Contact us", pl: "Napisz do nas", de: "Schreib uns", es: "Escríbenos", fr: "Nous écrire",
+  it: "Scrivici", pt: "Fale connosco", tr: "Bize yazın", nl: "Mail ons", cs: "Napište nám", sv: "Skriv till oss", fi: "Kirjoita meille",
+  ro: "Scrie-ne", hu: "Írj nekünk", el: "Γράψτε μας", bg: "Пишете ни", he: "כתבו לנו", ar: "راسلنا", hi: "हमें लिखें", ko: "문의하기" };
+for (const k in CONTACT) if (T[k]) T[k].contact = CONTACT[k];
 
 function detectLang() {
   const saved = localStorage.getItem("lang");

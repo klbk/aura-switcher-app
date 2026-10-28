@@ -153,6 +153,8 @@ let uiStrings: [String: [String]] = [ // key: [en, uk]
     "wordsInfo": ["AURA Switcher will never auto-correct these words. Separate them with commas.",
                   "Ці слова AURA Switcher ніколи не виправлятиме автоматично. Через кому."],
     "donate": ["Support AURA Switcher ☕", "Підтримати AURA Switcher ☕"],
+    "report": ["Report a problem…", "Повідомити про проблему…"],
+    "reportBody": ["What happened and in which app:", "Що сталося і в якій програмі:"],
     "save": ["Save", "Зберегти"],
     "cancel": ["Cancel", "Скасувати"],
     "system": ["System", "Системна"],
@@ -496,6 +498,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         return FileManager.default.displayName(atPath: url.path).replacingOccurrences(of: ".app", with: "")
     }
 
+    /// Opens an email to the developer with version, macOS and layouts already filled in.
+    func reportProblem() {
+        let ver = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "?"
+        let os = ProcessInfo.processInfo.operatingSystemVersionString
+        let body = "\(L("reportBody"))\n\n\n---\nAURA Switcher \(ver) · macOS \(os) · \(engine.layouts.map { displayCode($0.lang) }.joined(separator: ", "))"
+        var c = URLComponents(); c.scheme = "mailto"; c.path = "auraswitcher@gmail.com"
+        c.queryItems = [URLQueryItem(name: "subject", value: "AURA Switcher \(ver) — macOS"), URLQueryItem(name: "body", value: body)]
+        if let url = c.url { NSWorkspace.shared.open(url) }
+    }
+
     func editWords() {
         let a = NSAlert()
         a.messageText = L("words").replacingOccurrences(of: "…", with: "")
@@ -559,6 +571,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         add(uiMenu, "Українська", s.uiLang == "uk") { self.s.uiLang = "uk" }
         let ui = NSMenuItem(title: L("uiLang"), action: nil, keyEquivalent: ""); ui.submenu = uiMenu; m.addItem(ui)
         add(m, L("hint"))
+        add(m, L("report")) { self.reportProblem() }
         add(m, L("donate")) { NSWorkspace.shared.open(URL(string: "https://donatello.to/aura-switcher")!) }
         add(m, "AURA Switcher \(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "") beta · 🇺🇦")
         add(m, L("quit")) { NSApp.terminate(nil) }

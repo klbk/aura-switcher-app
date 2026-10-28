@@ -32,7 +32,7 @@ using std::vector;
 
 static const ULONG_PTR kMagic = 0x4B535754;  // marks our own synthetic input
 enum { WM_TRAY = WM_APP + 1, WM_AUTO, WM_DSHIFT };
-enum { ID_ENABLED = 1, ID_AUTO, ID_SOUND, ID_WORDS, ID_DONATE, ID_EXCLUDE, ID_NOBIND, ID_LOGIN, ID_UI_SYS, ID_UI_EN, ID_UI_UK, ID_QUIT,
+enum { ID_ENABLED = 1, ID_AUTO, ID_SOUND, ID_WORDS, ID_DONATE, ID_REPORT, ID_EXCLUDE, ID_NOBIND, ID_LOGIN, ID_UI_SYS, ID_UI_EN, ID_UI_UK, ID_QUIT,
        ID_BIND0 = 100, ID_EXDEL0 = 200, ID_BDDEL0 = 300 };
 
 // MARK: - Settings (HKCU\Software\AURA)
@@ -584,6 +584,27 @@ static void editWords() {
     DestroyWindow(dlg); DeleteObject(font);
 }
 
+// Opens an email to the developer with version, Windows build and layouts already filled in.
+static wstring urlEncode(const wstring& w) {
+    int n = WideCharToMultiByte(CP_UTF8, 0, w.c_str(), -1, nullptr, 0, nullptr, nullptr);
+    std::string u(n, 0); WideCharToMultiByte(CP_UTF8, 0, w.c_str(), -1, u.data(), n, nullptr, nullptr); u.pop_back();
+    wstring r; wchar_t buf[4];
+    for (unsigned char c : u) {
+        if (isalnum(c) || c == '-' || c == '_' || c == '.') r += wchar_t(c);
+        else { swprintf(buf, 4, L"%%%02X", c); r += buf; }
+    }
+    return r;
+}
+static void reportProblem() {
+    wchar_t build[64] = L"?"; DWORD sz = sizeof(build);
+    RegGetValueW(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion", L"CurrentBuild", RRF_RT_REG_SZ, nullptr, build, &sz);
+    wstring codes; for (auto& l : layouts) codes += (codes.empty() ? L"" : L", ") + l.code();
+    wstring body = wstring(L_(L"What happened and in which app:", L"Що сталося і в якій програмі:")) +
+                   L"\n\n\n---\nAURA Switcher " APP_VERSION L" · Windows build " + build + L" · " + codes;
+    wstring url = L"mailto:auraswitcher@gmail.com?subject=" + urlEncode(L"AURA Switcher " APP_VERSION L" — Windows") + L"&body=" + urlEncode(body);
+    ShellExecuteW(nullptr, L"open", url.c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+}
+
 static void showMenu() {
     menuExe = fgExe();
     HMENU m = CreatePopupMenu();
@@ -629,6 +650,7 @@ static void showMenu() {
     item(um, ID_UI_UK, L"Українська", S.uiLang == L"uk");
     AppendMenuW(m, MF_POPUP, (UINT_PTR)um, L_(L"Menu language", L"Мова меню"));
     item(m, 0, L_(L"Double ⇧ — convert word/selection", L"Подвійний ⇧ — змінити мову слова/виділення"), false, false);
+    item(m, ID_REPORT, L_(L"Report a problem…", L"Повідомити про проблему…"));
     item(m, ID_DONATE, L_(L"Support AURA Switcher ☕", L"Підтримати AURA Switcher ☕"));
     item(m, 0, L"AURA Switcher " APP_VERSION L" beta · 🇺🇦", false, false);
     item(m, ID_QUIT, L_(L"Quit", L"Вихід"));
@@ -653,6 +675,7 @@ static void showMenu() {
     else if (cmd >= ID_BDDEL0 && cmd < ID_BDDEL0 + menuBdDel.size()) S.bindings.erase(menuBdDel[cmd - ID_BDDEL0]);
     else if (cmd == ID_LOGIN) setLogin(!loginEnabled());
     else if (cmd == ID_WORDS) editWords();
+    else if (cmd == ID_REPORT) reportProblem();
     else if (cmd == ID_DONATE) ShellExecuteW(nullptr, L"open", L"https://donatello.to/aura-switcher", nullptr, nullptr, SW_SHOWNORMAL);
     else if (cmd == ID_UI_SYS) S.uiLang = L"";
     else if (cmd == ID_UI_EN) S.uiLang = L"en";

@@ -14,6 +14,7 @@ Website — https://klbk.github.io/aura-switcher/ · Support ☕ — https://don
 - **Open source:** https://github.com/klbk/aura-switcher-app (GPL-3.0). The app sees everything you type, so anyone can check that it stores nothing and sends nothing online.
 - **Free.** If AURA Switcher helps you, support development: **https://donatello.to/aura-switcher** ☕ (any country's card). The link is also on the website and in the app menu ("Support AURA Switcher ☕").
 - **Download:** https://github.com/klbk/aura-switcher/releases/latest
+- **Contact & bugs:** auraswitcher@gmail.com — or "Report a problem…" in the app menu (the email opens with version, system and layouts filled in).
 
 ## Features
 
