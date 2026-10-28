@@ -3,7 +3,7 @@
 > 🇺🇦  Designed and developed in Ukraine.
 > Українська версія — [README.uk.md](README.uk.md)
 
-A macOS app that fixes text typed in the wrong keyboard layout ("ghbdtn" → "привіт"). It lives in the menu bar, runs in the background and starts automatically at login.
+A macOS & Windows app that fixes text typed in the wrong keyboard layout ("ghbdtn" → "привіт"). It lives in the menu bar, runs in the background and starts automatically at login.
 
 Quick start — [docs/INSTALL-mac.md](docs/INSTALL-mac.md).
 
@@ -66,7 +66,7 @@ The icon shows the current language: `EN`, `УК`, `РУ`… — each language i
 2. Grant access: System Settings → Privacy & Security → **Accessibility** → enable AURA. Until then the menu shows `⚠︎`; once enabled, AURA starts working by itself, no restart needed.
 3. After that it starts at login. Manually — Spotlight (⌘Space) → "AURA".
 
-Archive for other Macs: `~/Repo/aura-switcher/build.sh --release` → `dist/AURA-<version>.zip`.
+Archive for other Macs: `~/Repo/aura-switcher/build.sh --release` → `dist/AURA-Switcher-<version>.zip`.
 
 ## Troubleshooting
 
@@ -77,7 +77,7 @@ Archive for other Macs: `~/Repo/aura-switcher/build.sh --release` → `dist/AURA
 
 ## How it works
 
-- A single Swift file: `~/Repo/aura-switcher/main.swift` (private repo https://github.com/klbk/aura-switcher-app), build script `build.sh` next to it. No external dependencies. Universal build: Apple Silicon + Intel.
+- A single Swift file: `~/Repo/aura-switcher/main.swift` (public repo https://github.com/klbk/aura-switcher-app), build script `build.sh` next to it. No external dependencies. Universal build: Apple Silicon + Intel.
 - Keystrokes are read with a **listen-only** `CGEventTap`: the system never waits for AURA, so it can't freeze the keyboard or mouse.
 - Character tables are built from the macOS layouts themselves (`UCKeyTranslate`), so any layout works without manual setup.
 - Word checking uses the system spell checker (`NSSpellChecker`), after the Space has already been typed.
@@ -106,4 +106,4 @@ Archive for other Macs: `~/Repo/aura-switcher/build.sh --release` → `dist/AURA
 - Password fields and some apps (terminals, games) may behave differently — add them to exclusions.
 
 ---
-🇺🇦 AURA — made in Ukraine.
+🇺🇦 AURA Switcher — made in Ukraine.
