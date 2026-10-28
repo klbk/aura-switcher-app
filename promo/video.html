@@ -35,7 +35,9 @@ html,body{width:1080px;height:1920px;overflow:hidden;background:#07080f;color:#f
 <div class="au"><i></i><i></i><i></i></div>
 <div id="root"></div>
 <script>
-const P = new URLSearchParams(location.search), t = +P.get("t") || 0;
+const P = new URLSearchParams(location.search), t = +P.get("t") || 0, EN = P.get("l") === "en";
+const L = EN ? {c1:"Wrong keyboard layout again? 😩", c2:"AURA fixes it by itself — right after Space", s2:"✓ Fixed after Space", c3:"Or double ⇧ to convert the text", s3:"✓ Double ⇧", p1:"Mac · Windows · free", p2:"Open source · no ads", made:"Made in Ukraine"}
+  : {c1:"Знову не та розкладка? 😩", c2:"AURA виправляє сама — одразу після пробілу", s2:"✓ Виправлено після пробілу", c3:"Або двічі ⇧ — і текст в іншій розкладці", s3:"✓ Двічі ⇧", p1:"Mac · Windows · безкоштовно", p2:"Відкритий код · без реклами", made:"Зроблено в Україні"};
 const typed = (s, t0, cps = 0.13) => s.slice(0, Math.max(0, Math.min(s.length, Math.floor((t - t0) / cps) + 1)));
 const fade = (a, b) => Math.max(0, Math.min(1, (t - a) / .3, (b - t) / .3));
 const caret = t % 0.9 < 0.55 ? '<span class="caret"></span>' : '<span class="caret" style="opacity:0"></span>';
@@ -45,23 +47,23 @@ const brand = `<div class="brand"><img src="icon.svg">AURA Switcher</div>`;
 let h = "";
 if (t < 2.6) {            // 1: the pain
   const s = t < .3 ? "" : typed("ghbdtn? zr cghfdb", .3, .1);
-  h = `<div class="scene" style="opacity:${fade(-1, 2.6)}"><div class="cap">Знову не та розкладка? 😩</div>${win("EN", "", `<span class="bad">${s}</span>`)}${brand}</div>`;
+  h = `<div class="scene" style="opacity:${fade(-1, 2.6)}"><div class="cap">${L.c1}</div>${win("EN", "", `<span class="bad">${s}</span>`)}${brand}</div>`;
 } else if (t < 6.8) {     // 2: auto-fix after Space
   let html, chip = "EN", cls = "", st = "";
   if (t < 3.6) html = typed("ghbdtn", 2.8, .13);
-  else { chip = "УК"; cls = t < 4.6 ? "uk" : ""; st = "✓ Виправлено після пробілу";
+  else { chip = "УК"; cls = t < 4.6 ? "uk" : ""; st = L.s2;
          html = `<span class="ok">привіт</span> ` + (t > 4.4 ? typed("як справи?", 4.4, .12) : ""); }
-  h = `<div class="scene" style="opacity:${fade(2.6, 6.8)}"><div class="cap">AURA виправляє сама — одразу після пробілу</div>${win(chip, cls, html, st)}${brand}</div>`;
+  h = `<div class="scene" style="opacity:${fade(2.6, 6.8)}"><div class="cap">${L.c2}</div>${win(chip, cls, html, st)}${brand}</div>`;
 } else if (t < 9.9) {     // 3: double Shift
   let w = typed("руддщ", 7.1, .13), chip = "УК", cls = "", st = "", on1 = t > 8.1 && t < 8.3, on2 = t > 8.45 && t < 8.65;
   if (t > 7.8 && t < 8.7) w = `<span class="sel">${w}</span>`;
-  if (t >= 8.7) { w = `<span class="en2">hello</span>`; chip = "EN"; cls = t < 9.5 ? "en" : ""; st = "✓ Двічі ⇧"; }
-  h = `<div class="scene" style="opacity:${fade(6.8, 9.9)}"><div class="cap">Або двічі ⇧ — і текст в іншій розкладці</div>${win(chip, cls, "привіт, " + w, st)}
+  if (t >= 8.7) { w = `<span class="en2">hello</span>`; chip = "EN"; cls = t < 9.5 ? "en" : ""; st = L.s3; }
+  h = `<div class="scene" style="opacity:${fade(6.8, 9.9)}"><div class="cap">${L.c3}</div>${win(chip, cls, "привіт, " + w, st)}
     <div class="keys"><div class="key ${on1 ? "on" : ""}">⇧ Shift</div><div class="key ${on2 ? "on" : ""}">⇧ Shift</div></div>${brand}</div>`;
 } else {                  // 4: final card
   h = `<div class="scene final" style="opacity:${fade(9.9, 99)}"><img src="icon.svg"><h1>AURA Switcher</h1>
-    <div class="p">Mac · Windows · безкоштовно<br>Відкритий код · без реклами</div>
-    <div class="p" style="margin-top:40px"><span class="flag"></span>Зроблено в Україні</div>
+    <div class="p">${L.p1}<br>${L.p2}</div>
+    <div class="p" style="margin-top:40px"><span class="flag"></span>${L.made}</div>
     <div class="u">klbk.github.io/aura-switcher</div></div>`;
 }
 document.getElementById("root").innerHTML = h;
