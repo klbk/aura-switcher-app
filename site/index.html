@@ -6,12 +6,13 @@
 <style>
 :root { --bg:#07080f; --card:rgba(255,255,255,.04); --line:rgba(255,255,255,.09); --text:#f4f5fb; --muted:#9aa0b8; --blue:#3b8cff; --yellow:#ffd500; }
 * { box-sizing:border-box; margin:0; }
-body { background:var(--bg); color:var(--text); font:16px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, sans-serif; -webkit-font-smoothing:antialiased; overflow-x:hidden; }
+body { background:var(--bg); color:var(--text); font:16px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, sans-serif; -webkit-font-smoothing:antialiased; }
+html, body { overflow-x:hidden; overflow-x:clip; max-width:100%; }
 a { color:inherit; text-decoration:none; }
 .wrap { max-width:1120px; margin:0 auto; padding:0 24px; }
 
 /* aurora */
-.aurora { position:absolute; inset:-200px 0 auto; height:900px; pointer-events:none; z-index:0; filter:blur(90px); opacity:.55; }
+.aurora { position:absolute; inset:-200px 0 auto; height:900px; pointer-events:none; z-index:0; filter:blur(90px); opacity:.55; overflow:hidden; }
 .aurora i { position:absolute; border-radius:50%; animation:drift 18s ease-in-out infinite alternate; }
 .aurora i:nth-child(1) { width:620px; height:420px; left:10%; top:120px; background:#1d4ed8; }
 .aurora i:nth-child(2) { width:520px; height:380px; right:8%; top:60px; background:#7c3aed; animation-delay:-6s; }
@@ -78,7 +79,7 @@ section { padding:110px 0 0; }
 .card h3 { font-size:20px; letter-spacing:-.01em; margin-bottom:6px; }
 .card p { color:var(--muted); font-size:15px; }
 .c1 { grid-column:span 3; } .c2 { grid-column:span 3; } .c3, .c4, .c5 { grid-column:span 2; } .c6 { grid-column:span 6; display:flex; align-items:center; justify-content:space-between; gap:24px; }
-.vis { height:120px; display:flex; align-items:center; justify-content:center; gap:14px; margin-bottom:20px; }
+.vis { height:120px; display:flex; align-items:center; justify-content:center; flex-wrap:wrap; gap:14px; margin-bottom:20px; }
 .key { min-width:64px; height:56px; padding:0 18px; border-radius:12px; display:grid; place-items:center; font-weight:700; font-size:18px;
        background:linear-gradient(180deg,#2b2f44,#1b1e2d); border:1px solid rgba(255,255,255,.12); box-shadow:0 4px 0 #0e1019, 0 10px 30px rgba(0,0,0,.4); }
 .key.y { color:var(--yellow); } .key.b { color:var(--blue); }
