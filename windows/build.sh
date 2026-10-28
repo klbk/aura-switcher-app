@@ -18,6 +18,13 @@ rm -f ../dist/$FILE-$VERSION-windows.zip ../dist/$FILE-$VERSION-windows-x64.zip
 (cd build && zip -qr ../../dist/$FILE-$VERSION-windows.zip x64 arm64)
 # x64-only archive for regular users: one folder, one exe
 mkdir -p "build/pkg/$NAME" && cp "build/x64/$NAME.exe" "build/pkg/$NAME/"
-(cd build/pkg && zip -q -9 -r ../../../dist/$FILE-$VERSION-windows-x64.zip "$NAME")
+cp ../docs/install-windows.uk.txt "build/pkg/$NAME/Як встановити.txt"
+cp ../docs/install-windows.en.txt "build/pkg/$NAME/How to install.txt"
+# python zipfile marks non-ASCII names as UTF-8, so Windows shows «Як встановити.txt» correctly (zip doesn't)
+(cd build/pkg && python3 -I -c 'import sys,zipfile,os
+z=zipfile.ZipFile(sys.argv[1],"w",zipfile.ZIP_DEFLATED,compresslevel=9)
+for r,_,fs in os.walk(sys.argv[2]):
+  for f in sorted(fs): z.write(os.path.join(r,f))
+z.close()' ../../../dist/$FILE-$VERSION-windows-x64.zip "$NAME")
 rm -rf build
 echo "dist/$FILE-$VERSION-windows-x64.zip"

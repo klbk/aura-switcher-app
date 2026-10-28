@@ -1,0 +1,21 @@
+AURA Switcher 0.4 (beta) — made in Ukraine 🇺🇦
+Fixes text typed in the wrong keyboard layout: ghbdtn → привіт.
+Windows 10 or 11.
+
+INSTALL
+1. Unzip the archive (right-click → "Extract All").
+2. Open "AURA Switcher.exe". If "Windows protected your PC" appears —
+   "More info" → "Run anyway" (the app isn't signed yet).
+3. The language code (EN, УК…) appears next to the clock (maybe under the ^ arrow).
+
+HOW TO USE
+• Typed a word in the wrong layout — press Space, AURA Switcher fixes it.
+• Press Shift twice quickly — the last word or the selected text
+  is converted to another layout.
+• Click the language code in the tray for the menu: turn off, sound, exclusions,
+  language per app, word exceptions, menu language.
+• Quit: menu → "Quit". Starts automatically at Windows login.
+
+• Like it? Support: https://donatello.to/aura-switcher ☕
+Open source: https://github.com/klbk/aura-switcher-app
+Found a bug? Tell us what happened and in which app.

@@ -1,13 +1,3 @@
----
-tags:
-  - aura
-  - macos
-  - app
-  - windows
-version: 0.4
-lang: ук
----
-
 # AURA Switcher
 
 > 🇺🇦 Створено в Україні.
@@ -18,6 +8,12 @@ lang: ук
 Коротко про запуск — [docs/INSTALL-mac.uk.md](docs/INSTALL-mac.uk.md).
 
 Сайт — https://klbk.github.io/aura-switcher/ · Підтримати ☕ — https://donatello.to/aura-switcher
+
+## Відкритий код і підтримка
+
+- **Код відкритий:** https://github.com/klbk/aura-switcher-app (ліцензія GPL-3.0). Програма бачить усе, що ви набираєте, тому кожен може перевірити: вона нічого не зберігає і нічого не надсилає в інтернет.
+- **Безкоштовно.** Якщо AURA Switcher вам допомагає — підтримайте розробку: **https://donatello.to/aura-switcher** ☕ (картка будь-якої країни). Посилання також є на сайті та в меню програми («Підтримати AURA Switcher ☕»).
+- **Завантажити:** https://github.com/klbk/aura-switcher/releases/latest
 
 ## Можливості
 

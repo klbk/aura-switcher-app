@@ -1,8 +1,3 @@
----
-tags: [aura, install]
-lang: en
----
-
 # AURA Switcher — Mac quick start
 
 > 🇺🇦 Made in Ukraine. Українською — [INSTALL-mac.uk.md](INSTALL-mac.uk.md)
@@ -19,5 +14,7 @@ Requires macOS 13 or later (Apple Silicon or Intel).
 **Check:** in the English layout type `ghbdtn` and Space — it becomes "привіт". Select a word and press ⇧ twice — it's converted to another layout.
 
 **Quit:** menu bar icon → "Quit". AURA starts at login automatically (can be turned off in the menu).
+
+**Like it?** Support development: https://donatello.to/aura-switcher ☕ — or "Support AURA Switcher ☕" in the app menu.
 
 Full docs — [README.md](../README.md).

@@ -6,3 +6,4 @@ HOW TO USE
   sound, exclude apps, language per app, word exceptions, menu language.
 • Quit: menu → "Quit". AURA Switcher starts at login (can be turned off in the menu).
 • Like it? Support: https://donatello.to/aura-switcher ☕
+Open source: https://github.com/klbk/aura-switcher-app

@@ -7,3 +7,4 @@
 • Закрити: меню → «Вихід». AURA Switcher сама запускається при вході в систему
   (можна вимкнути в меню).
 • Подобається? Підтримати: https://donatello.to/aura-switcher ☕
+Код відкритий: https://github.com/klbk/aura-switcher-app

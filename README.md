@@ -1,9 +1,3 @@
----
-tags: [aura, macos, app]
-version: 0.4
-lang: en
----
-
 # AURA Switcher
 
 > 🇺🇦  Designed and developed in Ukraine.
@@ -14,6 +8,12 @@ A macOS app that fixes text typed in the wrong keyboard layout ("ghbdtn" → "п
 Quick start — [docs/INSTALL-mac.md](docs/INSTALL-mac.md).
 
 Website — https://klbk.github.io/aura-switcher/ · Support ☕ — https://donatello.to/aura-switcher
+
+## Open source & support
+
+- **Open source:** https://github.com/klbk/aura-switcher-app (GPL-3.0). The app sees everything you type, so anyone can check that it stores nothing and sends nothing online.
+- **Free.** If AURA Switcher helps you, support development: **https://donatello.to/aura-switcher** ☕ (any country's card). The link is also on the website and in the app menu ("Support AURA Switcher ☕").
+- **Download:** https://github.com/klbk/aura-switcher/releases/latest
 
 ## Features
 
