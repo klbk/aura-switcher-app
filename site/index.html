@@ -2,7 +2,7 @@
 <html lang="uk">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>AURA</title><link rel="icon" href="icon.svg">
+<title>AURA Switcher</title><link rel="icon" href="icon.svg">
 <style>
 :root { --bg:#07080f; --card:rgba(255,255,255,.04); --line:rgba(255,255,255,.09); --text:#f4f5fb; --muted:#9aa0b8; --blue:#3b8cff; --yellow:#ffd500; }
 * { box-sizing:border-box; margin:0; }
@@ -23,12 +23,20 @@ nav .wrap { display:flex; align-items:center; justify-content:space-between; hei
 .brand { display:flex; gap:10px; align-items:center; font-weight:700; letter-spacing:.3px; }
 .brand img { width:28px; height:28px; }
 .navr { display:flex; gap:10px; align-items:center; }
+/* language picker: own popover so it always stays inside the screen */
 .langsel { position:relative; }
-.langsel::before { content:"🌐"; position:absolute; left:12px; top:50%; transform:translateY(-50%); font-size:14px; pointer-events:none; }
-.langsel::after { content:"▾"; position:absolute; right:12px; top:50%; transform:translateY(-50%); font-size:11px; color:var(--muted); pointer-events:none; }
-.langsel select { appearance:none; -webkit-appearance:none; background:var(--card); border:1px solid var(--line); color:var(--text); font:inherit; font-size:14px;
-                  padding:7px 30px 7px 36px; border-radius:999px; cursor:pointer; }
-.langsel select option { background:#151827; color:var(--text); }
+.langbtn { display:flex; align-items:center; gap:8px; background:var(--card); border:1px solid var(--line); color:var(--text); font:inherit; font-size:14px;
+           padding:7px 14px; border-radius:999px; cursor:pointer; }
+.langbtn::after { content:"▾"; font-size:11px; color:var(--muted); }
+.langlist { position:absolute; top:calc(100% + 8px); inset-inline-end:0; width:min(340px, calc(100vw - 32px)); max-height:min(420px, calc(100vh - 90px));
+            overflow:auto; display:none; grid-template-columns:1fr 1fr; gap:2px; padding:8px; border-radius:16px; border:1px solid var(--line);
+            background:rgba(16,18,30,.97); backdrop-filter:blur(20px); box-shadow:0 20px 60px rgba(0,0,0,.6); z-index:20; }
+.langsel.open .langlist { display:grid; }
+.langlist button { text-align:start; background:none; border:0; color:var(--muted); font:inherit; font-size:14px; padding:8px 10px; border-radius:10px; cursor:pointer; }
+.langlist button:hover { background:var(--card); color:var(--text); }
+.langlist button.on { color:var(--text); background:rgba(59,140,255,.18); font-weight:600; }
+.support { margin-top:22px; font-size:15px; color:var(--muted); }
+.support a { color:var(--yellow); font-weight:600; }
 .btn { display:inline-flex; align-items:center; gap:8px; border-radius:12px; font-weight:600; padding:12px 20px; transition:transform .15s, box-shadow .15s; }
 .btn:hover { transform:translateY(-1px); }
 .btn.sm { padding:8px 14px; font-size:14px; border-radius:10px; }
@@ -105,10 +113,10 @@ footer strong { color:var(--text); }
 </head>
 <body>
 <nav><div class="wrap">
-  <div class="brand"><img src="icon.svg" alt="">AURA</div>
+  <div class="brand"><img src="icon.svg" alt="">AURA Switcher</div>
   <div class="navr">
-    <label class="langsel"><select id="langSel" aria-label="Language"></select></label>
-    <a class="btn light sm" href="https://github.com/klbk/aura-site/releases/latest/download/AURA-mac.zip" data-t="dlMac"></a>
+    <div class="langsel" id="langSel"><button class="langbtn" aria-haspopup="listbox"><span aria-hidden="true">🌐</span><span id="langName"></span></button><div class="langlist" role="listbox"></div></div>
+    <a class="btn light sm" href="https://github.com/klbk/aura-switcher/releases/latest/download/AURA-Switcher-mac.zip" data-t="dlMac"></a>
   </div>
 </div></nav>
 
@@ -119,8 +127,8 @@ footer strong { color:var(--text); }
     <h1 data-t="h1"></h1>
     <p class="lead" data-t="lead"></p>
     <div class="cta">
-      <a class="btn light" href="https://github.com/klbk/aura-site/releases/latest/download/AURA-mac.zip"><span data-t="dlMac"></span></a>
-      <a class="btn ghost" href="https://github.com/klbk/aura-site/releases/latest/download/AURA-windows-x64.zip">⊞ <span data-t="dlWin"></span></a>
+      <a class="btn light" href="https://github.com/klbk/aura-switcher/releases/latest/download/AURA-Switcher-mac.zip"><span data-t="dlMac"></span></a>
+      <a class="btn ghost" href="https://github.com/klbk/aura-switcher/releases/latest/download/AURA-Switcher-windows-x64.zip">⊞ <span data-t="dlWin"></span></a>
     </div>
     <div class="window" aria-hidden="true">
       <div class="menubar"><div class="dots"><i></i><i></i><i></i></div><span class="chip" id="demoChip">EN</span></div>
@@ -158,13 +166,14 @@ footer strong { color:var(--text); }
   </div>
   <div class="final">
     <h2 data-t="ctaH"></h2><p data-t="ctaP"></p>
-    <div class="cta"><a class="btn light" href="https://github.com/klbk/aura-site/releases/latest/download/AURA-mac.zip"><span data-t="dlMac"></span></a><a class="btn ghost" href="https://github.com/klbk/aura-site/releases/latest/download/AURA-windows-x64.zip">⊞ <span data-t="dlWin"></span></a></div>
+    <div class="cta"><a class="btn light" href="https://github.com/klbk/aura-switcher/releases/latest/download/AURA-Switcher-mac.zip"><span data-t="dlMac"></span></a><a class="btn ghost" href="https://github.com/klbk/aura-switcher/releases/latest/download/AURA-Switcher-windows-x64.zip">⊞ <span data-t="dlWin"></span></a></div>
+    <p class="support"><span data-t="supportP"></span> <a href="https://donatello.to/aura-switcher" target="_blank" rel="noopener">☕ <span data-t="donate"></span></a></p>
   </div>
 </div></section>
 
 <footer><div class="wrap">
   <div><span class="flag"></span><strong data-t="made"></strong></div>
-  <div data-t="foot"></div>
+  <div><span data-t="foot"></span> · <a href="https://donatello.to/aura-switcher" target="_blank" rel="noopener">☕ <span data-t="donate"></span></a></div>
 </div></footer>
 <script src="i18n-more.js"></script>
 <script src="shared.js"></script>

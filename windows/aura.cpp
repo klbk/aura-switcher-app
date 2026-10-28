@@ -1,4 +1,4 @@
-// AURA for Windows — fixes text typed in the wrong keyboard layout.
+// AURA Switcher for Windows — fixes text typed in the wrong keyboard layout.
 // Made in Ukraine. Single file, Win32 only, no dependencies.
 //
 // Threads:
@@ -32,7 +32,7 @@ using std::vector;
 
 static const ULONG_PTR kMagic = 0x4B535754;  // marks our own synthetic input
 enum { WM_TRAY = WM_APP + 1, WM_AUTO, WM_DSHIFT };
-enum { ID_ENABLED = 1, ID_AUTO, ID_SOUND, ID_WORDS, ID_EXCLUDE, ID_NOBIND, ID_LOGIN, ID_UI_SYS, ID_UI_EN, ID_UI_UK, ID_QUIT,
+enum { ID_ENABLED = 1, ID_AUTO, ID_SOUND, ID_WORDS, ID_DONATE, ID_EXCLUDE, ID_NOBIND, ID_LOGIN, ID_UI_SYS, ID_UI_EN, ID_UI_UK, ID_QUIT,
        ID_BIND0 = 100, ID_EXDEL0 = 200, ID_BDDEL0 = 300 };
 
 // MARK: - Settings (HKCU\Software\AURA)
@@ -496,7 +496,7 @@ static void updateTray(bool force = false) {
     shownCode = key;
     HICON old = nid.hIcon;
     nid.hIcon = makeTextIcon(code, S.enabled);
-    wcscpy_s(nid.szTip, L"AURA " APP_VERSION L" beta");
+    wcscpy_s(nid.szTip, L"AURA Switcher " APP_VERSION L" beta");
     Shell_NotifyIconW(NIM_MODIFY, &nid);
     if (old) DestroyIcon(old);
 }
@@ -555,15 +555,15 @@ static void editWords() {
     POINT p; GetCursorPos(&p);
     HMONITOR mon = MonitorFromPoint(p, MONITOR_DEFAULTTONEAREST); MONITORINFO mi = {sizeof(mi)}; GetMonitorInfoW(mon, &mi);
     int x = (mi.rcWork.left + mi.rcWork.right - w) / 2, y = (mi.rcWork.top + mi.rcWork.bottom - hgt) / 3;
-    HWND dlg = CreateWindowExW(WS_EX_DLGMODALFRAME | WS_EX_TOPMOST, L"AURAWords", L_(L"AURA — word exceptions", L"AURA — слова-винятки"),
+    HWND dlg = CreateWindowExW(WS_EX_DLGMODALFRAME | WS_EX_TOPMOST, L"AURAWords", L_(L"AURA Switcher — word exceptions", L"AURA Switcher — слова-винятки"),
                                WS_CAPTION | WS_SYSMENU, x, y, w, hgt, nullptr, nullptr, inst, nullptr);
     auto ctl = [&](const wchar_t* cls, const wchar_t* text, DWORD style, int cx, int cy, int cw, int ch, int id) {
         HWND c = CreateWindowExW(0, cls, text, WS_CHILD | WS_VISIBLE | style, D(cx), D(cy), D(cw), D(ch), dlg, (HMENU)(INT_PTR)id, inst, nullptr);
         SendMessageW(c, WM_SETFONT, (WPARAM)font, TRUE);
         return c;
     };
-    ctl(L"STATIC", L_(L"AURA will never auto-correct these words. Separate them with commas.",
-                      L"Ці слова AURA ніколи не виправлятиме автоматично. Через кому."), 0, 16, 14, 388, 40, 0);
+    ctl(L"STATIC", L_(L"AURA Switcher will never auto-correct these words. Separate them with commas.",
+                      L"Ці слова AURA Switcher ніколи не виправлятиме автоматично. Через кому."), 0, 16, 14, 388, 40, 0);
     wstring cur; for (size_t i = 0; i < S.words.size(); i++) cur += (i ? L", " : L"") + S.words[i];
     HWND edit = ctl(L"EDIT", cur.c_str(), WS_BORDER | WS_TABSTOP | ES_AUTOHSCROLL, 16, 60, 388, 28, 100);
     SendMessageW(edit, EM_SETCUEBANNER, TRUE, (LPARAM)L"хз, ща, яж");
@@ -629,7 +629,8 @@ static void showMenu() {
     item(um, ID_UI_UK, L"Українська", S.uiLang == L"uk");
     AppendMenuW(m, MF_POPUP, (UINT_PTR)um, L_(L"Menu language", L"Мова меню"));
     item(m, 0, L_(L"Double ⇧ — convert word/selection", L"Подвійний ⇧ — змінити мову слова/виділення"), false, false);
-    item(m, 0, L"AURA " APP_VERSION L" beta · 🇺🇦", false, false);
+    item(m, ID_DONATE, L_(L"Support AURA Switcher ☕", L"Підтримати AURA Switcher ☕"));
+    item(m, 0, L"AURA Switcher " APP_VERSION L" beta · 🇺🇦", false, false);
     item(m, ID_QUIT, L_(L"Quit", L"Вихід"));
 
     POINT p; GetCursorPos(&p);
@@ -652,6 +653,7 @@ static void showMenu() {
     else if (cmd >= ID_BDDEL0 && cmd < ID_BDDEL0 + menuBdDel.size()) S.bindings.erase(menuBdDel[cmd - ID_BDDEL0]);
     else if (cmd == ID_LOGIN) setLogin(!loginEnabled());
     else if (cmd == ID_WORDS) editWords();
+    else if (cmd == ID_DONATE) ShellExecuteW(nullptr, L"open", L"https://donatello.to/aura-switcher", nullptr, nullptr, SW_SHOWNORMAL);
     else if (cmd == ID_UI_SYS) S.uiLang = L"";
     else if (cmd == ID_UI_EN) S.uiLang = L"en";
     else if (cmd == ID_UI_UK) S.uiLang = L"uk";

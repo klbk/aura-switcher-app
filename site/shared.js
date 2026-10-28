@@ -2,7 +2,7 @@
 // Site languages: uk, en, pl, de, es, fr. Russian browsers get Ukrainian (as in the app).
 const T = {
   uk: {
-    name: "Українська", title: "AURA — розкладка виправляється сама",
+    name: "Українська", title: "AURA Switcher — розкладка виправляється сама",
     badge: "Бета 0.4 · безкоштовно · без реєстрації",
     h1: "Пишіть.<br>Розкладку <span class=\"hl\">AURA</span> виправить сама",
     lead: "Набрали «ghbdtn» замість «привіт»? AURA помітить і виправить одразу після пробілу. Для macOS і Windows.",
@@ -26,7 +26,7 @@ const T = {
     made: "Зроблено в Україні", foot: "AURA — щоб думати про текст, а не про розкладку."
   },
   en: {
-    name: "English", title: "AURA — your keyboard layout fixes itself",
+    name: "English", title: "AURA Switcher — your keyboard layout fixes itself",
     badge: "Beta 0.4 · free · no sign-up",
     h1: "Just type.<br><span class=\"hl\">AURA</span> fixes the layout",
     lead: "Typed “ghbdtn” instead of “привіт”? AURA notices and fixes it right after Space. For macOS and Windows.",
@@ -50,7 +50,7 @@ const T = {
     made: "Made in Ukraine", foot: "AURA — think about your text, not your keyboard layout."
   },
   pl: {
-    name: "Polski", title: "AURA — układ klawiatury poprawia się sam",
+    name: "Polski", title: "AURA Switcher — układ klawiatury poprawia się sam",
     badge: "Beta 0.4 · za darmo · bez rejestracji",
     h1: "Po prostu pisz.<br><span class=\"hl\">AURA</span> poprawi układ",
     lead: "Wpisałeś „ghbdtn” zamiast „привіт”? AURA to zauważy i poprawi zaraz po spacji. Dla macOS i Windows.",
@@ -74,7 +74,7 @@ const T = {
     made: "Stworzono w Ukrainie", foot: "AURA — myśl o tekście, nie o układzie klawiatury."
   },
   de: {
-    name: "Deutsch", title: "AURA — das Tastaturlayout korrigiert sich selbst",
+    name: "Deutsch", title: "AURA Switcher — das Tastaturlayout korrigiert sich selbst",
     badge: "Beta 0.4 · kostenlos · ohne Anmeldung",
     h1: "Einfach tippen.<br><span class=\"hl\">AURA</span> korrigiert das Layout",
     lead: "„ghbdtn“ statt „привіт“ getippt? AURA bemerkt es und korrigiert es direkt nach der Leertaste. Für macOS und Windows.",
@@ -98,7 +98,7 @@ const T = {
     made: "Hergestellt in der Ukraine", foot: "AURA — denk an deinen Text, nicht an dein Tastaturlayout."
   },
   es: {
-    name: "Español", title: "AURA — la distribución del teclado se corrige sola",
+    name: "Español", title: "AURA Switcher — la distribución del teclado se corrige sola",
     badge: "Beta 0.4 · gratis · sin registro",
     h1: "Solo escribe.<br><span class=\"hl\">AURA</span> corrige la distribución",
     lead: "¿Escribiste «ghbdtn» en lugar de «привіт»? AURA lo detecta y lo corrige justo después del espacio. Para macOS y Windows.",
@@ -122,7 +122,7 @@ const T = {
     made: "Hecho en Ucrania", foot: "AURA — piensa en tu texto, no en la distribución del teclado."
   },
   fr: {
-    name: "Français", title: "AURA — la disposition du clavier se corrige toute seule",
+    name: "Français", title: "AURA Switcher — la disposition du clavier se corrige toute seule",
     badge: "Bêta 0.4 · gratuit · sans inscription",
     h1: "Tapez, tout simplement.<br><span class=\"hl\">AURA</span> corrige la disposition",
     lead: "Vous avez tapé « ghbdtn » au lieu de « привіт » ? AURA le remarque et corrige juste après l’espace. Pour macOS et Windows.",
@@ -149,6 +149,32 @@ const T = {
 
 if (typeof MORE !== "undefined") Object.assign(T, MORE);  // i18n-more.js: the rest of AURA's languages
 
+// support (Donatello) — [button, sentence before it]
+const SUPPORT = {
+  uk: ["Підтримати", "Подобається AURA Switcher? Підтримайте розробку чашкою кави."],
+  en: ["Support", "Like AURA Switcher? Support development with a coffee."],
+  pl: ["Wesprzyj", "Podoba Ci się AURA Switcher? Wesprzyj rozwój kawą."],
+  de: ["Unterstützen", "Dir gefällt AURA Switcher? Unterstütze die Entwicklung mit einem Kaffee."],
+  es: ["Apoyar", "¿Te gusta AURA Switcher? Apoya el desarrollo con un café."],
+  fr: ["Soutenir", "Vous aimez AURA Switcher ? Soutenez le développement avec un café."],
+  it: ["Sostieni", "Ti piace AURA Switcher? Sostieni lo sviluppo con un caffè."],
+  pt: ["Apoiar", "Gosta do AURA Switcher? Apoie o desenvolvimento com um café."],
+  tr: ["Destekle", "AURA Switcher’ı beğendiniz mi? Geliştirmeyi bir kahveyle destekleyin."],
+  nl: ["Steunen", "Vind je AURA Switcher fijn? Steun de ontwikkeling met een koffie."],
+  cs: ["Podpořit", "Líbí se vám AURA Switcher? Podpořte vývoj kávou."],
+  sv: ["Stöd", "Gillar du AURA Switcher? Stöd utvecklingen med en kaffe."],
+  fi: ["Tue", "Pidätkö AURA Switcheristä? Tue kehitystä kahvilla."],
+  ro: ["Susține", "Îți place AURA Switcher? Susține dezvoltarea cu o cafea."],
+  hu: ["Támogatás", "Tetszik az AURA Switcher? Támogasd a fejlesztést egy kávéval."],
+  el: ["Υποστήριξη", "Σας αρέσει το AURA Switcher; Στηρίξτε την ανάπτυξη με έναν καφέ."],
+  bg: ["Подкрепи", "Харесва ли ви AURA Switcher? Подкрепете разработката с кафе."],
+  he: ["תמיכה", "אוהבים את AURA Switcher? תמכו בפיתוח בכוס קפה."],
+  ar: ["ادعم", "هل أعجبك AURA Switcher؟ ادعم التطوير بفنجان قهوة."],
+  hi: ["सहयोग करें", "AURA Switcher पसंद आया? एक कॉफ़ी से विकास में सहयोग करें।"],
+  ko: ["후원하기", "AURA Switcher가 마음에 드시나요? 커피 한 잔으로 개발을 후원해 주세요."],
+};
+for (const k in SUPPORT) if (T[k]) { T[k].donate = SUPPORT[k][0]; T[k].supportP = SUPPORT[k][1]; }
+
 function detectLang() {
   const saved = localStorage.getItem("lang");
   if (saved && T[saved]) return saved;
@@ -165,12 +191,18 @@ function setLang(l) {
   lang = l; localStorage.setItem("lang", l);
   document.documentElement.lang = l; document.documentElement.dir = T[l].dir || "ltr"; document.title = T[l].title;
   document.querySelectorAll("[data-t]").forEach(e => e.innerHTML = T[l][e.dataset.t]);
-  const sel = document.getElementById("langSel"); if (sel) sel.value = l;
+  const name = document.getElementById("langName"); if (name) name.textContent = T[l].name;
+  document.querySelectorAll(".langlist button").forEach(b => b.classList.toggle("on", b.dataset.l === l));
 }
-const sel = document.getElementById("langSel");
-if (sel) {
-  sel.innerHTML = Object.keys(T).map(k => `<option value="${k}">${T[k].name}</option>`).join("");
-  sel.onchange = () => setLang(sel.value);
+// language picker popover
+const picker = document.getElementById("langSel");
+if (picker) {
+  const list = picker.querySelector(".langlist");
+  list.innerHTML = Object.keys(T).map(k => `<button data-l="${k}" role="option">${T[k].name}</button>`).join("");
+  picker.querySelector(".langbtn").onclick = e => { e.stopPropagation(); picker.classList.toggle("open"); };
+  list.onclick = e => { const b = e.target.closest("button"); if (b) { setLang(b.dataset.l); picker.classList.remove("open"); } };
+  document.addEventListener("click", () => picker.classList.remove("open"));
+  document.addEventListener("keydown", e => { if (e.key === "Escape") picker.classList.remove("open"); });
 }
 setLang(lang);
 

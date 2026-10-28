@@ -10,8 +10,8 @@ BEGIN
     BLOCK "040904B0"
     BEGIN
       VALUE "CompanyName", "Made in Ukraine"
-      VALUE "FileDescription", "AURA — keyboard layout fixer"
-      VALUE "ProductName", "AURA"
+      VALUE "FileDescription", "AURA Switcher — keyboard layout fixer"
+      VALUE "ProductName", "AURA Switcher"
       VALUE "ProductVersion", "0.4 beta"
       VALUE "FileVersion", "0.4"
       VALUE "LegalCopyright", "Oleksii Chernov, Ukraine"

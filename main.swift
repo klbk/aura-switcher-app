@@ -150,8 +150,9 @@ let uiStrings: [String: [String]] = [ // key: [en, uk]
     "uiLang": ["Menu language", "Мова меню"],
     "sound": ["Sound", "Звук"],
     "words": ["Word exceptions…", "Слова-винятки…"],
-    "wordsInfo": ["AURA will never auto-correct these words. Separate them with commas.",
-                  "Ці слова AURA ніколи не виправлятиме автоматично. Через кому."],
+    "wordsInfo": ["AURA Switcher will never auto-correct these words. Separate them with commas.",
+                  "Ці слова AURA Switcher ніколи не виправлятиме автоматично. Через кому."],
+    "donate": ["Support AURA Switcher ☕", "Підтримати AURA Switcher ☕"],
     "save": ["Save", "Зберегти"],
     "cancel": ["Cancel", "Скасувати"],
     "system": ["System", "Системна"],
@@ -558,7 +559,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         add(uiMenu, "Українська", s.uiLang == "uk") { self.s.uiLang = "uk" }
         let ui = NSMenuItem(title: L("uiLang"), action: nil, keyEquivalent: ""); ui.submenu = uiMenu; m.addItem(ui)
         add(m, L("hint"))
-        add(m, "AURA \(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "") beta")
+        add(m, L("donate")) { NSWorkspace.shared.open(URL(string: "https://donatello.to/aura-switcher")!) }
+        add(m, "AURA Switcher \(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "") beta · 🇺🇦")
         add(m, L("quit")) { NSApp.terminate(nil) }
     }
 }

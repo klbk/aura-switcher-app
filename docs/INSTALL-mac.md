@@ -3,16 +3,16 @@ tags: [aura, install]
 lang: en
 ---
 
-# AURA — Mac quick start
+# AURA Switcher — Mac quick start
 
 > 🇺🇦 Made in Ukraine. Українською — [INSTALL-mac.uk.md](INSTALL-mac.uk.md)
 
 Requires macOS 13 or later (Apple Silicon or Intel).
 
-1. **Unzip** `AURA-0.4.zip` (double-click).
+1. **Unzip** `AURA-Switcher-0.4.zip` (double-click).
 2. **Drag AURA** into Applications.
 3. **Open AURA.** If macOS says the developer can't be verified, click "Done", then open System Settings → Privacy & Security → "Open Anyway" at the bottom.
-   If macOS says the app is "damaged", run in Terminal: `xattr -cr /Applications/AURA.app` and open it again.
+   If macOS says the app is "damaged", run in Terminal: `xattr -cr "/Applications/AURA Switcher.app"` and open it again.
 4. **Grant access:** System Settings → Privacy & Security → **Accessibility** → enable AURA.
 5. **Done.** The language code (EN, УК, РУ…) appears in the menu bar. While it shows `⚠︎`, access isn't granted yet (step 4).
 
