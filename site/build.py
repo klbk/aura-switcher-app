@@ -9,7 +9,7 @@ from pathlib import Path
 BASE = "https://klbk.github.io/aura-switcher/"
 CHROME = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
 SRC = Path(__file__).resolve().parent
-ASSETS = ["icon.svg", "i18n-more.js", "seo.js", "shared.js"]
+ASSETS = ["icon.svg", "i18n-more.js", "seo.js", "shared.js", "google8a7be41a4753a620.html"]  # last: Search Console verification, keep
 
 out = Path(sys.argv[1]).resolve()
 langs = re.findall(r"^  (\w\w): \{", (SRC / "seo.js").read_text(), re.M)
