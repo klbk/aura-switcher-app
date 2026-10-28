@@ -1,0 +1,7 @@
+HOW TO USE
+• Typed a word in the wrong layout — press Space, AURA fixes it.
+• Press Shift twice quickly — the last word or the selected text
+  is converted to another layout.
+• Click the language code in the menu bar (EN, УК, РУ) for the menu: turn off,
+  sound, exclude apps, language per app, word exceptions, menu language.
+• Quit: menu → "Quit". AURA starts at login (can be turned off in the menu).
