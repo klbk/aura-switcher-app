@@ -2,7 +2,7 @@
 <html lang="uk">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>AURA Switcher</title><link rel="icon" href="icon.svg">
+<title>AURA Switcher</title><meta name="description" content=""><link rel="icon" href="icon.svg">
 <style>
 :root { --bg:#07080f; --card:rgba(255,255,255,.04); --line:rgba(255,255,255,.09); --text:#f4f5fb; --muted:#9aa0b8; --blue:#3b8cff; --yellow:#ffd500; }
 * { box-sizing:border-box; margin:0; }
@@ -104,6 +104,7 @@ kbd { font:inherit; font-size:13px; padding:1px 7px; border-radius:6px; border:1
 
 footer { padding:64px 0 48px; color:var(--muted); font-size:14px; }
 footer .wrap { display:flex; justify-content:space-between; align-items:center; gap:16px; flex-wrap:wrap; }
+.alt { max-width:820px; margin:0 auto; text-align:center; } .alt h2 { font-size:clamp(24px,3vw,32px); letter-spacing:-.02em; margin-bottom:12px; } .alt p { color:var(--muted); }
 .flag { display:inline-block; width:22px; height:15px; border-radius:3px; background:linear-gradient(#0057b7 50%,#ffd500 50%); vertical-align:-2px; margin-right:8px; }
 footer strong { color:var(--text); }
 
@@ -155,6 +156,10 @@ footer strong { color:var(--text); }
 </div></section>
 
 <section><div class="wrap">
+  <div class="card alt"><h2 data-t="altH"></h2><p data-t="altP"></p></div>
+</div></section>
+
+<section><div class="wrap">
   <h2 class="h2" data-t="pTitle"></h2>
   <div class="plat">
     <div class="card"><div class="os">macOS</div><ul data-t="pMac"></ul></div>
@@ -181,6 +186,7 @@ footer strong { color:var(--text); }
   <div><span data-t="foot"></span> · <a href="https://donatello.to/aura-switcher" target="_blank" rel="noopener">☕ <span data-t="donate"></span></a> · <a href="mailto:auraswitcher@gmail.com">✉︎ <span data-t="contact"></span></a> · <a href="https://github.com/klbk/aura-switcher-app" target="_blank" rel="noopener">GitHub</a></div>
 </div></footer>
 <script src="i18n-more.js"></script>
+<script src="seo.js"></script>
 <script src="shared.js"></script>
 </body>
 </html>

@@ -179,8 +179,11 @@ const CONTACT = { uk: "Написати нам", en: "Contact us", pl: "Napisz d
   it: "Scrivici", pt: "Fale connosco", tr: "Bize yazın", nl: "Mail ons", cs: "Napište nám", sv: "Skriv till oss", fi: "Kirjoita meille",
   ro: "Scrie-ne", hu: "Írj nekünk", el: "Γράψτε μας", bg: "Пишете ни", he: "כתבו לנו", ar: "راسلنا", hi: "हमें लिखें", ko: "문의하기" };
 for (const k in CONTACT) if (T[k]) T[k].contact = CONTACT[k];
+if (typeof SEO !== "undefined") for (const k in SEO) if (T[k]) Object.assign(T[k], SEO[k]);  // seo.js: title, description, "alternative to…"
 
 function detectLang() {
+  const page = document.documentElement.dataset.page;  // /<lang>/ pages show their own language
+  if (page && T[page]) return page;
   const saved = localStorage.getItem("lang");
   if (saved && T[saved]) return saved;
   for (const l of navigator.languages || [navigator.language]) {
@@ -195,6 +198,7 @@ let lang = detectLang();
 function setLang(l) {
   lang = l; localStorage.setItem("lang", l);
   document.documentElement.lang = l; document.documentElement.dir = T[l].dir || "ltr"; document.title = T[l].title;
+  const desc = document.querySelector('meta[name="description"]'); if (desc && T[l].desc) desc.content = T[l].desc;
   document.querySelectorAll("[data-t]").forEach(e => e.innerHTML = T[l][e.dataset.t]);
   const name = document.getElementById("langName"); if (name) name.textContent = T[l].name;
   document.querySelectorAll(".langlist button").forEach(b => b.classList.toggle("on", b.dataset.l === l));
@@ -205,7 +209,7 @@ if (picker) {
   const list = picker.querySelector(".langlist");
   list.innerHTML = Object.keys(T).map(k => `<button data-l="${k}" role="option">${T[k].name}</button>`).join("");
   picker.querySelector(".langbtn").onclick = e => { e.stopPropagation(); picker.classList.toggle("open"); };
-  list.onclick = e => { const b = e.target.closest("button"); if (b) { setLang(b.dataset.l); picker.classList.remove("open"); } };
+  list.onclick = e => { const b = e.target.closest("button"); if (b) { localStorage.setItem("lang", b.dataset.l); location.href = (document.documentElement.dataset.page ? "../" : "") + b.dataset.l + "/"; } };
   document.addEventListener("click", () => picker.classList.remove("open"));
   document.addEventListener("keydown", e => { if (e.key === "Escape") picker.classList.remove("open"); });
 }
