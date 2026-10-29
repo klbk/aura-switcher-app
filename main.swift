@@ -9,9 +9,10 @@ let kMagic: Int64 = 0x4B535754 // marks our own synthetic events
 func langName(_ code: String) -> String { Locale(identifier: uiCode()).localizedString(forLanguageCode: code)?.capitalized ?? code }
 
 /// A key press. `ch` is the character it actually produced (from the event), which tells which layout
-/// was really active — more reliable than asking the system from a background app. Not part of equality.
+/// was really active — more reliable than asking the system from a background app. `caps` (Caps Lock)
+/// uppercases letters only, not digits or symbols. Neither is part of equality.
 struct Key: Hashable {
-    let code: UInt16; let shift: Bool; var ch: Character? = nil
+    let code: UInt16; let shift: Bool; var caps = false; var ch: Character? = nil
     static func == (a: Key, b: Key) -> Bool { a.code == b.code && a.shift == b.shift }
     func hash(into h: inout Hasher) { h.combine(code); h.combine(shift) }
 }
@@ -46,7 +47,12 @@ final class Layout {
         }
     }
 
-    func text(_ keys: [Key]) -> String { String(keys.compactMap { toChar[$0] }) }
+    func text(_ keys: [Key]) -> String {
+        keys.reduce(into: "") { s, k in
+            guard let c = toChar[k] else { return }
+            if k.caps, c.isLetter { s += c.uppercased() } else { s.append(c) }
+        }
+    }
 }
 
 func loadLayouts() -> [Layout] {
@@ -99,6 +105,13 @@ func isGame(_ app: NSRunningApplication?) -> Bool {
     guard let url = app?.bundleURL, let cat = Bundle(url: url)?.object(forInfoDictionaryKey: "LSApplicationCategoryType") as? String
     else { return false }
     return cat.hasSuffix("games")
+}
+
+/// VS Code, JetBrains IDEs and others copy the whole current line when nothing is selected —
+/// a single line ending in a line break is that, not a selection to convert.
+func isCopiedLine(_ s: String) -> Bool {
+    guard s.last?.isNewline == true else { return false }  // "\r\n" is one Character in Swift
+    return !s.dropLast().contains(where: \.isNewline)
 }
 
 /// "хз, ща яж" → ["хз", "ща", "яж"]
@@ -292,7 +305,7 @@ final class Engine {
                 var buf = [UniChar](repeating: 0, count: 4)
                 e.keyboardGetUnicodeString(maxStringLength: 4, actualStringLength: &len, unicodeString: &buf)
                 let ch = len == 1 ? Unicode.Scalar(buf[0]).map(Character.init) : nil
-                word.append(Key(code: code, shift: f.contains(.maskShift) || f.contains(.maskAlphaShift), ch: ch))
+                word.append(Key(code: code, shift: f.contains(.maskShift), caps: f.contains(.maskAlphaShift), ch: ch))
             } else { reset() }
         }
     }
@@ -357,7 +370,7 @@ final class Engine {
         let keys = word.isEmpty ? lastWord : word
         if !keys.isEmpty { cycleWord(keys, trailing: word.isEmpty ? trailing : 0); return }
         clipboardSelection { sel in
-            if let sel, !sel.isEmpty { self.convertSelection(sel) } else { self.cycleLayout() }
+            if let sel, !sel.isEmpty, !isCopiedLine(sel) { self.convertSelection(sel) } else { self.cycleLayout() }
         }
     }
 
@@ -403,16 +416,28 @@ final class Engine {
         return sel as? String
     }
 
+    /// Copies the selection with ⌘C and puts the user's clipboard back exactly as it was
+    /// (every item and type: images, files, rich text — not only plain text).
     func clipboardSelection(_ done: @escaping (String?) -> Void) {
         let pb = NSPasteboard.general
-        let saved = pb.string(forType: .string), count = pb.changeCount
-        postKey(8, flags: .maskCommand) // ⌘C
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.12) {
-            let changed = pb.changeCount != count
-            let s = changed ? pb.string(forType: .string) : nil
-            if changed { pb.clearContents(); if let saved { pb.setString(saved, forType: .string) } }
-            done(s)
+        let saved: [NSPasteboardItem] = (pb.pasteboardItems ?? []).map { item in
+            let copy = NSPasteboardItem()
+            for t in item.types { if let d = item.data(forType: t) { copy.setData(d, forType: t) } }
+            return copy
         }
+        let count = pb.changeCount
+        func restore() { pb.clearContents(); if !saved.isEmpty { pb.writeObjects(saved) } }
+        postKey(8, flags: .maskCommand) // ⌘C
+        // slow apps may copy late: wait up to 0.4 s, and if the copy lands even later, still restore
+        func poll(_ left: Int) {
+            if pb.changeCount != count {
+                let s = pb.string(forType: .string); restore(); done(s); return
+            }
+            if left > 0 { DispatchQueue.main.asyncAfter(deadline: .now() + 0.02) { poll(left - 1) }; return }
+            done(nil)
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) { if pb.changeCount == count + 1 { restore() } }
+        }
+        poll(20)
     }
 
     // MARK: synthetic input

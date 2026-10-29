@@ -145,13 +145,23 @@ static const wchar_t* L_(const wchar_t* en, const wchar_t* uk) {
 
 // MARK: - Layouts
 
-struct Key { BYTE vk; bool shift; bool operator<(const Key& o) const { return vk != o.vk ? vk < o.vk : shift < o.shift; } bool operator==(const Key& o) const { return vk == o.vk && shift == o.shift; } };
+// caps (Caps Lock) only flips the case of letters, not digits or symbols; not part of comparison
+struct Key { BYTE vk; bool shift; bool caps = false; bool operator<(const Key& o) const { return vk != o.vk ? vk < o.vk : shift < o.shift; } bool operator==(const Key& o) const { return vk == o.vk && shift == o.shift; } };
 
 struct Layout {
     HKL hkl; wstring locale;  // e.g. "uk-UA"
     std::map<Key, wchar_t> toChar;
     std::map<wchar_t, Key> toKey;
-    wstring text(const vector<Key>& keys) const { wstring s; for (auto& k : keys) { auto it = toChar.find(k); if (it != toChar.end()) s += it->second; } return s; }
+    wstring text(const vector<Key>& keys) const {
+        wstring s;
+        for (auto& k : keys) {
+            auto it = toChar.find(k); if (it == toChar.end()) continue;
+            wchar_t c = it->second;
+            if (k.caps && IsCharAlphaW(c)) c = k.shift ? towlower(c) : towupper(c);  // Windows: Caps+Shift → lowercase
+            s += c;
+        }
+        return s;
+    }
     wstring code() const;
 };
 
@@ -281,7 +291,7 @@ static LRESULT CALLBACK kbHook(int code, WPARAM wp, LPARAM lp) {
         if (trailing > 0 || !lastWord.empty()) { lastWord.clear(); trailing = 0; }
         bool shift = (GetAsyncKeyState(VK_SHIFT) & 0x8000) != 0;
         bool caps = (GetKeyState(VK_CAPITAL) & 1) != 0;
-        word.push_back({vk, (vk >= 'A' && vk <= 'Z') ? (shift != caps) : shift});
+        word.push_back({vk, shift, caps});
     } else resetState();
     return CallNextHookEx(nullptr, code, wp, lp);
 }
@@ -380,26 +390,61 @@ static bool clipboardText(wstring& out) {
     CloseClipboard();
     return ok;
 }
-static void setClipboardText(const wstring& s) {
+// The user's clipboard, every format (text, rich text, images as DIB, files), to put back after ⌘C.
+struct ClipFormat { UINT fmt; vector<BYTE> data; };
+static vector<ClipFormat> saveClipboard() {
+    vector<ClipFormat> r;
+    if (!OpenClipboard(hwndMain)) return r;
+    for (UINT f = EnumClipboardFormats(0); f; f = EnumClipboardFormats(f)) {
+        // GDI handles and private formats aren't plain memory; images survive as CF_DIB/CF_DIBV5
+        if (f == CF_BITMAP || f == CF_METAFILEPICT || f == CF_PALETTE || f == CF_ENHMETAFILE || f == CF_OWNERDISPLAY ||
+            f == CF_DSPBITMAP || f == CF_DSPMETAFILEPICT || f == CF_DSPENHMETAFILE || (f >= CF_PRIVATEFIRST && f <= CF_GDIOBJLAST)) continue;
+        HANDLE h = GetClipboardData(f); if (!h) continue;
+        SIZE_T n = GlobalSize(h); auto* p = (const BYTE*)GlobalLock(h);
+        if (!p) continue;
+        if (n) r.push_back({f, vector<BYTE>(p, p + n)});
+        GlobalUnlock(h);
+    }
+    CloseClipboard();
+    return r;
+}
+static void restoreClipboard(const vector<ClipFormat>& saved) {
     if (!OpenClipboard(hwndMain)) return;
     EmptyClipboard();
-    HGLOBAL g = GlobalAlloc(GMEM_MOVEABLE, (s.size() + 1) * sizeof(wchar_t));
-    if (g) { memcpy(GlobalLock(g), s.c_str(), (s.size() + 1) * sizeof(wchar_t)); GlobalUnlock(g); SetClipboardData(CF_UNICODETEXT, g); }
+    for (auto& c : saved) {
+        HGLOBAL g = GlobalAlloc(GMEM_MOVEABLE, c.data.size()); if (!g) continue;
+        memcpy(GlobalLock(g), c.data.data(), c.data.size()); GlobalUnlock(g);
+        if (!SetClipboardData(c.fmt, g)) GlobalFree(g);
+    }
     CloseClipboard();
 }
+enum { TIMER_TRAY = 1, TIMER_LATE_CLIP = 2 };
+static vector<ClipFormat> lateClip; static DWORD lateClipSeq = 0;  // copy that may still land after we gave up
+
 static bool copySelection(wstring& sel) {
-    wstring saved; bool hadText = clipboardText(saved);
+    vector<ClipFormat> saved = saveClipboard();
     DWORD before = GetClipboardSequenceNumber();
     INPUT in[4] = {};
     for (int i = 0; i < 4; i++) { in[i].type = INPUT_KEYBOARD; in[i].ki.dwExtraInfo = kMagic; }
     in[0].ki.wVk = VK_CONTROL; in[1].ki.wVk = 'C'; in[2].ki.wVk = 'C'; in[2].ki.dwFlags = KEYEVENTF_KEYUP; in[3].ki.wVk = VK_CONTROL; in[3].ki.dwFlags = KEYEVENTF_KEYUP;
     SendInput(4, in, sizeof(INPUT));
-    for (int i = 0; i < 15 && GetClipboardSequenceNumber() == before; i++) Sleep(10);
-    if (GetClipboardSequenceNumber() == before) return false;
+    for (int i = 0; i < 40 && GetClipboardSequenceNumber() == before; i++) Sleep(10);
+    if (GetClipboardSequenceNumber() == before) {  // slow app: if the copy lands later, still put the clipboard back
+        lateClip = std::move(saved); lateClipSeq = before; SetTimer(hwndMain, TIMER_LATE_CLIP, 600, nullptr);
+        return false;
+    }
     Sleep(20);
     bool ok = clipboardText(sel);
-    if (hadText) setClipboardText(saved);
+    restoreClipboard(saved);
     return ok && !sel.empty();
+}
+
+// VS Code, JetBrains IDEs and others copy the whole current line when nothing is selected —
+// a single line ending in a line break is that, not a selection to convert.
+static bool isCopiedLine(const wstring& s) {
+    if (s.empty() || s.back() != L'\n') return false;
+    size_t end = s.size() - 1; if (end && s[end - 1] == L'\r') end--;
+    return s.find_first_of(L"\r\n") == end;
 }
 
 static void cycleLayout() { if (!layouts.empty()) selectLayout(layouts[(layoutIndex(fgLayout()) + 1) % layouts.size()]); }
@@ -467,7 +512,7 @@ static void onDoubleShift(Snapshot* s) {
         return;
     }
     wstring sel;
-    if (copySelection(sel)) convertSelection(sel); else cycleLayout();
+    if (copySelection(sel) && !isCopiedLine(sel)) convertSelection(sel); else cycleLayout();
 }
 
 static void onAuto(Snapshot* s) {
@@ -752,7 +797,14 @@ static bool fullscreenGame() {
     if (!fg || fg == GetShellWindow() || fg == GetDesktopWindow()) return false;
     wchar_t cls[32]; GetClassNameW(fg, cls, 32);
     if (!wcscmp(cls, L"WorkerW") || !wcscmp(cls, L"Progman")) return false;
-    if (GetWindowLongW(fg, GWL_STYLE) & WS_CAPTION) return false;
+    // games are captionless, non-resizable and not "maximized"; apps with their own title bar (VS Code,
+    // Discord) keep a resizable frame, so a maximized one with an auto-hidden taskbar isn't taken for a game
+    LONG style = GetWindowLongW(fg, GWL_STYLE);
+    if ((style & (WS_CAPTION | WS_THICKFRAME)) || IsZoomed(fg)) return false;
+    // a browser in full screen (F11, video) is still a place to type
+    static const wchar_t* const browsers[] = {L"chrome.exe", L"msedge.exe", L"firefox.exe", L"brave.exe", L"opera.exe", L"vivaldi.exe"};
+    wstring exe = fgExe();
+    for (auto b : browsers) if (!_wcsicmp(exe.c_str(), b)) return false;
     RECT w; MONITORINFO mi = {sizeof(mi)};
     if (!GetWindowRect(fg, &w) || !GetMonitorInfoW(MonitorFromWindow(fg, MONITOR_DEFAULTTONEAREST), &mi)) return false;
     return w.left <= mi.rcMonitor.left && w.top <= mi.rcMonitor.top && w.right >= mi.rcMonitor.right && w.bottom >= mi.rcMonitor.bottom;
@@ -809,7 +861,13 @@ static LRESULT CALLBACK wndProc(HWND h, UINT msg, WPARAM wp, LPARAM lp) {
         return 0;
     case WM_AUTO: { auto* s = (Snapshot*)lp; if (active) onAuto(s); delete s; return 0; }
     case WM_DSHIFT: { auto* s = (Snapshot*)lp; if (active) onDoubleShift(s); delete s; return 0; }
-    case WM_TIMER: refreshActive(); updateTray(); return 0;
+    case WM_TIMER:
+        if (wp == TIMER_LATE_CLIP) {
+            KillTimer(h, TIMER_LATE_CLIP);
+            if (GetClipboardSequenceNumber() != lateClipSeq) restoreClipboard(lateClip);
+            lateClip.clear(); return 0;
+        }
+        refreshActive(); updateTray(); return 0;
     case WM_INPUTLANGCHANGE: case WM_SETTINGCHANGE: layouts = loadLayouts(); warmUpDictionaries(); updateTray(true); return 0;
     case WM_DESTROY: PostQuitMessage(0); return 0;
     }
@@ -843,7 +901,7 @@ int WINAPI wWinMain(HINSTANCE inst, HINSTANCE, PWSTR, int) {
     updateTray(true);
 
     SetWinEventHook(EVENT_SYSTEM_FOREGROUND, EVENT_SYSTEM_FOREGROUND, nullptr, onForeground, 0, 0, WINEVENT_OUTOFCONTEXT);
-    SetTimer(hwndMain, 1, 300, nullptr);  // tray language code follows the active layout
+    SetTimer(hwndMain, TIMER_TRAY, 300, nullptr);  // tray language code follows the active layout
     CreateThread(nullptr, 0, hookThread, nullptr, 0, nullptr);
 
     MSG m;
