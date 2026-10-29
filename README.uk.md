@@ -89,7 +89,7 @@ AURA використовує **всі розкладки, увімкнені в
 
 ## Windows (бета, перевірена на Windows x64)
 
-- Windows 10/11, x64 і ARM64 (ARM64 ще не перевірена). Архіви: `~/Repo/aura-switcher/dist/AURA-Switcher-0.6.1-windows-x64.zip` (звичайні ПК, ~210 КБ) і `AURA-Switcher-0.6.1-windows-arm64.zip` (ноутбуки на ARM: Snapdragon, Surface Pro X). Встановлення не потрібне — скопіюйте `AURA Switcher.exe` куди завгодно й запустіть.
+- Windows 10/11, x64 і ARM64 (ARM64 ще не перевірена). Архіви: `~/Repo/aura-switcher/dist/AURA-Switcher-0.7-windows-x64.zip` (звичайні ПК, ~210 КБ) і `AURA-Switcher-0.7-windows-arm64.zip` (ноутбуки на ARM: Snapdragon, Surface Pro X). Встановлення не потрібне — скопіюйте `AURA Switcher.exe` куди завгодно й запустіть.
 - Збірка на Mac: `~/Repo/aura-switcher/windows/build.sh` (потрібен Zig, лежить у `~/.local/zig`).
 - Ті самі функції й меню, що на Mac. Іконка в треї показує код мови: жовті літери на синій заокругленій плитці (сіра — вимкнено), малюється точно під розмір трею, тож не розмивається.
   ![tray](docs/tray-preview.png) Клік по іконці — меню.

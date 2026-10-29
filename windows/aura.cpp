@@ -26,7 +26,7 @@
 #include <string>
 #include <vector>
 
-#define APP_VERSION L"0.6.1"
+#define APP_VERSION L"0.7"
 #ifndef BUILD_TIME
 #define BUILD_TIME 0  // build.sh passes the build date (seconds since 1970)
 #endif

@@ -3,7 +3,7 @@
 const T = {
   uk: {
     name: "Українська", title: "AURA Switcher — розкладка виправляється сама",
-    badge: "Бета 0.6.1 · безкоштовно · без реєстрації",
+    badge: "Бета 0.7 · безкоштовно · без реєстрації",
     h1: "Пишіть.<br>Розкладку <span class=\"hl\">AURA</span> виправить сама",
     lead: "Набрали «ghbdsn» замість «привіт»? AURA помітить і виправить одразу після пробілу. Для macOS і Windows.",
     dlMac: "Завантажити для Mac", dlWin: "Для Windows",
@@ -27,7 +27,7 @@ const T = {
   },
   en: {
     name: "English", title: "AURA Switcher — your keyboard layout fixes itself",
-    badge: "Beta 0.6.1 · free · no sign-up",
+    badge: "Beta 0.7 · free · no sign-up",
     h1: "Just type.<br><span class=\"hl\">AURA</span> fixes the layout",
     lead: "Typed “ghbdsn” instead of “привіт”? AURA notices and fixes it right after Space. For macOS and Windows.",
     dlMac: "Download for Mac", dlWin: "For Windows",
@@ -51,7 +51,7 @@ const T = {
   },
   pl: {
     name: "Polski", title: "AURA Switcher — układ klawiatury poprawia się sam",
-    badge: "Beta 0.6.1 · za darmo · bez rejestracji",
+    badge: "Beta 0.7 · za darmo · bez rejestracji",
     h1: "Po prostu pisz.<br><span class=\"hl\">AURA</span> poprawi układ",
     lead: "Wpisałeś „ghbdsn” zamiast „привіт”? AURA to zauważy i poprawi zaraz po spacji. Dla macOS i Windows.",
     dlMac: "Pobierz na Maca", dlWin: "Na Windows",
@@ -75,7 +75,7 @@ const T = {
   },
   de: {
     name: "Deutsch", title: "AURA Switcher — das Tastaturlayout korrigiert sich selbst",
-    badge: "Beta 0.6.1 · kostenlos · ohne Anmeldung",
+    badge: "Beta 0.7 · kostenlos · ohne Anmeldung",
     h1: "Einfach tippen.<br><span class=\"hl\">AURA</span> korrigiert das Layout",
     lead: "„ghbdsn“ statt „привіт“ getippt? AURA bemerkt es und korrigiert es direkt nach der Leertaste. Für macOS und Windows.",
     dlMac: "Für Mac laden", dlWin: "Für Windows",
@@ -99,7 +99,7 @@ const T = {
   },
   es: {
     name: "Español", title: "AURA Switcher — la distribución del teclado se corrige sola",
-    badge: "Beta 0.6.1 · gratis · sin registro",
+    badge: "Beta 0.7 · gratis · sin registro",
     h1: "Solo escribe.<br><span class=\"hl\">AURA</span> corrige la distribución",
     lead: "¿Escribiste «ghbdsn» en lugar de «привіт»? AURA lo detecta y lo corrige justo después del espacio. Para macOS y Windows.",
     dlMac: "Descargar para Mac", dlWin: "Para Windows",
@@ -123,7 +123,7 @@ const T = {
   },
   fr: {
     name: "Français", title: "AURA Switcher — la disposition du clavier se corrige toute seule",
-    badge: "Bêta 0.6.1 · gratuit · sans inscription",
+    badge: "Bêta 0.7 · gratuit · sans inscription",
     h1: "Tapez, tout simplement.<br><span class=\"hl\">AURA</span> corrige la disposition",
     lead: "Vous avez tapé « ghbdsn » au lieu de « привіт » ? AURA le remarque et corrige juste après l’espace. Pour macOS et Windows.",
     dlMac: "Télécharger pour Mac", dlWin: "Pour Windows",
