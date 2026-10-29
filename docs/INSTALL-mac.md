@@ -4,7 +4,7 @@
 
 Requires macOS 13 or later (Apple Silicon or Intel).
 
-1. **Unzip** `AURA-Switcher-0.4.zip` (double-click).
+1. **Unzip** `AURA-Switcher-mac.zip` (double-click).
 2. **Drag AURA** into Applications.
 3. **Open AURA.** If macOS says the developer can't be verified, click "Done", then open System Settings → Privacy & Security → "Open Anyway" at the bottom.
    If macOS says the app is "damaged", run in Terminal: `xattr -cr "/Applications/AURA Switcher.app"` and open it again.

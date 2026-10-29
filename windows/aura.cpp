@@ -25,7 +25,7 @@
 #include <string>
 #include <vector>
 
-#define APP_VERSION L"0.6"
+#define APP_VERSION L"0.6.1"
 
 using std::wstring;
 using std::vector;
