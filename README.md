@@ -54,7 +54,7 @@ The icon shows the current language: `EN`, `УК`, `РУ`… — each language i
 - **Exclusions / Language bindings** — lists; click an item to remove it.
 - **Word exceptions…** — your words AURA never auto-corrects (slang like «хз», «ща», «яж»). Comma-separated; double ⇧ still works on them.
 - **Launch at login**.
-- **Menu language** — System / English / Українська. "System": Ukrainian or Russian system → Ukrainian, any other → English.
+- **Menu language** — System or one of 21 languages (same as the site). "System" follows the OS language; Russian → Ukrainian; a language not in the list → English.
 - **Quit**.
 
 ## Install and run
@@ -88,7 +88,7 @@ Archive for other Macs: `~/Repo/aura-switcher/build.sh --release` → `dist/AURA
 
 ## Windows (beta, tested on Windows x64)
 
-- Windows 10/11, x64 and ARM64 (ARM64 not tested yet). Archives: `~/Repo/aura-switcher/dist/AURA-Switcher-0.5-windows-x64.zip` (regular PCs, ~190 KB) and `AURA-Switcher-0.5-windows.zip` (both builds, `x64` and `arm64` folders). No installer — copy `AURA Switcher.exe` anywhere and run it.
+- Windows 10/11, x64 and ARM64 (ARM64 not tested yet). Archives: `~/Repo/aura-switcher/dist/AURA-Switcher-0.6-windows-x64.zip` (regular PCs, ~190 KB) and `AURA-Switcher-0.6-windows.zip` (both builds, `x64` and `arm64` folders). No installer — copy `AURA Switcher.exe` anywhere and run it.
 - Build on a Mac: `~/Repo/aura-switcher/windows/build.sh` (needs Zig, located in `~/.local/zig`).
 - Same features and menu as on Mac. The tray icon shows the language code: yellow letters on a rounded blue tile (grey — disabled), drawn at the exact tray size so it stays sharp.
   ![tray](docs/tray-preview.png) Click the icon for the menu.

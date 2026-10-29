@@ -1,0 +1,24 @@
+AURA Switcher 0.4 — made in Ukraine 🇺🇦
+Fixes text typed in the wrong keyboard layout: ghbdtn → привіт.
+Requires macOS 13 or later.
+
+INSTALL
+1. Drag AURA Switcher into Applications.
+2. Open AURA Switcher. If macOS says the developer can't be verified:
+   click "Done", then System Settings → Privacy & Security →
+   "Open Anyway" at the bottom.
+   If macOS says the app is "damaged", run in Terminal:
+   xattr -cr "/Applications/AURA Switcher.app"
+   and open AURA Switcher again.
+3. System Settings → Privacy & Security → Accessibility → enable AURA Switcher.
+
+HOW TO USE
+• Typed a word in the wrong layout — press Space, AURA Switcher fixes it.
+• Press Shift twice quickly — the last word or the selected text
+  is converted to another layout.
+• Click the language code in the menu bar (EN, УК, РУ) for the menu: turn off,
+  sound, exclude apps, language per app, word exceptions, menu language.
+• Quit: menu → "Quit". AURA Switcher starts at login (can be turned off in the menu).
+• Like it? Support: https://donatello.to/aura-switcher ☕
+Open source: https://github.com/klbk/aura-switcher-app
+Found a bug? Tell us at auraswitcher@gmail.com what happened and in which app.
