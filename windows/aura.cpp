@@ -39,10 +39,13 @@ enum { ID_ENABLED = 1, ID_AUTO, ID_SOUND, ID_WORDS, ID_DONATE, ID_REPORT, ID_EXC
 
 static const wchar_t* kRegKey = L"Software\\AURA";
 
-static wstring regGet(const wchar_t* name, const wstring& def) {
-    wchar_t buf[4096]; DWORD sz = sizeof(buf);
-    if (RegGetValueW(HKEY_CURRENT_USER, kRegKey, name, RRF_RT_REG_SZ, nullptr, buf, &sz) == ERROR_SUCCESS) return buf;
-    return def;
+static wstring regGet(const wchar_t* name, const wstring& def) {  // any length: ask the size first
+    DWORD sz = 0;
+    if (RegGetValueW(HKEY_CURRENT_USER, kRegKey, name, RRF_RT_REG_SZ, nullptr, nullptr, &sz) != ERROR_SUCCESS || sz < sizeof(wchar_t)) return def;
+    wstring buf(sz / sizeof(wchar_t), L'\0');
+    if (RegGetValueW(HKEY_CURRENT_USER, kRegKey, name, RRF_RT_REG_SZ, nullptr, buf.data(), &sz) != ERROR_SUCCESS) return def;
+    buf.resize(wcslen(buf.c_str()));
+    return buf;
 }
 static void regSet(const wchar_t* name, const wstring& v) {
     HKEY k;
@@ -219,7 +222,8 @@ static HKL fgLayout() {
     return GetKeyboardLayout(GetWindowThreadProcessId(fg, nullptr));
 }
 static int layoutIndex(HKL h) {
-    for (size_t i = 0; i < layouts.size(); i++) if (LOWORD((UINT_PTR)layouts[i].hkl) == LOWORD((UINT_PTR)h)) return int(i);
+    // layouts are one per language (en-US and en-GB merged), so match by language, not by full LANGID
+    for (size_t i = 0; i < layouts.size(); i++) if (PRIMARYLANGID(LOWORD((UINT_PTR)layouts[i].hkl)) == PRIMARYLANGID(LOWORD((UINT_PTR)h))) return int(i);
     return 0;
 }
 static void selectLayout(const Layout& l) {
@@ -322,7 +326,10 @@ static void sendKey(WORD vk, bool shift = false) {
 static void typeText(const wstring& s) {
     vector<INPUT> in;
     for (wchar_t c : s) for (int up = 0; up < 2; up++) {
-        INPUT i{}; i.type = INPUT_KEYBOARD; i.ki.wScan = c; i.ki.dwFlags = KEYEVENTF_UNICODE | (up ? KEYEVENTF_KEYUP : 0); i.ki.dwExtraInfo = kMagic; in.push_back(i);
+        INPUT i{}; i.type = INPUT_KEYBOARD; i.ki.dwExtraInfo = kMagic;
+        if (c == L'\n' || c == L'\r') { i.ki.wVk = VK_RETURN; i.ki.dwFlags = up ? KEYEVENTF_KEYUP : 0; }  // line break = Enter
+        else { i.ki.wScan = c; i.ki.dwFlags = KEYEVENTF_UNICODE | (up ? KEYEVENTF_KEYUP : 0); }
+        in.push_back(i);
     }
     if (!in.empty()) SendInput(UINT(in.size()), in.data(), sizeof(INPUT));
 }
@@ -382,8 +389,9 @@ static int autoFixTarget(const vector<Key>& keys) {
 
 static wstring lastSelOut; static int lastSelLang = 0;
 
+static bool openClipboard() { for (int i = 0; i < 10; i++) { if (OpenClipboard(hwndMain)) return true; Sleep(10); } return false; }
 static bool clipboardText(wstring& out) {
-    if (!OpenClipboard(hwndMain)) return false;
+    if (!openClipboard()) return false;
     HANDLE h = GetClipboardData(CF_UNICODETEXT);
     bool ok = false;
     if (h) { auto* p = (const wchar_t*)GlobalLock(h); if (p) { out = p; ok = true; GlobalUnlock(h); } }
@@ -394,7 +402,7 @@ static bool clipboardText(wstring& out) {
 struct ClipFormat { UINT fmt; vector<BYTE> data; };
 static vector<ClipFormat> saveClipboard() {
     vector<ClipFormat> r;
-    if (!OpenClipboard(hwndMain)) return r;
+    if (!openClipboard()) return r;
     for (UINT f = EnumClipboardFormats(0); f; f = EnumClipboardFormats(f)) {
         // GDI handles and private formats aren't plain memory; images survive as CF_DIB/CF_DIBV5
         if (f == CF_BITMAP || f == CF_METAFILEPICT || f == CF_PALETTE || f == CF_ENHMETAFILE || f == CF_OWNERDISPLAY ||
@@ -409,7 +417,7 @@ static vector<ClipFormat> saveClipboard() {
     return r;
 }
 static void restoreClipboard(const vector<ClipFormat>& saved) {
-    if (!OpenClipboard(hwndMain)) return;
+    if (!openClipboard()) return;
     EmptyClipboard();
     for (auto& c : saved) {
         HGLOBAL g = GlobalAlloc(GMEM_MOVEABLE, c.data.size()); if (!g) continue;
@@ -447,11 +455,19 @@ static bool isCopiedLine(const wstring& s) {
     return s.find_first_of(L"\r\n") == end;
 }
 
+// cmd / PowerShell (conhost), Windows Terminal, Git Bash (mintty): Ctrl+C without a selection is an interrupt
+static bool fgIsConsole() {
+    wchar_t cls[64] = L""; GetClassNameW(GetForegroundWindow(), cls, 64);
+    return !wcscmp(cls, L"ConsoleWindowClass") || !wcscmp(cls, L"CASCADIA_HOSTING_WINDOW_CLASS") || !wcscmp(cls, L"mintty");
+}
 static void cycleLayout() { if (!layouts.empty()) selectLayout(layouts[(layoutIndex(fgLayout()) + 1) % layouts.size()]); }
 
-static void convertSelection(const wstring& text) {
+static void convertSelection(wstring text) {
+    if (layouts.empty()) return;
+    // clipboard line breaks are \r\n; typed as two characters they become two line breaks
+    for (size_t i; (i = text.find(L"\r\n")) != wstring::npos;) text.erase(i, 1);
     int src;
-    if (text == lastSelOut) src = lastSelLang;
+    if (text == lastSelOut && lastSelLang < int(layouts.size())) src = lastSelLang;
     else {
         int cur = layoutIndex(fgLayout()), best = cur, bestScore = -1;
         for (size_t i = 0; i < layouts.size(); i++) {
@@ -469,7 +485,7 @@ static void convertSelection(const wstring& text) {
         out += r;
     }
     typeText(out);
-    for (size_t i = 0; i < out.size(); i++) sendKey(VK_LEFT, true);  // reselect
+    for (wchar_t c : out) if (!IS_LOW_SURROGATE(c)) sendKey(VK_LEFT, true);  // reselect: ⇧← moves by character, not wchar_t
     lastSelOut = out; lastSelLang = dst;
     selectLayout(layouts[dst]);
 }
@@ -511,6 +527,7 @@ static void onDoubleShift(Snapshot* s) {
         selectLayout(n);
         return;
     }
+    if (fgIsConsole()) { cycleLayout(); return; }  // Ctrl+C there would interrupt the running command
     wstring sel;
     if (copySelection(sel) && !isCopiedLine(sel)) convertSelection(sel); else cycleLayout();
 }
@@ -817,9 +834,10 @@ static void refreshActive() {
 }
 
 static void CALLBACK onForeground(HWINEVENTHOOK, DWORD, HWND, LONG, LONG, DWORD, DWORD) {
-    wstring prev = curExe;
+    static wstring seenExe;  // own copy: the 300 ms timer also refreshes curExe and could hide the switch
     refreshActive();
-    if (curExe == prev) return;
+    if (curExe == seenExe) return;
+    seenExe = curExe;
     resetReq = true;
     static const wstring self = [] { wchar_t p[MAX_PATH]; GetModuleFileNameW(nullptr, p, MAX_PATH); wstring s = p; return s.substr(s.find_last_of(L'\\') + 1); }();
     if (!curExe.empty() && _wcsicmp(curExe.c_str(), self.c_str()) && _wcsicmp(curExe.c_str(), L"explorer.exe")) {
@@ -868,7 +886,13 @@ static LRESULT CALLBACK wndProc(HWND h, UINT msg, WPARAM wp, LPARAM lp) {
             lateClip.clear(); return 0;
         }
         refreshActive(); updateTray(); return 0;
-    case WM_INPUTLANGCHANGE: case WM_SETTINGCHANGE: layouts = loadLayouts(); warmUpDictionaries(); updateTray(true); return 0;
+    case WM_INPUTLANGCHANGE: case WM_SETTINGCHANGE: {  // sent for any system setting: reload only if the list changed
+        static vector<HKL> known;
+        HKL list[64]; int n = GetKeyboardLayoutList(64, list);
+        vector<HKL> now(list, list + std::max(n, 0));
+        if (now != known) { known = now; layouts = loadLayouts(); lastSelOut.clear(); warmUpDictionaries(); }
+        updateTray(true); return 0;
+    }
     case WM_DESTROY: PostQuitMessage(0); return 0;
     }
     if (msg == WM_TASKBARCREATED) { Shell_NotifyIconW(NIM_ADD, &nid); updateTray(true); return 0; }

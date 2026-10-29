@@ -313,11 +313,11 @@ final class Engine {
     func autoCorrect(_ keys: [Key]) {
         // user kept typing meanwhile — skip
         guard lastWord == keys, word.isEmpty, trailing == 1, let fix = autoFix(keys) else { return }
-        let out = fix.layout.text(keys)
+        let out = fix.text(keys)
         let typed = typedLayout(keys)?.text(keys)
         // UK/RU word spelled the same in both layouts: text is already right, only switch the layout
         if out != typed { replace(count: keys.count + 1, with: out + " ") }
-        select(fix.layout)
+        select(fix)
         Sounds.play(Sounds.auto)
     }
 
@@ -345,7 +345,7 @@ final class Engine {
         return matches.first ?? sys
     }
 
-    func autoFix(_ keys: [Key]) -> (layout: Layout, Void)? {
+    func autoFix(_ keys: [Key]) -> Layout? {
         guard keys.count >= 2, let cur = typedLayout(keys) else { return nil }
         let typed = cur.text(keys)
         if settings.words.contains(typed.lowercased()) || isWord(typed, cur.lang) { return nil }
@@ -357,7 +357,7 @@ final class Engine {
             // Cyrillic UK/RU differ in few keys but that's exactly what users mix up, so they're allowed.
             let same = zip(t, typed).filter { $0 == $1 }.count
             if isLatin(t), isLatin(typed), same * 2 > keys.count { continue }
-            if t.count == keys.count, isWord(t, l.lang) { return (l, ()) }
+            if t.count == keys.count, isWord(t, l.lang) { return l }
         }
         return nil
     }
@@ -389,7 +389,7 @@ final class Engine {
     func convertSelection(_ text: String) {
         guard !layouts.isEmpty else { return }
         var srcIdx: Int
-        if text == lastSelOut { srcIdx = lastSelLang } else {
+        if text == lastSelOut, lastSelLang < layouts.count { srcIdx = lastSelLang } else {
             let cur = index(currentLang())
             let scores = layouts.map { l in text.filter { l.toKey[$0] != nil && $0.isLetter }.count }
             srcIdx = scores.indices.max { a, b in
@@ -399,7 +399,7 @@ final class Engine {
         let srcL = layouts[srcIdx], dstIdx = (srcIdx + 1) % layouts.count, dst = layouts[dstIdx]
         let out = String(text.map { c in srcL.toKey[c].flatMap { dst.toChar[$0] } ?? c })
         typeText(out)
-        for _ in 0..<out.utf16.count { postKey(123, flags: .maskShift) } // reselect
+        for _ in 0..<out.count { postKey(123, flags: .maskShift) } // reselect (⇧← moves by character)
         lastSelOut = out; lastSelLang = dstIdx
         select(dst)
     }
@@ -471,6 +471,16 @@ final class Engine {
     }
 }
 
+// single instance: a second copy would double every correction. Two copies started at the same moment
+// (login item + manual launch) see each other — the earliest launched (then the lowest pid) stays.
+let me = NSRunningApplication.current
+func launchedBefore(_ a: NSRunningApplication, _ b: NSRunningApplication) -> Bool {
+    let da = a.launchDate ?? .distantFuture, db = b.launchDate ?? .distantFuture
+    return da != db ? da < db : a.processIdentifier < b.processIdentifier
+}
+if NSRunningApplication.runningApplications(withBundleIdentifier: Bundle.main.bundleIdentifier ?? "")
+    .contains(where: { $0 != me && launchedBefore($0, me) }) { exit(0) }
+
 let engine = Engine()
 
 // MARK: - App / menu
@@ -494,7 +504,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         DistributedNotificationCenter.default().addObserver(forName: NSNotification.Name(kTISNotifySelectedKeyboardInputSourceChanged as String),
                                                             object: nil, queue: .main) { _ in self.updateTitle() }
         DistributedNotificationCenter.default().addObserver(forName: NSNotification.Name(kTISNotifyEnabledKeyboardInputSourcesChanged as String),
-                                                            object: nil, queue: .main) { _ in engine.layouts = loadLayouts(); engine.codes = engine.allCodes; engine.warmUpDictionaries() }
+                                                            object: nil, queue: .main) { _ in engine.layouts = loadLayouts(); engine.codes = engine.allCodes; engine.lastSelOut = nil; engine.warmUpDictionaries() }
         NSWorkspace.shared.notificationCenter.addObserver(forName: NSWorkspace.didActivateApplicationNotification,
                                                           object: nil, queue: .main) { note in
             guard let app = note.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication,
@@ -639,11 +649,6 @@ final class ClosureItem: NSMenuItem {
     required init(coder: NSCoder) { fatalError() }
     @objc func run() { handler?() }
 }
-
-// single instance: a second copy would double every correction
-let me = NSRunningApplication.current
-if NSRunningApplication.runningApplications(withBundleIdentifier: Bundle.main.bundleIdentifier ?? "")
-    .contains(where: { $0 != me }) { exit(0) }
 
 let app = NSApplication.shared
 let delegate = AppDelegate()
