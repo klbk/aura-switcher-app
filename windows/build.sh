@@ -5,7 +5,7 @@ set -e
 cd "$(dirname "$0")"
 NAME="AURA Switcher"
 FILE=AURA-Switcher
-VERSION=0.4
+VERSION=0.5
 ZIG=${ZIG:-$HOME/.local/bin/zig}
 rm -rf build && mkdir -p build/x64 build/arm64 ../dist
 for T in x86_64:x64 aarch64:arm64; do

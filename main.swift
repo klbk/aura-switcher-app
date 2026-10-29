@@ -93,6 +93,14 @@ final class Settings {
     var words: [String] { get { d.stringArray(forKey: "words") ?? [] } set { d.set(newValue, forKey: "words") } }
 }
 
+/// Games (App Store category "Games" and its subcategories): double ⇧ is often sprint there, and a
+/// full-screen game hides the menu bar, so the app can't be excluded by hand — pause AURA automatically.
+func isGame(_ app: NSRunningApplication?) -> Bool {
+    guard let url = app?.bundleURL, let cat = Bundle(url: url)?.object(forInfoDictionaryKey: "LSApplicationCategoryType") as? String
+    else { return false }
+    return cat.hasSuffix("games")
+}
+
 /// "хз, ща яж" → ["хз", "ща", "яж"]
 func parseWords(_ s: String) -> [String] {
     var seen = Set<String>()
@@ -144,6 +152,8 @@ let uiStrings: [String: [String]] = [ // key: [en, uk]
     "appLang": ["Language for this app", "Мова для цієї програми"],
     "empty": ["Empty", "Порожньо"],
     "exclusions": ["Exclusions", "Винятки"],
+    "game": ["Game — AURA paused", "Гра — AURA на паузі"],
+    "recent": ["Don't work in (recent apps)", "Не працювати в (останні програми)"],
     "bindings": ["Language bindings", "Прив'язки мов"],
     "login": ["Launch at login", "Запускати під час входу"],
     "hint": ["Double ⇧ — convert word/selection", "Подвійний ⇧ — змінити мову слова/виділення"],
@@ -175,6 +185,8 @@ final class Engine {
     let settings = Settings()
     var layouts: [Layout] = loadLayouts()
     var frontBundle = NSWorkspace.shared.frontmostApplication?.bundleIdentifier ?? ""
+    lazy var frontIsGame = isGame(NSWorkspace.shared.frontmostApplication)
+    var recent: [String] = []   // last apps switched to, newest first — to exclude a full-screen game after leaving it
     var tap: CFMachPort?
     let src = CGEventSource(stateID: .privateState)
 
@@ -188,7 +200,7 @@ final class Engine {
     var allCodes: Set<UInt16> { Set(layouts.flatMap { $0.toChar.keys.map(\.code) }) }
     lazy var codes = allCodes
 
-    var active: Bool { settings.enabled && !settings.excluded.contains(frontBundle) }
+    var active: Bool { settings.enabled && !frontIsGame && !settings.excluded.contains(frontBundle) }
 
     func reset() { word = []; lastWord = []; trailing = 0 }
 
@@ -459,6 +471,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             guard let app = note.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication,
                   let id = app.bundleIdentifier, id != Bundle.main.bundleIdentifier else { return }
             engine.frontBundle = id
+            engine.frontIsGame = isGame(app)
+            engine.recent = Array(([id] + engine.recent.filter { $0 != id }).prefix(6))
             engine.reset()
             if engine.settings.enabled, let lang = engine.settings.bindings[id], let l = engine.layout(lang) { engine.select(l) }
         }
@@ -482,7 +496,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     func updateTitle() {
         guard engine.tap != nil else { return }
         let l = displayCode(currentLang())
-        let title = s.enabled ? l : l.lowercased()
+        let title = engine.active ? l : l.lowercased()
         if item.button?.title != title { item.button?.title = title }
     }
 
@@ -533,6 +547,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
         let id = engine.frontBundle
         add(m, L("app") + appName(id))
+        if engine.frontIsGame { add(m, L("game")) }
         let ex = s.excluded.contains(id)
         add(m, L("exclude"), ex) {
             self.s.excluded = ex ? self.s.excluded.filter { $0 != id } : self.s.excluded + [id]
@@ -551,6 +566,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         if s.excluded.isEmpty { add(exMenu, L("empty")) }
         for e in s.excluded { add(exMenu, "✕ \(appName(e))") { self.s.excluded = self.s.excluded.filter { $0 != e } } }
         let ei = NSMenuItem(title: L("exclusions"), action: nil, keyEquivalent: ""); ei.submenu = exMenu; m.addItem(ei)
+
+        let rMenu = NSMenu()
+        if engine.recent.isEmpty { add(rMenu, L("empty")) }
+        for r in engine.recent {
+            let on = s.excluded.contains(r)
+            add(rMenu, appName(r), on) { self.s.excluded = on ? self.s.excluded.filter { $0 != r } : self.s.excluded + [r] }
+        }
+        let ri = NSMenuItem(title: L("recent"), action: nil, keyEquivalent: ""); ri.submenu = rMenu; m.addItem(ri)
 
         let bMenu = NSMenu()
         if s.bindings.isEmpty { add(bMenu, L("empty")) }

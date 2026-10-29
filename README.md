@@ -26,6 +26,7 @@ Website — https://klbk.github.io/aura-switcher/ · Support ☕ — https://don
 - **Exclusions.** AURA does nothing in the apps you choose.
 - **Per-app language.** The layout is set automatically when you switch to an app (e.g. Terminal → EN). Auto-correction is off in apps with a bound language.
 - **Single instance.** A second running copy of AURA quits immediately, so text is never corrected twice.
+- **Games.** AURA pauses itself in games (double ⇧ is often sprint there): on Mac — apps in the Games category, on Windows — full-screen games. A game AURA didn't recognise can be excluded after leaving it: menu → "Don't work in (recent apps)".
 
 ## Languages
 
@@ -43,7 +44,7 @@ Auto-correction is skipped between similar Latin layouts (EN ↔ DE ↔ FR): the
 
 ## Menu bar
 
-The icon shows the current language: `EN`, `УК`, `РУ`… — each language in its own script (`ΕΛ` for Greek, `DE` for German). Lowercase (`en`, `ук`) — AURA is off. `⚠︎` — no access.
+The icon shows the current language: `EN`, `УК`, `РУ`… — each language in its own script (`ΕΛ` for Greek, `DE` for German). Lowercase (`en`, `ук`) — AURA is off or paused in this app (exclusion, game). `⚠︎` — no access.
 
 - **Enabled** — master switch.
 - **Auto-correction** — on/off (double ⇧ always works).
@@ -87,7 +88,7 @@ Archive for other Macs: `~/Repo/aura-switcher/build.sh --release` → `dist/AURA
 
 ## Windows (beta, tested on Windows x64)
 
-- Windows 10/11, x64 and ARM64 (ARM64 not tested yet). Archives: `~/Repo/aura-switcher/dist/AURA-Switcher-0.4-windows-x64.zip` (regular PCs, ~190 KB) and `AURA-Switcher-0.4-windows.zip` (both builds, `x64` and `arm64` folders). No installer — copy `AURA Switcher.exe` anywhere and run it.
+- Windows 10/11, x64 and ARM64 (ARM64 not tested yet). Archives: `~/Repo/aura-switcher/dist/AURA-Switcher-0.5-windows-x64.zip` (regular PCs, ~190 KB) and `AURA-Switcher-0.5-windows.zip` (both builds, `x64` and `arm64` folders). No installer — copy `AURA Switcher.exe` anywhere and run it.
 - Build on a Mac: `~/Repo/aura-switcher/windows/build.sh` (needs Zig, located in `~/.local/zig`).
 - Same features and menu as on Mac. The tray icon shows the language code: yellow letters on a rounded blue tile (grey — disabled), drawn at the exact tray size so it stays sharp.
   ![tray](docs/tray-preview.png) Click the icon for the menu.

@@ -25,7 +25,7 @@
 #include <string>
 #include <vector>
 
-#define APP_VERSION L"0.4"
+#define APP_VERSION L"0.5"
 
 using std::wstring;
 using std::vector;
@@ -33,7 +33,7 @@ using std::vector;
 static const ULONG_PTR kMagic = 0x4B535754;  // marks our own synthetic input
 enum { WM_TRAY = WM_APP + 1, WM_AUTO, WM_DSHIFT };
 enum { ID_ENABLED = 1, ID_AUTO, ID_SOUND, ID_WORDS, ID_DONATE, ID_REPORT, ID_EXCLUDE, ID_NOBIND, ID_LOGIN, ID_UI_SYS, ID_UI_EN, ID_UI_UK, ID_QUIT,
-       ID_BIND0 = 100, ID_EXDEL0 = 200, ID_BDDEL0 = 300 };
+       ID_BIND0 = 100, ID_EXDEL0 = 200, ID_BDDEL0 = 300, ID_RECENT0 = 400 };
 
 // MARK: - Settings (HKCU\Software\AURA)
 
@@ -491,11 +491,11 @@ static HICON makeTextIcon(const wstring& text, bool on) {
 
 static void updateTray(bool force = false) {
     wstring code = layouts.empty() ? L"--" : layouts[layoutIndex(fgLayout())].code();
-    wstring key = code + (S.enabled ? L"1" : L"0");
+    wstring key = code + (active ? L"1" : L"0");
     if (!force && key == shownCode) return;
     shownCode = key;
     HICON old = nid.hIcon;
-    nid.hIcon = makeTextIcon(code, S.enabled);
+    nid.hIcon = makeTextIcon(code, active);
     wcscpy_s(nid.szTip, L"AURA Switcher " APP_VERSION L" beta");
     Shell_NotifyIconW(NIM_MODIFY, &nid);
     if (old) DestroyIcon(old);
@@ -519,7 +519,8 @@ static void setLogin(bool on) {
 // MARK: - Menu
 
 static wstring menuExe;  // app that was in front when the menu opened
-static vector<wstring> menuExDel, menuBdDel;
+static vector<wstring> menuExDel, menuBdDel, recentExe;  // recentExe: last apps, newest first
+static bool fgGame = false;
 
 static wstring langName(const wstring& locale) {
     wchar_t buf[128];
@@ -605,6 +606,11 @@ static void reportProblem() {
     ShellExecuteW(nullptr, L"open", url.c_str(), nullptr, nullptr, SW_SHOWNORMAL);
 }
 
+static void toggleExcluded(const wstring& exe) {
+    if (S.isExcluded(exe)) { vector<wstring> r; for (auto& e : S.excluded) if (_wcsicmp(e.c_str(), exe.c_str())) r.push_back(e); S.excluded = r; }
+    else S.excluded.push_back(exe);
+}
+
 static void showMenu() {
     menuExe = fgExe();
     HMENU m = CreatePopupMenu();
@@ -625,6 +631,7 @@ static void showMenu() {
         for (size_t i = 0; i < layouts.size(); i++)
             item(lm, UINT(ID_BIND0 + i), langName(layouts[i].locale), b != S.bindings.end() && b->second == layouts[i].locale);
         AppendMenuW(m, MF_POPUP, (UINT_PTR)lm, L_(L"Language for this app", L"Мова для цієї програми"));
+        if (fgGame) item(m, 0, L_(L"Full-screen game — AURA paused", L"Гра на весь екран — AURA на паузі"), false, false);
         AppendMenuW(m, MF_SEPARATOR, 0, nullptr);
     }
 
@@ -632,6 +639,12 @@ static void showMenu() {
     if (menuExDel.empty()) item(em, 0, L_(L"Empty", L"Порожньо"), false, false);
     for (size_t i = 0; i < menuExDel.size(); i++) item(em, UINT(ID_EXDEL0 + i), L"✕ " + menuExDel[i]);
     AppendMenuW(m, MF_POPUP, (UINT_PTR)em, L_(L"Exclusions", L"Винятки"));
+
+    // a full-screen game hides the tray — let it be excluded after leaving it
+    HMENU rm = CreatePopupMenu();
+    if (recentExe.empty()) item(rm, 0, L_(L"Empty", L"Порожньо"), false, false);
+    for (size_t i = 0; i < recentExe.size(); i++) item(rm, UINT(ID_RECENT0 + i), recentExe[i], S.isExcluded(recentExe[i]));
+    AppendMenuW(m, MF_POPUP, (UINT_PTR)rm, L_(L"Don't work in (recent apps)", L"Не працювати в (останні програми)"));
 
     HMENU bm = CreatePopupMenu(); menuBdDel.clear();
     if (S.bindings.empty()) item(bm, 0, L_(L"Empty", L"Порожньо"), false, false);
@@ -663,10 +676,8 @@ static void showMenu() {
     if (cmd == ID_ENABLED) { S.enabled = !S.enabled; }
     else if (cmd == ID_AUTO) { S.autoFix = !S.autoFix; }
     else if (cmd == ID_SOUND) { S.sound = !S.sound; playSound(sndAuto); }
-    else if (cmd == ID_EXCLUDE) {
-        if (S.isExcluded(menuExe)) { vector<wstring> r; for (auto& e : S.excluded) if (_wcsicmp(e.c_str(), menuExe.c_str())) r.push_back(e); S.excluded = r; }
-        else S.excluded.push_back(menuExe);
-    }
+    else if (cmd == ID_EXCLUDE) toggleExcluded(menuExe);
+    else if (cmd >= ID_RECENT0 && cmd < ID_RECENT0 + recentExe.size()) toggleExcluded(recentExe[cmd - ID_RECENT0]);
     else if (cmd == ID_NOBIND) S.bindings.erase(menuExe);
     else if (cmd >= ID_BIND0 && cmd < ID_BIND0 + layouts.size()) S.bindings[menuExe] = layouts[cmd - ID_BIND0].locale;
     else if (cmd >= ID_EXDEL0 && cmd < ID_EXDEL0 + menuExDel.size()) {
@@ -688,9 +699,25 @@ static void showMenu() {
 
 static wstring curExe;
 
+// Full-screen game: Windows reports exclusive Direct3D full screen; borderless games are a captionless
+// window covering the whole monitor. Double ⇧ is often sprint there, and the tray is hidden — pause.
+static bool fullscreenGame() {
+    QUERY_USER_NOTIFICATION_STATE st;
+    if (SUCCEEDED(SHQueryUserNotificationState(&st)) && st == QUNS_RUNNING_D3D_FULL_SCREEN) return true;
+    HWND fg = GetForegroundWindow();
+    if (!fg || fg == GetShellWindow() || fg == GetDesktopWindow()) return false;
+    wchar_t cls[32]; GetClassNameW(fg, cls, 32);
+    if (!wcscmp(cls, L"WorkerW") || !wcscmp(cls, L"Progman")) return false;
+    if (GetWindowLongW(fg, GWL_STYLE) & WS_CAPTION) return false;
+    RECT w; MONITORINFO mi = {sizeof(mi)};
+    if (!GetWindowRect(fg, &w) || !GetMonitorInfoW(MonitorFromWindow(fg, MONITOR_DEFAULTTONEAREST), &mi)) return false;
+    return w.left <= mi.rcMonitor.left && w.top <= mi.rcMonitor.top && w.right >= mi.rcMonitor.right && w.bottom >= mi.rcMonitor.bottom;
+}
+
 static void refreshActive() {
     curExe = fgExe();
-    active = S.enabled && !S.isExcluded(curExe);
+    fgGame = fullscreenGame();
+    active = S.enabled && !fgGame && !S.isExcluded(curExe);
 }
 
 static void CALLBACK onForeground(HWINEVENTHOOK, DWORD, HWND, LONG, LONG, DWORD, DWORD) {
@@ -698,6 +725,12 @@ static void CALLBACK onForeground(HWINEVENTHOOK, DWORD, HWND, LONG, LONG, DWORD,
     refreshActive();
     if (curExe == prev) return;
     resetReq = true;
+    static const wstring self = [] { wchar_t p[MAX_PATH]; GetModuleFileNameW(nullptr, p, MAX_PATH); wstring s = p; return s.substr(s.find_last_of(L'\\') + 1); }();
+    if (!curExe.empty() && _wcsicmp(curExe.c_str(), self.c_str()) && _wcsicmp(curExe.c_str(), L"explorer.exe")) {
+        vector<wstring> r = {curExe};
+        for (auto& e : recentExe) if (_wcsicmp(e.c_str(), curExe.c_str()) && r.size() < 6) r.push_back(e);
+        recentExe = r;
+    }
     auto b = S.bindings.find(curExe);
     if (S.enabled && b != S.bindings.end())
         for (auto& l : layouts) if (l.locale == b->second) { selectLayout(l); break; }
