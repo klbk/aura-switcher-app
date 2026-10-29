@@ -101,10 +101,15 @@ final class Settings {
     var updateCheckedAt: Double { get { d.double(forKey: "updateCheckedAt") } set { d.set(newValue, forKey: "updateCheckedAt") } }
 }
 
-/// Updates without going online: the app never contacts a server. The menu opens the releases page in the
-/// browser, and some time after this build (or after the last check) the menu and the icon remind that a
-/// newer version may be out. The build date is written into Info.plist by build.sh.
-let releasesURL = URL(string: "https://github.com/klbk/aura-switcher/releases/latest")!
+/// Updates without going online: the app never contacts a server. The menu opens the site's update page in
+/// the browser (only the version and menu language are in its address), and some time after this build (or
+/// after the last check) the menu and the icon remind that a newer version may be out. The build date is
+/// written into Info.plist by build.sh. The site's update page: says whether a newer version is out, what's
+/// new and how to update, in the menu language.
+func updatePageURL() -> URL {
+    let ver = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? ""
+    return URL(string: "https://klbk.github.io/aura-switcher/update/?v=\(ver)&l=\(uiCode())")!
+}
 let updateNudgeDays = 30.0
 let buildDate = (Bundle.main.object(forInfoDictionaryKey: "AURABuildDate") as? String).flatMap(Double.init) ?? 0
 func updateDue() -> Bool {
@@ -649,7 +654,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         add(m, L("hint"))
         add(m, updateDue() ? L("updateDue") : L("update")) {
             self.s.updateCheckedAt = Date().timeIntervalSince1970
-            NSWorkspace.shared.open(releasesURL)
+            NSWorkspace.shared.open(updatePageURL())
             self.updateTitle()
         }
         add(m, L("report")) { self.reportProblem() }

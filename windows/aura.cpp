@@ -84,10 +84,9 @@ struct Settings {
 };
 static Settings S;
 
-// Updates without going online: the app never contacts a server. The menu opens the releases page in the
-// browser, and some time after this build (or after the last check) the menu and the tray icon remind
-// that a newer version may be out.
-static const wchar_t* kReleasesUrl = L"https://github.com/klbk/aura-switcher/releases/latest";
+// Updates without going online: the app never contacts a server. The menu opens the site's update page in
+// the browser (only the version and menu language are in its address), and some time after this build (or
+// after the last check) the menu and the tray icon remind that a newer version may be out.
 static const long long kUpdateNudgeDays = 30;
 static long long updateChecked = wcstoll(regGet(L"updateChecked", L"0").c_str(), nullptr, 10);  // last opened the releases page
 static bool updateDue() {
@@ -825,7 +824,8 @@ static void showMenu() {
     else if (cmd == ID_REPORT) reportProblem();
     else if (cmd == ID_UPDATE) {
         updateChecked = (long long)time(nullptr); regSet(L"updateChecked", std::to_wstring(updateChecked));
-        ShellExecuteW(nullptr, L"open", kReleasesUrl, nullptr, nullptr, SW_SHOWNORMAL);
+        wstring url = wstring(L"https://klbk.github.io/aura-switcher/update/?v=" APP_VERSION L"&l=") + UI_LANGS[uiIndex()];
+        ShellExecuteW(nullptr, L"open", url.c_str(), nullptr, nullptr, SW_SHOWNORMAL);
     }
     else if (cmd == ID_DONATE) ShellExecuteW(nullptr, L"open", L"https://donatello.to/aura-switcher", nullptr, nullptr, SW_SHOWNORMAL);
     else if (cmd == ID_UI_SYS) S.uiLang = L"";

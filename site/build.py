@@ -9,7 +9,7 @@ from pathlib import Path
 BASE = "https://klbk.github.io/aura-switcher/"
 CHROME = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
 SRC = Path(__file__).resolve().parent
-ASSETS = ["icon.svg", "i18n-more.js", "seo.js", "shared.js", "google8a7be41a4753a620.html", "f9834e666c1005df874f5c53d176ecc3.txt"]  # last two: Search Console + IndexNow (Bing) keys, keep
+ASSETS = ["icon.svg", "latest.js", "i18n-more.js", "seo.js", "shared.js", "google8a7be41a4753a620.html", "f9834e666c1005df874f5c53d176ecc3.txt"]  # last two: Search Console + IndexNow (Bing) keys, keep
 
 out = Path(sys.argv[1]).resolve()
 langs = re.findall(r"^  (\w\w): \{", (SRC / "seo.js").read_text(), re.M)
@@ -41,6 +41,8 @@ def finish(dom, canonical, rel):
     return dom
 
 for a in ASSETS: shutil.copy(SRC / a, out)
+(out / "update").mkdir(exist_ok=True)  # update page (opened from the app's menu): not pre-rendered, not in the sitemap
+shutil.copy(SRC / "update" / "index.html", out / "update" / "index.html")
 for l in langs:
     page = src.replace('<html lang="uk">', f'<html lang="{l}" data-page="{l}">')
     (out / l).mkdir(exist_ok=True)

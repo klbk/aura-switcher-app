@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="uk">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>AURA Switcher</title><link rel="icon" href="../icon.svg">
+<script>
+// Opened from the app's menu: ?v=<installed version>&l=<menu language>. The app itself never goes online.
+const Q = new URLSearchParams(location.search);
+if (Q.get("l")) document.documentElement.dataset.page = Q.get("l");  // shared.js picks the page language from here
+</script>
+<style>
+:root { --bg:#07080f; --card:rgba(255,255,255,.04); --line:rgba(255,255,255,.09); --text:#f4f5fb; --muted:#9aa0b8; --blue:#3b8cff; --yellow:#ffd500; }
+* { box-sizing:border-box; margin:0; }
+body { background:var(--bg); color:var(--text); font:17px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, sans-serif; -webkit-font-smoothing:antialiased; }
+a { color:inherit; text-decoration:none; }
+.wrap { max-width:640px; margin:0 auto; padding:48px 20px 64px; }
+.brand { display:flex; gap:10px; align-items:center; font-weight:700; color:var(--muted); }
+.brand img { width:28px; height:28px; }
+h1 { font-size:clamp(30px, 6vw, 44px); line-height:1.1; letter-spacing:-.03em; margin:36px 0 8px; }
+h1.ok { color:var(--yellow); }
+.yours { color:var(--muted); }
+.card { background:var(--card); border:1px solid var(--line); border-radius:20px; padding:22px 24px; margin-top:24px; }
+.card h2 { font-size:18px; margin-bottom:10px; }
+.card ul, .card ol { padding-inline-start:22px; color:var(--muted); }
+.card li { margin:6px 0; } .card li b { color:var(--text); font-weight:600; }
+.dl { display:flex; flex-wrap:wrap; gap:12px; align-items:center; margin-top:28px; }
+.btn { display:inline-flex; align-items:center; gap:8px; border-radius:14px; font-weight:700; padding:16px 26px; font-size:18px;
+       background:var(--text); color:var(--bg); box-shadow:0 8px 30px rgba(255,255,255,.15); }
+.alt { color:var(--muted); font-size:14px; } .alt a { color:var(--blue); }
+footer { margin-top:40px; font-size:14px; color:var(--muted); } footer a { color:var(--yellow); }
+[hidden] { display:none !important; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brand"><img src="../icon.svg" alt="">AURA Switcher</div>
+  <h1 id="title"></h1>
+  <p class="yours" id="yours"></p>
+
+  <div class="dl" id="dl" hidden>
+    <a class="btn" id="dlMain"></a>
+    <span class="alt" id="dlAlt"></span>
+  </div>
+
+  <div class="card" id="how" hidden><h2 id="howTitle"></h2><ol id="steps"></ol></div>
+  <div class="card"><h2 id="notesTitle"></h2><ul id="notes"></ul></div>
+
+  <footer><a href="../" id="site"></a> · <a href="https://donatello.to/aura-switcher" target="_blank" rel="noopener">☕ <span data-t="donate"></span></a></footer>
+</div>
+<script src="../latest.js"></script>
+<script src="../i18n-more.js"></script>
+<script src="../seo.js"></script>
+<script src="../shared.js"></script>
+<script>
+// [latest, available, yours, notes, how, mac1, mac2, mac3, win1, win2, win3, site]
+const U = {
+  en: ["You have the latest version", "AURA Switcher {v} is out", "You have {v}", "What's new", "How to update", "Quit AURA: click the language code in the menu bar → «Quit».", "Open the downloaded archive and drag AURA Switcher into Applications, replacing the old one.", "Open AURA. If ⚠︎ shows instead of the language code, switch AURA off and back on here:", "Quit AURA: click its icon in the tray → «Quit».", "Unzip the archive and put the new «AURA Switcher.exe» in place of the old one.", "Run AURA Switcher.exe — your settings stay as they were.", "AURA Switcher website"],
+  uk: ["У вас остання версія", "Вийшла AURA Switcher {v}", "У вас {v}", "Що нового", "Як оновити", "Закрийте AURA: клік по коду мови вгорі → «Вихід».", "Відкрийте завантажений архів і перетягніть AURA Switcher у «Програми», замінивши стару.", "Запустіть AURA. Якщо замість коду мови ⚠︎ — вимкніть і знову увімкніть AURA тут:", "Закрийте AURA: клік по іконці в треї → «Вихід».", "Розпакуйте архів і покладіть новий «AURA Switcher.exe» замість старого.", "Запустіть AURA Switcher.exe — налаштування збережуться.", "Сайт AURA Switcher"],
+  pl: ["Masz najnowszą wersję", "Wyszła AURA Switcher {v}", "Masz {v}", "Co nowego", "Jak zaktualizować", "Zamknij AURA: kliknij kod języka na pasku menu → «Zakończ».", "Otwórz pobrane archiwum i przeciągnij AURA Switcher do Aplikacji, zastępując starą wersję.", "Uruchom AURA. Jeśli zamiast kodu języka widać ⚠︎, wyłącz i włącz AURA tutaj:", "Zamknij AURA: kliknij ikonę w zasobniku → «Zakończ».", "Rozpakuj archiwum i umieść nowy «AURA Switcher.exe» w miejscu starego.", "Uruchom AURA Switcher.exe — ustawienia zostaną zachowane.", "Strona AURA Switcher"],
+  de: ["Du hast die neueste Version", "AURA Switcher {v} ist da", "Du hast {v}", "Was ist neu", "So aktualisierst du", "AURA beenden: auf den Sprachcode in der Menüleiste klicken → „Beenden“.", "Das geladene Archiv öffnen und AURA Switcher in „Programme“ ziehen, die alte Version ersetzen.", "AURA öffnen. Steht ⚠︎ statt des Sprachcodes, AURA hier aus- und wieder einschalten:", "AURA beenden: auf das Symbol im Infobereich klicken → „Beenden“.", "Archiv entpacken und die neue „AURA Switcher.exe“ an die Stelle der alten legen.", "AURA Switcher.exe starten — die Einstellungen bleiben erhalten.", "Website von AURA Switcher"],
+  es: ["Tienes la última versión", "Ya está aquí AURA Switcher {v}", "Tienes la {v}", "Novedades", "Cómo actualizar", "Cierra AURA: haz clic en el código de idioma de la barra de menús → «Salir».", "Abre el archivo descargado y arrastra AURA Switcher a Aplicaciones, reemplazando la anterior.", "Abre AURA. Si aparece ⚠︎ en lugar del código de idioma, desactiva y vuelve a activar AURA aquí:", "Cierra AURA: haz clic en su icono de la bandeja → «Salir».", "Descomprime el archivo y pon el nuevo «AURA Switcher.exe» en lugar del anterior.", "Ejecuta AURA Switcher.exe: tus ajustes se conservan.", "Web de AURA Switcher"],
+  fr: ["Vous avez la dernière version", "AURA Switcher {v} est sortie", "Vous avez la {v}", "Nouveautés", "Comment mettre à jour", "Quittez AURA : cliquez sur le code de langue dans la barre des menus → « Quitter ».", "Ouvrez l’archive téléchargée et glissez AURA Switcher dans Applications en remplaçant l’ancienne.", "Ouvrez AURA. Si ⚠︎ s’affiche au lieu du code de langue, désactivez puis réactivez AURA ici :", "Quittez AURA : cliquez sur son icône dans la zone de notification → « Quitter ».", "Décompressez l’archive et mettez le nouveau « AURA Switcher.exe » à la place de l’ancien.", "Lancez AURA Switcher.exe : vos réglages sont conservés.", "Site d’AURA Switcher"],
+  it: ["Hai l’ultima versione", "È uscita AURA Switcher {v}", "Hai la {v}", "Novità", "Come aggiornare", "Chiudi AURA: clic sul codice lingua nella barra dei menu → «Esci».", "Apri l’archivio scaricato e trascina AURA Switcher in Applicazioni, sostituendo la vecchia.", "Apri AURA. Se al posto del codice lingua c’è ⚠︎, disattiva e riattiva AURA qui:", "Chiudi AURA: clic sulla sua icona nell’area di notifica → «Esci».", "Estrai l’archivio e metti il nuovo «AURA Switcher.exe» al posto del vecchio.", "Avvia AURA Switcher.exe: le impostazioni restano.", "Sito di AURA Switcher"],
+  pt: ["Tem a versão mais recente", "Saiu o AURA Switcher {v}", "Tem a {v}", "Novidades", "Como atualizar", "Feche o AURA: clique no código do idioma na barra de menus → «Sair».", "Abra o arquivo transferido e arraste o AURA Switcher para Aplicações, substituindo o antigo.", "Abra o AURA. Se aparecer ⚠︎ em vez do código do idioma, desative e volte a ativar o AURA aqui:", "Feche o AURA: clique no ícone na área de notificação → «Sair».", "Descompacte o arquivo e coloque o novo «AURA Switcher.exe» no lugar do antigo.", "Execute AURA Switcher.exe — as definições mantêm-se.", "Site do AURA Switcher"],
+  tr: ["En son sürümü kullanıyorsunuz", "AURA Switcher {v} çıktı", "Sizdeki sürüm: {v}", "Yenilikler", "Nasıl güncellenir", "AURA’yı kapatın: menü çubuğundaki dil koduna tıklayın → «Çık».", "İndirilen arşivi açın ve AURA Switcher’ı eskisinin yerine Uygulamalar’a sürükleyin.", "AURA’yı açın. Dil kodu yerine ⚠︎ görünürse AURA’nın anahtarını burada kapatıp yeniden açın:", "AURA’yı kapatın: bildirim alanındaki simgeye tıklayın → «Çık».", "Arşivi açın ve yeni «AURA Switcher.exe» dosyasını eskisinin yerine koyun.", "AURA Switcher.exe’yi çalıştırın — ayarlarınız korunur.", "AURA Switcher web sitesi"],
+  nl: ["Je hebt de nieuwste versie", "AURA Switcher {v} is uit", "Jij hebt {v}", "Wat is er nieuw", "Zo werk je bij", "Stop AURA: klik op de taalcode in de menubalk → «Stop».", "Open het gedownloade archief en sleep AURA Switcher naar Apps, ter vervanging van de oude.", "Open AURA. Zie je ⚠︎ in plaats van de taalcode, zet AURA hier uit en weer aan:", "Stop AURA: klik op het pictogram in het systeemvak → «Stop».", "Pak het archief uit en zet de nieuwe «AURA Switcher.exe» op de plek van de oude.", "Start AURA Switcher.exe — je instellingen blijven behouden.", "Website van AURA Switcher"],
+  cs: ["Máte nejnovější verzi", "Vyšel AURA Switcher {v}", "Máte {v}", "Co je nového", "Jak aktualizovat", "Ukončete AURA: klikněte na kód jazyka v řádku nabídek → «Ukončit».", "Otevřete stažený archiv a přetáhněte AURA Switcher do Aplikací místo staré verze.", "Spusťte AURA. Pokud místo kódu jazyka vidíte ⚠︎, vypněte a znovu zapněte AURA zde:", "Ukončete AURA: klikněte na ikonu v oznamovací oblasti → «Ukončit».", "Rozbalte archiv a dejte nový «AURA Switcher.exe» na místo starého.", "Spusťte AURA Switcher.exe — nastavení zůstanou.", "Web AURA Switcher"],
+  sv: ["Du har den senaste versionen", "AURA Switcher {v} är här", "Du har {v}", "Nyheter", "Så uppdaterar du", "Avsluta AURA: klicka på språkkoden i menyraden → «Avsluta».", "Öppna det hämtade arkivet och dra AURA Switcher till Program så att den gamla ersätts.", "Öppna AURA. Visas ⚠︎ i stället för språkkoden, slå av och på AURA här:", "Avsluta AURA: klicka på ikonen i meddelandefältet → «Avsluta».", "Packa upp arkivet och lägg nya «AURA Switcher.exe» i stället för den gamla.", "Starta AURA Switcher.exe — inställningarna finns kvar.", "AURA Switchers webbplats"],
+  fi: ["Sinulla on uusin versio", "AURA Switcher {v} on julkaistu", "Sinulla on {v}", "Uutta", "Näin päivität", "Sulje AURA: napsauta kielikoodia valikkorivillä → «Lopeta».", "Avaa ladattu arkisto ja vedä AURA Switcher Ohjelmat-kansioon vanhan tilalle.", "Avaa AURA. Jos kielikoodin tilalla näkyy ⚠︎, kytke AURA pois ja takaisin päälle täällä:", "Sulje AURA: napsauta kuvaketta ilmoitusalueella → «Lopeta».", "Pura arkisto ja laita uusi «AURA Switcher.exe» vanhan tilalle.", "Käynnistä AURA Switcher.exe — asetukset säilyvät.", "AURA Switcherin sivusto"],
+  ro: ["Ai cea mai nouă versiune", "A apărut AURA Switcher {v}", "Ai {v}", "Ce e nou", "Cum actualizezi", "Închide AURA: clic pe codul limbii din bara de meniu → «Ieșire».", "Deschide arhiva descărcată și trage AURA Switcher în Aplicații, înlocuind-o pe cea veche.", "Deschide AURA. Dacă în locul codului limbii apare ⚠︎, dezactivează și reactivează AURA aici:", "Închide AURA: clic pe pictograma din zona de notificare → «Ieșire».", "Dezarhivează și pune noul «AURA Switcher.exe» în locul celui vechi.", "Rulează AURA Switcher.exe — setările rămân.", "Site-ul AURA Switcher"],
+  hu: ["A legújabb verzió van nálad", "Megjelent az AURA Switcher {v}", "Nálad: {v}", "Újdonságok", "Így frissíts", "Lépj ki az AURA-ból: kattints a nyelvkódra a menüsorban → «Kilépés».", "Nyisd meg a letöltött archívumot, és húzd az AURA Switchert az Alkalmazásokba a régi helyére.", "Indítsd el az AURA-t. Ha a nyelvkód helyett ⚠︎ látszik, kapcsold ki és be az AURA-t itt:", "Lépj ki az AURA-ból: kattints az ikonjára a tálcán → «Kilépés».", "Csomagold ki, és tedd az új «AURA Switcher.exe»-t a régi helyére.", "Indítsd el az AURA Switcher.exe-t — a beállítások megmaradnak.", "Az AURA Switcher oldala"],
+  el: ["Έχετε την τελευταία έκδοση", "Κυκλοφόρησε το AURA Switcher {v}", "Έχετε την {v}", "Τι νέο υπάρχει", "Πώς να ενημερώσετε", "Κλείστε το AURA: κλικ στον κωδικό γλώσσας στη γραμμή μενού → «Έξοδος».", "Ανοίξτε το αρχείο που κατεβάσατε και σύρετε το AURA Switcher στις Εφαρμογές, αντικαθιστώντας το παλιό.", "Ανοίξτε το AURA. Αν αντί για τον κωδικό γλώσσας εμφανίζεται ⚠︎, απενεργοποιήστε και ενεργοποιήστε ξανά το AURA εδώ:", "Κλείστε το AURA: κλικ στο εικονίδιό του στην περιοχή ειδοποιήσεων → «Έξοδος».", "Αποσυμπιέστε και βάλτε το νέο «AURA Switcher.exe» στη θέση του παλιού.", "Εκτελέστε το AURA Switcher.exe — οι ρυθμίσεις παραμένουν.", "Ιστότοπος AURA Switcher"],
+  bg: ["Имате най-новата версия", "Излезе AURA Switcher {v}", "Вашата версия: {v}", "Какво ново", "Как да обновите", "Затворете AURA: щракнете върху кода на езика в лентата с менюта → «Изход».", "Отворете изтегления архив и плъзнете AURA Switcher в Програми на мястото на старата.", "Стартирайте AURA. Ако вместо кода на езика има ⚠︎, изключете и включете AURA тук:", "Затворете AURA: щракнете върху иконата в системната област → «Изход».", "Разархивирайте и сложете новия «AURA Switcher.exe» на мястото на стария.", "Стартирайте AURA Switcher.exe — настройките се запазват.", "Сайтът на AURA Switcher"],
+  he: ["יש לכם את הגרסה העדכנית", "יצאה AURA Switcher {v}", "אצלכם: {v}", "מה חדש", "איך מעדכנים", "סגרו את AURA: לחצו על קוד השפה בשורת התפריטים ← «יציאה».", "פתחו את הארכיון שהורד וגררו את AURA Switcher ליישומים במקום הישנה.", "הפעילו את AURA. אם במקום קוד השפה מופיע ⚠︎, כבו והפעילו מחדש את AURA כאן:", "סגרו את AURA: לחצו על הסמל באזור ההודעות ← «יציאה».", "חלצו את הארכיון ושימו את «AURA Switcher.exe» החדש במקום הישן.", "הפעילו את AURA Switcher.exe — ההגדרות נשמרות.", "האתר של AURA Switcher"],
+  ar: ["لديك أحدث إصدار", "صدر AURA Switcher {v}", "لديك {v}", "ما الجديد", "كيفية التحديث", "أغلق AURA: انقر رمز اللغة في شريط القائمة ← «إنهاء».", "افتح الأرشيف الذي نزّلته واسحب AURA Switcher إلى التطبيقات بدلًا من القديم.", "شغّل AURA. إذا ظهر ⚠︎ بدل رمز اللغة، فأوقف AURA ثم فعّله مجددًا هنا:", "أغلق AURA: انقر أيقونته في منطقة الإعلامات ← «إنهاء».", "فك ضغط الأرشيف وضع «AURA Switcher.exe» الجديد مكان القديم.", "شغّل AURA Switcher.exe — تبقى إعداداتك كما هي.", "موقع AURA Switcher"],
+  hi: ["आपके पास नवीनतम संस्करण है", "AURA Switcher {v} आ गया है", "आपके पास {v} है", "नया क्या है", "अपडेट कैसे करें", "AURA बंद करें: मेनू बार में भाषा कोड पर क्लिक करें → «बंद करें»।", "डाउनलोड किया आर्काइव खोलें और AURA Switcher को पुराने की जगह Applications में खींचें।", "AURA खोलें। अगर भाषा कोड की जगह ⚠︎ दिखे, तो यहाँ AURA को बंद करके फिर चालू करें:", "AURA बंद करें: ट्रे में उसके आइकन पर क्लिक करें → «बंद करें»।", "आर्काइव खोलें और नया «AURA Switcher.exe» पुराने की जगह रखें।", "AURA Switcher.exe चलाएँ — आपकी सेटिंग्स बनी रहेंगी।", "AURA Switcher वेबसाइट"],
+  ko: ["최신 버전을 사용 중입니다", "AURA Switcher {v} 출시", "현재 버전: {v}", "새로운 기능", "업데이트 방법", "AURA 종료: 메뉴 막대의 언어 코드 클릭 → «종료».", "내려받은 압축 파일을 열고 AURA Switcher를 응용 프로그램으로 끌어 기존 앱을 대치하세요.", "AURA를 여세요. 언어 코드 대신 ⚠︎가 보이면 여기서 AURA를 껐다가 다시 켜세요:", "AURA 종료: 트레이의 아이콘 클릭 → «종료».", "압축을 풀고 새 «AURA Switcher.exe»를 기존 파일 자리에 두세요.", "AURA Switcher.exe 실행 — 설정은 그대로 유지됩니다.", "AURA Switcher 웹사이트"],
+};
+(function () {
+  const l = U[lang] ? lang : "en", u = U[l], t = T[lang] || T.en, $ = id => document.getElementById(id);
+  const [sLatest, sAvail, sYours, sNotes, sHow, mac1, mac2, mac3, win1, win2, win3, sSite] = u;
+  const newer = (a, b) => {  // is version a newer than b ("0.10" > "0.9")
+    const x = a.split(".").map(Number), y = b.split(".").map(Number);
+    for (let i = 0; i < Math.max(x.length, y.length); i++) if ((x[i] || 0) !== (y[i] || 0)) return (x[i] || 0) > (y[i] || 0);
+    return false;
+  };
+  const have = Q.get("v"), latest = LATEST.version, upToDate = have && !newer(latest, have);
+  document.title = "AURA Switcher " + latest;
+  $("title").textContent = upToDate ? "✓ " + sLatest : sAvail.replace("{v}", latest);
+  $("title").classList.toggle("ok", !!upToDate);
+  $("yours").textContent = have ? sYours.replace("{v}", have) : "";
+  $("notesTitle").textContent = sNotes + " · " + latest;
+  $("notes").innerHTML = (LATEST.notes[l] || LATEST.notes.en).map(n => `<li dir="auto">${n}</li>`).join("");
+  $("site").textContent = sSite;
+  if (upToDate) return;
+
+  // download for this computer, the other systems as small links
+  const base = "https://github.com/klbk/aura-switcher/releases/latest/download/";
+  const win = /Windows/.test(navigator.userAgent), mac = /Macintosh|Mac OS X/.test(navigator.userAgent);
+  const main = $("dlMain");
+  main.href = base + (win ? "AURA-Switcher-windows-x64.zip" : "AURA-Switcher-mac.zip");
+  main.textContent = (win ? "⊞ " : "") + (win ? t.dlWin : t.dlMac);
+  $("dlAlt").innerHTML = win ? `<a href="${base}AURA-Switcher-windows-arm64.zip">Windows ARM64</a> · <a href="${base}AURA-Switcher-mac.zip">macOS</a>`
+                             : `<a href="${base}AURA-Switcher-windows-x64.zip">Windows</a> · <a href="${base}AURA-Switcher-windows-arm64.zip">Windows ARM64</a>`;
+  $("dl").hidden = false;
+
+  // how to update: steps for this system (both if unknown)
+  const perm = (t.s2p || "").replace(/^[^:]*:\s*/, "");  // "On Mac: System Settings → … → AURA." → path only
+  const macSteps = [mac1, mac2, `${mac3} <b>${perm}</b>`], winSteps = [win1, win2, win3];
+  const steps = win ? winSteps : mac ? macSteps : macSteps.map(s => "macOS — " + s).concat(winSteps.map(s => "Windows — " + s));
+  $("howTitle").textContent = sHow;
+  $("steps").innerHTML = steps.map(s => `<li>${s}</li>`).join("");
+  $("how").hidden = false;
+})();
+</script>
+</body>
+</html>
