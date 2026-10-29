@@ -1,5 +1,5 @@
 AURA Switcher 0.6.1 — made in Ukraine 🇺🇦
-Fixes text typed in the wrong keyboard layout: ghbdtn → привіт.
+Fixes text typed in the wrong keyboard layout: ghbdsn → привіт.
 Requires macOS 13 or later.
 
 INSTALL

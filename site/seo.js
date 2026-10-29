@@ -1,7 +1,7 @@
 // Search texts per language: <title>, meta description, and the "alternative to…" section. Loaded before shared.js.
 const SEO = {
   uk: { title: "AURA Switcher — безкоштовна альтернатива Punto Switcher для Mac і Windows",
-    desc: "Автоматичне перемикання розкладки клавіатури: «ghbdtn» → «привіт» після пробілу. Українська альтернатива Punto Switcher і Caramba Switcher. Безкоштовно, відкритий код, macOS і Windows.",
+    desc: "Автоматичне перемикання розкладки клавіатури: «ghbdsn» → «привіт» після пробілу. Українська альтернатива Punto Switcher і Caramba Switcher. Безкоштовно, відкритий код, macOS і Windows.",
     altH: "Українська альтернатива Punto Switcher",
     altP: "Шукаєте заміну Punto Switcher чи Caramba Switcher? AURA Switcher так само автоматично перемикає розкладку й виправляє текст, набраний не тією мовою, — але це українська розробка з відкритим кодом: безкоштовно, без реклами, нічого не надсилає в інтернет. Працює на macOS і Windows, з українською, англійською та ще 19 мовами." },
   en: { title: "AURA Switcher — free Punto Switcher alternative for Mac & Windows",

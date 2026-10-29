@@ -1,5 +1,5 @@
 AURA Switcher 0.6.1 (beta) — made in Ukraine 🇺🇦
-Fixes text typed in the wrong keyboard layout: ghbdtn → привіт.
+Fixes text typed in the wrong keyboard layout: ghbdsn → привіт.
 Windows 10 or 11.
 
 INSTALL

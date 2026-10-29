@@ -11,7 +11,7 @@ Requires macOS 13 or later (Apple Silicon or Intel).
 4. **Grant access:** System Settings → Privacy & Security → **Accessibility** → enable AURA.
 5. **Done.** The language code (EN, УК, РУ…) appears in the menu bar. While it shows `⚠︎`, access isn't granted yet (step 4).
 
-**Check:** in the English layout type `ghbdtn` and Space — it becomes "привіт". Select a word and press ⇧ twice — it's converted to another layout.
+**Check:** in the English layout type `ghbdsn` and Space — it becomes "привіт". Select a word and press ⇧ twice — it's converted to another layout.
 
 **Quit:** menu bar icon → "Quit". AURA starts at login automatically (can be turned off in the menu).
 

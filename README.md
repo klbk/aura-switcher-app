@@ -3,7 +3,7 @@
 > 🇺🇦  Designed and developed in Ukraine.
 > Українська версія — [README.uk.md](README.uk.md)
 
-A macOS & Windows app that fixes text typed in the wrong keyboard layout ("ghbdtn" → "привіт"). It lives in the menu bar, runs in the background and starts automatically at login.
+A macOS & Windows app that fixes text typed in the wrong keyboard layout ("ghbdsn" → "привіт"). It lives in the menu bar, runs in the background and starts automatically at login.
 
 Quick start — [docs/INSTALL-mac.md](docs/INSTALL-mac.md).
 

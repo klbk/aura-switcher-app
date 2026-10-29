@@ -46,11 +46,11 @@ const win = (chip, cls, html, status = "") => `<div class="win"><div class="bar"
 const brand = `<div class="brand"><img src="icon.svg">AURA Switcher</div>`;
 let h = "";
 if (t < 2.6) {            // 1: the pain
-  const s = t < .3 ? "" : typed("ghbdtn? zr cghfdb", .3, .1);
+  const s = t < .3 ? "" : typed("ghbdsn? zr cghfdb", .3, .1);
   h = `<div class="scene" style="opacity:${fade(-1, 2.6)}"><div class="cap">${L.c1}</div>${win("EN", "", `<span class="bad">${s}</span>`)}${brand}</div>`;
 } else if (t < 6.8) {     // 2: auto-fix after Space
   let html, chip = "EN", cls = "", st = "";
-  if (t < 3.6) html = typed("ghbdtn", 2.8, .13);
+  if (t < 3.6) html = typed("ghbdsn", 2.8, .13);
   else { chip = "УК"; cls = t < 4.6 ? "uk" : ""; st = L.s2;
          html = `<span class="ok">привіт</span> ` + (t > 4.4 ? typed("як справи?", 4.4, .12) : ""); }
   h = `<div class="scene" style="opacity:${fade(2.6, 6.8)}"><div class="cap">${L.c2}</div>${win(chip, cls, html, st)}${brand}</div>`;

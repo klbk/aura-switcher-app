@@ -5,7 +5,7 @@ const T = {
     name: "Українська", title: "AURA Switcher — розкладка виправляється сама",
     badge: "Бета 0.6.1 · безкоштовно · без реєстрації",
     h1: "Пишіть.<br>Розкладку <span class=\"hl\">AURA</span> виправить сама",
-    lead: "Набрали «ghbdtn» замість «привіт»? AURA помітить і виправить одразу після пробілу. Для macOS і Windows.",
+    lead: "Набрали «ghbdsn» замість «привіт»? AURA помітить і виправить одразу після пробілу. Для macOS і Windows.",
     dlMac: "Завантажити для Mac", dlWin: "Для Windows",
     demoWrong: "Не та розкладка…", demoFixed: "Виправлено після пробілу",
     fTitle: "Все, що потрібно. Нічого зайвого",
@@ -29,7 +29,7 @@ const T = {
     name: "English", title: "AURA Switcher — your keyboard layout fixes itself",
     badge: "Beta 0.6.1 · free · no sign-up",
     h1: "Just type.<br><span class=\"hl\">AURA</span> fixes the layout",
-    lead: "Typed “ghbdtn” instead of “привіт”? AURA notices and fixes it right after Space. For macOS and Windows.",
+    lead: "Typed “ghbdsn” instead of “привіт”? AURA notices and fixes it right after Space. For macOS and Windows.",
     dlMac: "Download for Mac", dlWin: "For Windows",
     demoWrong: "Wrong layout…", demoFixed: "Fixed after Space",
     fTitle: "Everything you need. Nothing you don't",
@@ -53,7 +53,7 @@ const T = {
     name: "Polski", title: "AURA Switcher — układ klawiatury poprawia się sam",
     badge: "Beta 0.6.1 · za darmo · bez rejestracji",
     h1: "Po prostu pisz.<br><span class=\"hl\">AURA</span> poprawi układ",
-    lead: "Wpisałeś „ghbdtn” zamiast „привіт”? AURA to zauważy i poprawi zaraz po spacji. Dla macOS i Windows.",
+    lead: "Wpisałeś „ghbdsn” zamiast „привіт”? AURA to zauważy i poprawi zaraz po spacji. Dla macOS i Windows.",
     dlMac: "Pobierz na Maca", dlWin: "Na Windows",
     demoWrong: "Zły układ…", demoFixed: "Poprawione po spacji",
     fTitle: "Wszystko, czego potrzebujesz. Nic zbędnego",
@@ -77,7 +77,7 @@ const T = {
     name: "Deutsch", title: "AURA Switcher — das Tastaturlayout korrigiert sich selbst",
     badge: "Beta 0.6.1 · kostenlos · ohne Anmeldung",
     h1: "Einfach tippen.<br><span class=\"hl\">AURA</span> korrigiert das Layout",
-    lead: "„ghbdtn“ statt „привіт“ getippt? AURA bemerkt es und korrigiert es direkt nach der Leertaste. Für macOS und Windows.",
+    lead: "„ghbdsn“ statt „привіт“ getippt? AURA bemerkt es und korrigiert es direkt nach der Leertaste. Für macOS und Windows.",
     dlMac: "Für Mac laden", dlWin: "Für Windows",
     demoWrong: "Falsches Layout…", demoFixed: "Nach der Leertaste korrigiert",
     fTitle: "Alles, was du brauchst. Nichts Überflüssiges",
@@ -101,7 +101,7 @@ const T = {
     name: "Español", title: "AURA Switcher — la distribución del teclado se corrige sola",
     badge: "Beta 0.6.1 · gratis · sin registro",
     h1: "Solo escribe.<br><span class=\"hl\">AURA</span> corrige la distribución",
-    lead: "¿Escribiste «ghbdtn» en lugar de «привіт»? AURA lo detecta y lo corrige justo después del espacio. Para macOS y Windows.",
+    lead: "¿Escribiste «ghbdsn» en lugar de «привіт»? AURA lo detecta y lo corrige justo después del espacio. Para macOS y Windows.",
     dlMac: "Descargar para Mac", dlWin: "Para Windows",
     demoWrong: "Distribución equivocada…", demoFixed: "Corregido tras el espacio",
     fTitle: "Todo lo que necesitas. Nada más",
@@ -125,7 +125,7 @@ const T = {
     name: "Français", title: "AURA Switcher — la disposition du clavier se corrige toute seule",
     badge: "Bêta 0.6.1 · gratuit · sans inscription",
     h1: "Tapez, tout simplement.<br><span class=\"hl\">AURA</span> corrige la disposition",
-    lead: "Vous avez tapé « ghbdtn » au lieu de « привіт » ? AURA le remarque et corrige juste après l’espace. Pour macOS et Windows.",
+    lead: "Vous avez tapé « ghbdsn » au lieu de « привіт » ? AURA le remarque et corrige juste après l’espace. Pour macOS et Windows.",
     dlMac: "Télécharger pour Mac", dlWin: "Pour Windows",
     demoWrong: "Mauvaise disposition…", demoFixed: "Corrigé après l’espace",
     fTitle: "Tout ce qu’il faut. Rien de superflu",
@@ -227,12 +227,12 @@ setLang(lang);
 // demo: a word typed in the wrong layout, fixed after Space — examples match the visitor's language
 // [typed, fixed, layout it was typed in, layout AURA switches to]; Ukrainian layout = ЙЦУКЕН on QWERTY keys
 const words = {
-  uk: [["ghbdtn", "привіт", "EN", "УК"], ["руддщ", "hello", "УК", "EN"], ["ntrcn", "текст", "EN", "УК"]],
-  en: [["руддщ", "hello", "УК", "EN"], ["kalhmera", "καλημερα", "EN", "ΕΛ"], ["ghbdtn", "привіт", "EN", "УК"], ["akuo", "שלום", "EN", "עב"]],
-  pl: [["вщикн", "dobry", "УК", "PL"], ["ghbdtn", "привіт", "PL", "УК"], ["цшефь", "witam", "УК", "PL"]],
-  de: [["рфддщ", "hallo", "УК", "DE"], ["ghbdtn", "привіт", "DE", "УК"], ["вфтлу", "danke", "УК", "DE"]],
-  es: [["рщдф", "hola", "УК", "ES"], ["ghbdtn", "привіт", "ES", "УК"], ["пкфсшфі", "gracias", "УК", "ES"]],
-  fr: [["ищтощгк", "bonjour", "УК", "FR"], ["ghbdtn", "привіт", "FR", "УК"], ["ійдге", "salut", "УК", "FR"]], // AZERTY keys
+  uk: [["ghbdsn", "привіт", "EN", "УК"], ["руддщ", "hello", "УК", "EN"], ["ntrcn", "текст", "EN", "УК"]],
+  en: [["руддщ", "hello", "УК", "EN"], ["kalhmera", "καλημερα", "EN", "ΕΛ"], ["ghbdsn", "привіт", "EN", "УК"], ["akuo", "שלום", "EN", "עב"]],
+  pl: [["вщикн", "dobry", "УК", "PL"], ["ghbdsn", "привіт", "PL", "УК"], ["цшефь", "witam", "УК", "PL"]],
+  de: [["рфддщ", "hallo", "УК", "DE"], ["ghbdsn", "привіт", "DE", "УК"], ["вфтлу", "danke", "УК", "DE"]],
+  es: [["рщдф", "hola", "УК", "ES"], ["ghbdsn", "привіт", "ES", "УК"], ["пкфсшфі", "gracias", "УК", "ES"]],
+  fr: [["ищтощгк", "bonjour", "УК", "FR"], ["ghbdsn", "привіт", "FR", "УК"], ["ійдге", "salut", "УК", "FR"]], // AZERTY keys
 };
 if (typeof MORE_WORDS !== "undefined") Object.assign(words, MORE_WORDS);
 const $ = id => document.getElementById(id);
