@@ -213,6 +213,15 @@ if (picker) {
   document.addEventListener("click", () => picker.classList.remove("open"));
   document.addEventListener("keydown", e => { if (e.key === "Escape") picker.classList.remove("open"); });
 }
+// visitors on Windows get the Windows download first (pre-rendered pages are Mac-first)
+if (/Windows/.test(navigator.userAgent)) {
+  const W = "https://github.com/klbk/aura-switcher/releases/latest/download/AURA-Switcher-windows-x64.zip";
+  document.querySelectorAll('a[href$="AURA-Switcher-mac.zip"]').forEach(a => {
+    const w = a.parentElement.querySelector(`a[href="${W}"]`);
+    if (w) { a.before(w); w.classList.replace("ghost", "light"); a.classList.replace("light", "ghost"); }
+    else { a.href = W; a.removeAttribute("data-t"); a.innerHTML = '⊞ <span data-t="dlWin"></span>'; }
+  });
+}
 setLang(lang);
 
 // demo: a word typed in the wrong layout, fixed after Space — examples match the visitor's language
