@@ -21,18 +21,22 @@
 #include <algorithm>
 #include <cmath>
 #include <atomic>
+#include <ctime>
 #include <map>
 #include <string>
 #include <vector>
 
 #define APP_VERSION L"0.6.1"
+#ifndef BUILD_TIME
+#define BUILD_TIME 0  // build.sh passes the build date (seconds since 1970)
+#endif
 
 using std::wstring;
 using std::vector;
 
 static const ULONG_PTR kMagic = 0x4B535754;  // marks our own synthetic input
 enum { WM_TRAY = WM_APP + 1, WM_AUTO, WM_DSHIFT };
-enum { ID_ENABLED = 1, ID_AUTO, ID_SOUND, ID_WORDS, ID_DONATE, ID_REPORT, ID_EXCLUDE, ID_NOBIND, ID_LOGIN, ID_UI_SYS, ID_QUIT,
+enum { ID_ENABLED = 1, ID_AUTO, ID_SOUND, ID_WORDS, ID_DONATE, ID_REPORT, ID_UPDATE, ID_EXCLUDE, ID_NOBIND, ID_LOGIN, ID_UI_SYS, ID_QUIT,
        ID_BIND0 = 100, ID_EXDEL0 = 200, ID_BDDEL0 = 300, ID_RECENT0 = 400, ID_UI0 = 500 };
 
 // MARK: - Settings (HKCU\Software\AURA)
@@ -80,6 +84,17 @@ struct Settings {
 };
 static Settings S;
 
+// Updates without going online: the app never contacts a server. The menu opens the releases page in the
+// browser, and some time after this build (or after the last check) the menu and the tray icon remind
+// that a newer version may be out.
+static const wchar_t* kReleasesUrl = L"https://github.com/klbk/aura-switcher/releases/latest";
+static const long long kUpdateNudgeDays = 30;
+static long long updateChecked = wcstoll(regGet(L"updateChecked", L"0").c_str(), nullptr, 10);  // last opened the releases page
+static bool updateDue() {
+    long long since = std::max<long long>(BUILD_TIME, updateChecked);
+    return since > 0 && (long long)time(nullptr) - since > kUpdateNudgeDays * 86400;
+}
+
 static wstring lower(wstring s) { CharLowerBuffW(s.data(), DWORD(s.size())); return s; }
 
 // "хз, ща яж" → {"хз", "ща", "яж"}
@@ -122,6 +137,8 @@ static const wchar_t* const UI_STR[][UI_N] = { // row: English first, then the o
     {L"Double ⇧ — convert word/selection", L"Подвійний ⇧ — змінити мову слова/виділення", L"Podwójny ⇧ — zmień układ słowa/zaznaczenia", L"Doppel-⇧ — Wort/Auswahl umwandeln", L"Doble ⇧ — convertir palabra/selección", L"Double ⇧ — convertir le mot/la sélection", L"Doppio ⇧ — converti parola/selezione", L"Duplo ⇧ — converter palavra/seleção", L"Çift ⇧ — kelimeyi/seçimi dönüştür", L"Dubbel ⇧ — woord/selectie omzetten", L"Dvojitý ⇧ — převést slovo/výběr", L"Dubbel-⇧ — konvertera ord/markering", L"Kaksois-⇧ — muunna sana/valinta", L"Dublu ⇧ — convertește cuvântul/selecția", L"Dupla ⇧ — szó/kijelölés átalakítása", L"Διπλό ⇧ — μετατροπή λέξης/επιλογής", L"Двоен ⇧ — смяна на езика на дума/селекция", L"⇧ כפול — המרת מילה/בחירה", L"⇧ مزدوج — تحويل الكلمة/التحديد", L"दो बार ⇧ — शब्द/चयन बदलें", L"⇧ 두 번 — 단어/선택 영역 변환"},
     {L"Report a problem…", L"Повідомити про проблему…", L"Zgłoś problem…", L"Problem melden…", L"Informar de un problema…", L"Signaler un problème…", L"Segnala un problema…", L"Comunicar um problema…", L"Sorun bildir…", L"Probleem melden…", L"Nahlásit problém…", L"Rapportera ett problem…", L"Ilmoita ongelmasta…", L"Raportează o problemă…", L"Probléma bejelentése…", L"Αναφορά προβλήματος…", L"Съобщете за проблем…", L"דיווח על בעיה…", L"الإبلاغ عن مشكلة…", L"समस्या बताएँ…", L"문제 신고…"},
     {L"What happened and in which app:", L"Що сталося і в якій програмі:", L"Co się stało i w jakiej aplikacji:", L"Was ist passiert und in welcher App:", L"Qué pasó y en qué app:", L"Ce qui s'est passé et dans quelle app :", L"Cosa è successo e in quale app:", L"O que aconteceu e em que app:", L"Ne oldu ve hangi uygulamada:", L"Wat er gebeurde en in welke app:", L"Co se stalo a v jaké aplikaci:", L"Vad hände och i vilken app:", L"Mitä tapahtui ja missä ohjelmassa:", L"Ce s-a întâmplat și în ce aplicație:", L"Mi történt és melyik alkalmazásban:", L"Τι συνέβη και σε ποια εφαρμογή:", L"Какво се случи и в коя програма:", L"מה קרה ובאיזה יישום:", L"ماذا حدث وفي أي تطبيق:", L"क्या हुआ और किस ऐप में:", L"무슨 일이 어느 앱에서 있었나요:"},
+    {L"Check for updates…", L"Перевірити оновлення…", L"Sprawdź aktualizacje…", L"Nach Updates suchen…", L"Buscar actualizaciones…", L"Rechercher des mises à jour…", L"Controlla aggiornamenti…", L"Procurar atualizações…", L"Güncellemeleri denetle…", L"Zoek naar updates…", L"Zkontrolovat aktualizace…", L"Sök efter uppdateringar…", L"Tarkista päivitykset…", L"Caută actualizări…", L"Frissítések keresése…", L"Έλεγχος για ενημερώσεις…", L"Проверка за актуализации…", L"בדיקת עדכונים…", L"التحقق من التحديثات…", L"अपडेट जाँचें…", L"업데이트 확인…"},
+    {L"⬆︎ An update may be available — check", L"⬆︎ Можливо, вийшло оновлення — перевірити", L"⬆︎ Może być dostępna aktualizacja — sprawdź", L"⬆︎ Möglicherweise gibt es ein Update — prüfen", L"⬆︎ Puede haber una actualización — comprobar", L"⬆︎ Une mise à jour est peut-être disponible — vérifier", L"⬆︎ Potrebbe esserci un aggiornamento — controlla", L"⬆︎ Pode haver uma atualização — verificar", L"⬆︎ Güncelleme olabilir — denetle", L"⬆︎ Er is misschien een update — controleren", L"⬆︎ Možná je k dispozici aktualizace — zkontrolovat", L"⬆︎ Det kan finnas en uppdatering — kontrollera", L"⬆︎ Päivitys saattaa olla saatavilla — tarkista", L"⬆︎ Poate există o actualizare — verifică", L"⬆︎ Lehet, hogy van frissítés — ellenőrzés", L"⬆︎ Ίσως υπάρχει ενημέρωση — έλεγχος", L"⬆︎ Може да има актуализация — проверете", L"⬆︎ ייתכן שיש עדכון — בדיקה", L"⬆︎ قد يتوفر تحديث — تحقّق", L"⬆︎ शायद नया अपडेट आया है — जाँचें", L"⬆︎ 업데이트가 있을 수 있습니다 — 확인"},
     {L"Support AURA Switcher ☕", L"Підтримати AURA Switcher ☕", L"Wesprzyj AURA Switcher ☕", L"AURA Switcher unterstützen ☕", L"Apoyar AURA Switcher ☕", L"Soutenir AURA Switcher ☕", L"Sostieni AURA Switcher ☕", L"Apoiar o AURA Switcher ☕", L"AURA Switcher'ı destekle ☕", L"Steun AURA Switcher ☕", L"Podpořit AURA Switcher ☕", L"Stöd AURA Switcher ☕", L"Tue AURA Switcheriä ☕", L"Susține AURA Switcher ☕", L"Az AURA Switcher támogatása ☕", L"Υποστηρίξτε το AURA Switcher ☕", L"Подкрепете AURA Switcher ☕", L"תמכו ב-AURA Switcher ☕", L"ادعم AURA Switcher ☕", L"AURA Switcher का समर्थन करें ☕", L"AURA Switcher 후원하기 ☕"},
     {L"Quit", L"Вихід", L"Zakończ", L"Beenden", L"Salir", L"Quitter", L"Esci", L"Sair", L"Çık", L"Stop", L"Ukončit", L"Avsluta", L"Lopeta", L"Ieșire", L"Kilépés", L"Έξοδος", L"Изход", L"יציאה", L"إنهاء", L"बंद करें", L"종료"},
 };
@@ -551,7 +568,7 @@ static wstring shownCode;
 // Tray icon: language code in yellow on a rounded Ukrainian-blue tile (grey when off).
 // Drawn at the exact tray size for the current DPI (Windows blurs a scaled-down icon),
 // supersampled 4× for smooth letters and rounded corners.
-static HICON makeTextIcon(const wstring& text, bool on) {
+static HICON makeTextIcon(const wstring& text, bool on, bool dot = false) {
     const int sz = GetSystemMetricsForDpi(SM_CXSMICON, GetDpiForSystem()), k = 4, big = sz * k;
     const COLORREF bgc = on ? RGB(0x00, 0x57, 0xb7) : RGB(0x6b, 0x72, 0x80), fg = on ? RGB(0xff, 0xd5, 0x00) : RGB(0xff, 0xff, 0xff);
 
@@ -569,6 +586,15 @@ static HICON makeTextIcon(const wstring& text, bool on) {
         RECT m{0, 0, 0, 0}; DrawTextW(dc, text.c_str(), -1, &m, DT_CALCRECT | DT_SINGLELINE);
         if (m.right <= big * 88 / 100) { DrawTextW(dc, text.c_str(), -1, &rc, DT_CENTER | DT_VCENTER | DT_SINGLELINE); SelectObject(dc, of); DeleteObject(f); break; }
         SelectObject(dc, of); DeleteObject(f);
+    }
+    if (dot) {  // update reminder: red dot in the top-right corner, ringed with the tile colour
+        auto circle = [&](double cx, double cy, double r, COLORREF c) {
+            HBRUSH b = CreateSolidBrush(c); HGDIOBJ ob = SelectObject(dc, b), op = SelectObject(dc, GetStockObject(NULL_PEN));
+            Ellipse(dc, int(cx - r), int(cy - r), int(cx + r), int(cy + r));
+            SelectObject(dc, ob); SelectObject(dc, op); DeleteObject(b);
+        };
+        circle(big * 0.78, big * 0.22, big * 0.19, bgc);
+        circle(big * 0.78, big * 0.22, big * 0.13, RGB(0xff, 0x3b, 0x30));
     }
 
     BITMAPINFO si = {}; si.bmiHeader = {sizeof(BITMAPINFOHEADER), sz, -sz, 1, 32, BI_RGB};
@@ -599,11 +625,12 @@ static HICON makeTextIcon(const wstring& text, bool on) {
 
 static void updateTray(bool force = false) {
     wstring code = layouts.empty() ? L"--" : layouts[layoutIndex(fgLayout())].code();
-    wstring key = code + (active ? L"1" : L"0");
+    bool due = updateDue();
+    wstring key = code + (active ? L"1" : L"0") + (due ? L"u" : L"");
     if (!force && key == shownCode) return;
     shownCode = key;
     HICON old = nid.hIcon;
-    nid.hIcon = makeTextIcon(code, active);
+    nid.hIcon = makeTextIcon(code, active, due);
     wcscpy_s(nid.szTip, L"AURA Switcher " APP_VERSION L" beta");
     Shell_NotifyIconW(NIM_MODIFY, &nid);
     if (old) DestroyIcon(old);
@@ -770,6 +797,8 @@ static void showMenu() {
     for (int i = 0; i < UI_N; i++) item(um, UINT(ID_UI0 + i), UI_NAMES[i], S.uiLang == UI_LANGS[i]);
     AppendMenuW(m, MF_POPUP, (UINT_PTR)um, L_(L"Menu language", L"Мова меню"));
     item(m, 0, L_(L"Double ⇧ — convert word/selection", L"Подвійний ⇧ — змінити мову слова/виділення"), false, false);
+    item(m, ID_UPDATE, updateDue() ? L_(L"⬆︎ An update may be available — check", L"⬆︎ Можливо, вийшло оновлення — перевірити")
+                                   : L_(L"Check for updates…", L"Перевірити оновлення…"));
     item(m, ID_REPORT, L_(L"Report a problem…", L"Повідомити про проблему…"));
     item(m, ID_DONATE, L_(L"Support AURA Switcher ☕", L"Підтримати AURA Switcher ☕"));
     item(m, 0, L"AURA Switcher " APP_VERSION L" beta · 🇺🇦", false, false);
@@ -794,6 +823,10 @@ static void showMenu() {
     else if (cmd == ID_LOGIN) setLogin(!loginEnabled());
     else if (cmd == ID_WORDS) editWords();
     else if (cmd == ID_REPORT) reportProblem();
+    else if (cmd == ID_UPDATE) {
+        updateChecked = (long long)time(nullptr); regSet(L"updateChecked", std::to_wstring(updateChecked));
+        ShellExecuteW(nullptr, L"open", kReleasesUrl, nullptr, nullptr, SW_SHOWNORMAL);
+    }
     else if (cmd == ID_DONATE) ShellExecuteW(nullptr, L"open", L"https://donatello.to/aura-switcher", nullptr, nullptr, SW_SHOWNORMAL);
     else if (cmd == ID_UI_SYS) S.uiLang = L"";
     else if (cmd >= ID_UI0 && cmd < ID_UI0 + UI_N) S.uiLang = UI_LANGS[cmd - ID_UI0];

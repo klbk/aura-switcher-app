@@ -29,6 +29,7 @@ cat > "$APP/Contents/Info.plist" <<EOF
 <key>CFBundleVersion</key><string>$VERSION</string>
 <key>LSMinimumSystemVersion</key><string>13.0</string>
 <key>LSUIElement</key><true/>
+<key>AURABuildDate</key><string>$(date +%s)</string>
 </dict></plist>
 EOF
 codesign --force -s - "$APP"

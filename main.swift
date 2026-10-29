@@ -97,6 +97,19 @@ final class Settings {
     var sound: Bool { get { d.object(forKey: "sound") as? Bool ?? true } set { d.set(newValue, forKey: "sound") } }
     /// user's words that are never auto-corrected (slang like «хз», «ща»), stored lowercased
     var words: [String] { get { d.stringArray(forKey: "words") ?? [] } set { d.set(newValue, forKey: "words") } }
+    /// when the user last opened the releases page (seconds since 1970), 0 = never
+    var updateCheckedAt: Double { get { d.double(forKey: "updateCheckedAt") } set { d.set(newValue, forKey: "updateCheckedAt") } }
+}
+
+/// Updates without going online: the app never contacts a server. The menu opens the releases page in the
+/// browser, and some time after this build (or after the last check) the menu and the icon remind that a
+/// newer version may be out. The build date is written into Info.plist by build.sh.
+let releasesURL = URL(string: "https://github.com/klbk/aura-switcher/releases/latest")!
+let updateNudgeDays = 30.0
+let buildDate = (Bundle.main.object(forInfoDictionaryKey: "AURABuildDate") as? String).flatMap(Double.init) ?? 0
+func updateDue() -> Bool {
+    let since = max(buildDate, engine.settings.updateCheckedAt)
+    return since > 0 && Date().timeIntervalSince1970 - since > updateNudgeDays * 86400
 }
 
 /// Games (App Store category "Games" and its subcategories): double ⇧ is often sprint there, and a
@@ -183,6 +196,8 @@ let uiStrings: [String: [String]] = [ // key: one string per uiLangs
     "hint": ["Double ⇧ — convert word/selection", "Подвійний ⇧ — змінити мову слова/виділення", "Podwójny ⇧ — zmień układ słowa/zaznaczenia", "Doppel-⇧ — Wort/Auswahl umwandeln", "Doble ⇧ — convertir palabra/selección", "Double ⇧ — convertir le mot/la sélection", "Doppio ⇧ — converti parola/selezione", "Duplo ⇧ — converter palavra/seleção", "Çift ⇧ — kelimeyi/seçimi dönüştür", "Dubbel ⇧ — woord/selectie omzetten", "Dvojitý ⇧ — převést slovo/výběr", "Dubbel-⇧ — konvertera ord/markering", "Kaksois-⇧ — muunna sana/valinta", "Dublu ⇧ — convertește cuvântul/selecția", "Dupla ⇧ — szó/kijelölés átalakítása", "Διπλό ⇧ — μετατροπή λέξης/επιλογής", "Двоен ⇧ — смяна на езика на дума/селекция", "⇧ כפול — המרת מילה/בחירה", "⇧ مزدوج — تحويل الكلمة/التحديد", "दो बार ⇧ — शब्द/चयन बदलें", "⇧ 두 번 — 단어/선택 영역 변환"],
     "report": ["Report a problem…", "Повідомити про проблему…", "Zgłoś problem…", "Problem melden…", "Informar de un problema…", "Signaler un problème…", "Segnala un problema…", "Comunicar um problema…", "Sorun bildir…", "Probleem melden…", "Nahlásit problém…", "Rapportera ett problem…", "Ilmoita ongelmasta…", "Raportează o problemă…", "Probléma bejelentése…", "Αναφορά προβλήματος…", "Съобщете за проблем…", "דיווח על בעיה…", "الإبلاغ عن مشكلة…", "समस्या बताएँ…", "문제 신고…"],
     "reportBody": ["What happened and in which app:", "Що сталося і в якій програмі:", "Co się stało i w jakiej aplikacji:", "Was ist passiert und in welcher App:", "Qué pasó y en qué app:", "Ce qui s'est passé et dans quelle app :", "Cosa è successo e in quale app:", "O que aconteceu e em que app:", "Ne oldu ve hangi uygulamada:", "Wat er gebeurde en in welke app:", "Co se stalo a v jaké aplikaci:", "Vad hände och i vilken app:", "Mitä tapahtui ja missä ohjelmassa:", "Ce s-a întâmplat și în ce aplicație:", "Mi történt és melyik alkalmazásban:", "Τι συνέβη και σε ποια εφαρμογή:", "Какво се случи и в коя програма:", "מה קרה ובאיזה יישום:", "ماذا حدث وفي أي تطبيق:", "क्या हुआ और किस ऐप में:", "무슨 일이 어느 앱에서 있었나요:"],
+    "update": ["Check for updates…", "Перевірити оновлення…", "Sprawdź aktualizacje…", "Nach Updates suchen…", "Buscar actualizaciones…", "Rechercher des mises à jour…", "Controlla aggiornamenti…", "Procurar atualizações…", "Güncellemeleri denetle…", "Zoek naar updates…", "Zkontrolovat aktualizace…", "Sök efter uppdateringar…", "Tarkista päivitykset…", "Caută actualizări…", "Frissítések keresése…", "Έλεγχος για ενημερώσεις…", "Проверка за актуализации…", "בדיקת עדכונים…", "التحقق من التحديثات…", "अपडेट जाँचें…", "업데이트 확인…"],
+    "updateDue": ["⬆︎ An update may be available — check", "⬆︎ Можливо, вийшло оновлення — перевірити", "⬆︎ Może być dostępna aktualizacja — sprawdź", "⬆︎ Möglicherweise gibt es ein Update — prüfen", "⬆︎ Puede haber una actualización — comprobar", "⬆︎ Une mise à jour est peut-être disponible — vérifier", "⬆︎ Potrebbe esserci un aggiornamento — controlla", "⬆︎ Pode haver uma atualização — verificar", "⬆︎ Güncelleme olabilir — denetle", "⬆︎ Er is misschien een update — controleren", "⬆︎ Možná je k dispozici aktualizace — zkontrolovat", "⬆︎ Det kan finnas en uppdatering — kontrollera", "⬆︎ Päivitys saattaa olla saatavilla — tarkista", "⬆︎ Poate există o actualizare — verifică", "⬆︎ Lehet, hogy van frissítés — ellenőrzés", "⬆︎ Ίσως υπάρχει ενημέρωση — έλεγχος", "⬆︎ Може да има актуализация — проверете", "⬆︎ ייתכן שיש עדכון — בדיקה", "⬆︎ قد يتوفر تحديث — تحقّق", "⬆︎ शायद नया अपडेट आया है — जाँचें", "⬆︎ 업데이트가 있을 수 있습니다 — 확인"],
     "donate": ["Support AURA Switcher ☕", "Підтримати AURA Switcher ☕", "Wesprzyj AURA Switcher ☕", "AURA Switcher unterstützen ☕", "Apoyar AURA Switcher ☕", "Soutenir AURA Switcher ☕", "Sostieni AURA Switcher ☕", "Apoiar o AURA Switcher ☕", "AURA Switcher'ı destekle ☕", "Steun AURA Switcher ☕", "Podpořit AURA Switcher ☕", "Stöd AURA Switcher ☕", "Tue AURA Switcheriä ☕", "Susține AURA Switcher ☕", "Az AURA Switcher támogatása ☕", "Υποστηρίξτε το AURA Switcher ☕", "Подкрепете AURA Switcher ☕", "תמכו ב-AURA Switcher ☕", "ادعم AURA Switcher ☕", "AURA Switcher का समर्थन करें ☕", "AURA Switcher 후원하기 ☕"],
     "quit": ["Quit", "Вихід", "Zakończ", "Beenden", "Salir", "Quitter", "Esci", "Sair", "Çık", "Stop", "Ukončit", "Avsluta", "Lopeta", "Ieșire", "Kilépés", "Έξοδος", "Изход", "יציאה", "إنهاء", "बंद करें", "종료"],
 ]
@@ -535,7 +550,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     func updateTitle() {
         guard engine.tap != nil else { return }
         let l = displayCode(currentLang())
-        let title = engine.active ? l : l.lowercased()
+        let title = (engine.active ? l : l.lowercased()) + (updateDue() ? "•" : "")
         if item.button?.title != title { item.button?.title = title }
     }
 
@@ -632,6 +647,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         for (c, name) in zip(uiLangs, uiLangNames) { add(uiMenu, name, s.uiLang == c) { self.s.uiLang = c } }
         let ui = NSMenuItem(title: L("uiLang"), action: nil, keyEquivalent: ""); ui.submenu = uiMenu; m.addItem(ui)
         add(m, L("hint"))
+        add(m, updateDue() ? L("updateDue") : L("update")) {
+            self.s.updateCheckedAt = Date().timeIntervalSince1970
+            NSWorkspace.shared.open(releasesURL)
+            self.updateTitle()
+        }
         add(m, L("report")) { self.reportProblem() }
         add(m, L("donate")) { NSWorkspace.shared.open(URL(string: "https://donatello.to/aura-switcher")!) }
         add(m, "AURA Switcher \(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "") beta · 🇺🇦")

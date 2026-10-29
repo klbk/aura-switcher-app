@@ -27,6 +27,7 @@ Website — https://klbk.github.io/aura-switcher/ · Support ☕ — https://don
 - **Per-app language.** The layout is set automatically when you switch to an app (e.g. Terminal → EN). Auto-correction is off in apps with a bound language.
 - **Single instance.** A second running copy of AURA quits immediately, so text is never corrected twice.
 - **Games.** AURA pauses itself in games (double ⇧ is often sprint there): on Mac — apps in the Games category, on Windows — full-screen games. A game AURA didn't recognise can be excluded after leaving it: menu → "Don't work in (recent apps)".
+- **Updates without going online.** AURA itself never sends or downloads anything. Menu → "Check for updates…" opens the releases page in the browser. 30 days after the build (or after the last check) a dot appears next to the language code and the menu says "⬆︎ An update may be available — check".
 
 ## Languages
 

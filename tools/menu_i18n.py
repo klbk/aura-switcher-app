@@ -8,7 +8,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 KEYS = ["enabled", "auto", "sound", "access", "app", "exclude", "game", "appLang", "noBinding", "exclusions", "recent",
         "bindings", "empty", "login", "words", "wordsTitle", "wordsInfo", "save", "cancel", "uiLang", "system", "hint",
-        "report", "reportBody", "donate", "quit"]
+        "report", "reportBody", "update", "updateDue", "donate", "quit"]
 # code, native name, then one line per key (in KEYS order)
 LANGS = """
 en English
@@ -36,6 +36,8 @@ System
 Double ⇧ — convert word/selection
 Report a problem…
 What happened and in which app:
+Check for updates…
+⬆︎ An update may be available — check
 Support AURA Switcher ☕
 Quit
 
@@ -64,6 +66,8 @@ AURA Switcher — слова-винятки
 Подвійний ⇧ — змінити мову слова/виділення
 Повідомити про проблему…
 Що сталося і в якій програмі:
+Перевірити оновлення…
+⬆︎ Можливо, вийшло оновлення — перевірити
 Підтримати AURA Switcher ☕
 Вихід
 
@@ -92,6 +96,8 @@ Systemowy
 Podwójny ⇧ — zmień układ słowa/zaznaczenia
 Zgłoś problem…
 Co się stało i w jakiej aplikacji:
+Sprawdź aktualizacje…
+⬆︎ Może być dostępna aktualizacja — sprawdź
 Wesprzyj AURA Switcher ☕
 Zakończ
 
@@ -120,6 +126,8 @@ System
 Doppel-⇧ — Wort/Auswahl umwandeln
 Problem melden…
 Was ist passiert und in welcher App:
+Nach Updates suchen…
+⬆︎ Möglicherweise gibt es ein Update — prüfen
 AURA Switcher unterstützen ☕
 Beenden
 
@@ -148,6 +156,8 @@ Sistema
 Doble ⇧ — convertir palabra/selección
 Informar de un problema…
 Qué pasó y en qué app:
+Buscar actualizaciones…
+⬆︎ Puede haber una actualización — comprobar
 Apoyar AURA Switcher ☕
 Salir
 
@@ -176,6 +186,8 @@ Système
 Double ⇧ — convertir le mot/la sélection
 Signaler un problème…
 Ce qui s'est passé et dans quelle app :
+Rechercher des mises à jour…
+⬆︎ Une mise à jour est peut-être disponible — vérifier
 Soutenir AURA Switcher ☕
 Quitter
 
@@ -204,6 +216,8 @@ Sistema
 Doppio ⇧ — converti parola/selezione
 Segnala un problema…
 Cosa è successo e in quale app:
+Controlla aggiornamenti…
+⬆︎ Potrebbe esserci un aggiornamento — controlla
 Sostieni AURA Switcher ☕
 Esci
 
@@ -232,6 +246,8 @@ Sistema
 Duplo ⇧ — converter palavra/seleção
 Comunicar um problema…
 O que aconteceu e em que app:
+Procurar atualizações…
+⬆︎ Pode haver uma atualização — verificar
 Apoiar o AURA Switcher ☕
 Sair
 
@@ -260,6 +276,8 @@ Sistem
 Çift ⇧ — kelimeyi/seçimi dönüştür
 Sorun bildir…
 Ne oldu ve hangi uygulamada:
+Güncellemeleri denetle…
+⬆︎ Güncelleme olabilir — denetle
 AURA Switcher'ı destekle ☕
 Çık
 
@@ -288,6 +306,8 @@ Systeem
 Dubbel ⇧ — woord/selectie omzetten
 Probleem melden…
 Wat er gebeurde en in welke app:
+Zoek naar updates…
+⬆︎ Er is misschien een update — controleren
 Steun AURA Switcher ☕
 Stop
 
@@ -316,6 +336,8 @@ Systémový
 Dvojitý ⇧ — převést slovo/výběr
 Nahlásit problém…
 Co se stalo a v jaké aplikaci:
+Zkontrolovat aktualizace…
+⬆︎ Možná je k dispozici aktualizace — zkontrolovat
 Podpořit AURA Switcher ☕
 Ukončit
 
@@ -344,6 +366,8 @@ System
 Dubbel-⇧ — konvertera ord/markering
 Rapportera ett problem…
 Vad hände och i vilken app:
+Sök efter uppdateringar…
+⬆︎ Det kan finnas en uppdatering — kontrollera
 Stöd AURA Switcher ☕
 Avsluta
 
@@ -372,6 +396,8 @@ Järjestelmä
 Kaksois-⇧ — muunna sana/valinta
 Ilmoita ongelmasta…
 Mitä tapahtui ja missä ohjelmassa:
+Tarkista päivitykset…
+⬆︎ Päivitys saattaa olla saatavilla — tarkista
 Tue AURA Switcheriä ☕
 Lopeta
 
@@ -400,6 +426,8 @@ Sistem
 Dublu ⇧ — convertește cuvântul/selecția
 Raportează o problemă…
 Ce s-a întâmplat și în ce aplicație:
+Caută actualizări…
+⬆︎ Poate există o actualizare — verifică
 Susține AURA Switcher ☕
 Ieșire
 
@@ -428,6 +456,8 @@ Rendszer
 Dupla ⇧ — szó/kijelölés átalakítása
 Probléma bejelentése…
 Mi történt és melyik alkalmazásban:
+Frissítések keresése…
+⬆︎ Lehet, hogy van frissítés — ellenőrzés
 Az AURA Switcher támogatása ☕
 Kilépés
 
@@ -456,6 +486,8 @@ AURA Switcher — εξαιρέσεις λέξεων
 Διπλό ⇧ — μετατροπή λέξης/επιλογής
 Αναφορά προβλήματος…
 Τι συνέβη και σε ποια εφαρμογή:
+Έλεγχος για ενημερώσεις…
+⬆︎ Ίσως υπάρχει ενημέρωση — έλεγχος
 Υποστηρίξτε το AURA Switcher ☕
 Έξοδος
 
@@ -484,6 +516,8 @@ AURA Switcher никога няма да поправя автоматично �
 Двоен ⇧ — смяна на езика на дума/селекция
 Съобщете за проблем…
 Какво се случи и в коя програма:
+Проверка за актуализации…
+⬆︎ Може да има актуализация — проверете
 Подкрепете AURA Switcher ☕
 Изход
 
@@ -512,6 +546,8 @@ AURA Switcher לעולם לא יתקן מילים אלה אוטומטית. הפ�
 ⇧ כפול — המרת מילה/בחירה
 דיווח על בעיה…
 מה קרה ובאיזה יישום:
+בדיקת עדכונים…
+⬆︎ ייתכן שיש עדכון — בדיקה
 תמכו ב-AURA Switcher ☕
 יציאה
 
@@ -540,6 +576,8 @@ AURA Switcher — كلمات مستثناة
 ⇧ مزدوج — تحويل الكلمة/التحديد
 الإبلاغ عن مشكلة…
 ماذا حدث وفي أي تطبيق:
+التحقق من التحديثات…
+⬆︎ قد يتوفر تحديث — تحقّق
 ادعم AURA Switcher ☕
 إنهاء
 
@@ -568,6 +606,8 @@ AURA Switcher इन शब्दों को कभी अपने आप न
 दो बार ⇧ — शब्द/चयन बदलें
 समस्या बताएँ…
 क्या हुआ और किस ऐप में:
+अपडेट जाँचें…
+⬆︎ शायद नया अपडेट आया है — जाँचें
 AURA Switcher का समर्थन करें ☕
 बंद करें
 
@@ -596,6 +636,8 @@ AURA Switcher는 이 단어들을 자동으로 수정하지 않습니다. 쉼표
 ⇧ 두 번 — 단어/선택 영역 변환
 문제 신고…
 무슨 일이 어느 앱에서 있었나요:
+업데이트 확인…
+⬆︎ 업데이트가 있을 수 있습니다 — 확인
 AURA Switcher 후원하기 ☕
 종료
 """

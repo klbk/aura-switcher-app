@@ -4,6 +4,8 @@ HOW TO USE
   is converted to another layout.
 • Click the language code in the menu bar (EN, УК, РУ) for the menu: turn off,
   sound, exclude apps, language per app, word exceptions, menu language.
+• Updates: menu → "Check for updates…" (opens the page in your browser).
+  After a month a reminder dot appears next to the language code. AURA itself never goes online.
 • Quit: menu → "Quit". AURA Switcher starts at login (can be turned off in the menu).
 • Like it? Support: https://donatello.to/aura-switcher ☕
 Open source: https://github.com/klbk/aura-switcher-app

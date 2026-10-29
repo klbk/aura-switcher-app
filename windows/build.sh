@@ -9,7 +9,7 @@ VERSION=0.6.1
 ZIG=${ZIG:-$HOME/.local/bin/zig}
 rm -rf build && mkdir -p build/x64 build/arm64 ../dist
 for T in x86_64:x64 aarch64:arm64; do
-  "$ZIG" c++ -target ${T%%:*}-windows-gnu -O2 -s -std=c++17 -municode -Wl,--subsystem,windows \
+  "$ZIG" c++ -target ${T%%:*}-windows-gnu -O2 -s -std=c++17 -municode -Wl,--subsystem,windows -DBUILD_TIME=$(date +%s) \
     aura.cpp aura.rc -o "build/${T##*:}/$NAME.exe" \
     -lole32 -lwinmm -luser32 -lshell32 -lgdi32 -ladvapi32 -static
 done
