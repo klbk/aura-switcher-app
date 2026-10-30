@@ -7,6 +7,8 @@ import re, shutil, subprocess, sys, tempfile
 from pathlib import Path
 
 BASE = "https://klbk.github.io/aura-switcher/"
+# visit counter (GoatCounter: no cookies, no personal data); added only to published pages, not while rendering
+COUNTER = '<script data-goatcounter="https://aura-switcher.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>'
 CHROME = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
 SRC = Path(__file__).resolve().parent
 ASSETS = ["icon.svg", "latest.js", "i18n-more.js", "seo.js", "shared.js", "google8a7be41a4753a620.html", "f9834e666c1005df874f5c53d176ecc3.txt"]  # last two: Search Console + IndexNow (Bing) keys, keep
@@ -35,7 +37,7 @@ def finish(dom, canonical, rel):
     title = re.search(r"<title>(.*?)</title>", dom).group(1)
     desc = re.search(r'<meta name="description" content="(.*?)">', dom).group(1)
     og = f'<meta property="og:title" content="{title}"><meta property="og:description" content="{desc}">'
-    dom = dom.replace("</head>", head_links(canonical) + og + "</head>", 1)
+    dom = dom.replace("</head>", head_links(canonical) + og + COUNTER + "</head>", 1)
     if rel: dom = dom.replace('src="i18n-more.js"', 'src="../i18n-more.js"').replace('src="seo.js"', 'src="../seo.js"') \
                      .replace('src="shared.js"', 'src="../shared.js"').replace('"icon.svg"', '"../icon.svg"')
     return dom
