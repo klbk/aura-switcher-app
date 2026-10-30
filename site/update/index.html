@@ -28,6 +28,12 @@ h1.ok { color:var(--yellow); }
 .btn { display:inline-flex; align-items:center; gap:8px; border-radius:14px; font-weight:700; padding:16px 26px; font-size:18px;
        background:var(--text); color:var(--bg); box-shadow:0 8px 30px rgba(255,255,255,.15); }
 .alt { color:var(--muted); font-size:14px; } .alt a { color:var(--blue); }
+.support { display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap;
+           border-color:rgba(255,213,0,.35); background:rgba(255,213,0,.06); }
+.support p { color:var(--text); flex:1 1 260px; }
+.coffee { display:inline-flex; gap:8px; align-items:center; border-radius:12px; font-weight:700; padding:12px 20px;
+          border:1px solid rgba(255,213,0,.5); background:rgba(255,213,0,.12); color:var(--yellow); white-space:nowrap; }
+.coffee:hover { background:rgba(255,213,0,.2); }
 footer { margin-top:40px; font-size:14px; color:var(--muted); } footer a { color:var(--yellow); }
 [hidden] { display:none !important; }
 </style>
@@ -45,8 +51,10 @@ footer { margin-top:40px; font-size:14px; color:var(--muted); } footer a { color
 
   <div class="card" id="how" hidden><h2 id="howTitle"></h2><ol id="steps"></ol></div>
   <div class="card"><h2 id="notesTitle"></h2><ul id="notes"></ul></div>
+  <div class="card support"><p data-t="supportP"></p>
+    <a class="coffee" href="https://donatello.to/aura-switcher" target="_blank" rel="noopener">☕ <span data-t="donate"></span></a></div>
 
-  <footer><a href="../" id="site"></a> · <a href="https://donatello.to/aura-switcher" target="_blank" rel="noopener">☕ <span data-t="donate"></span></a></footer>
+  <footer><a href="../" id="site"></a></footer>
 </div>
 <script src="../latest.js"></script>
 <script src="../i18n-more.js"></script>
