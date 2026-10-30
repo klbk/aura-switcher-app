@@ -62,13 +62,13 @@ The icon shows the current language: `EN`, `УК`, `РУ`… — each language i
 
 1. Build and install (also launches it):
    ```
-   ~/Repo/aura-switcher/build.sh
+   ./build.sh
    ```
    Requires Xcode or Command Line Tools (`swiftc`). Installs to `/Applications/AURA Switcher.app`.
 2. Grant access: System Settings → Privacy & Security → **Accessibility** → enable AURA. Until then the menu shows `⚠︎`; once enabled, AURA starts working by itself, no restart needed.
 3. After that it starts at login. Manually — Spotlight (⌘Space) → "AURA".
 
-Archive for other Macs: `~/Repo/aura-switcher/build.sh --release` → `dist/AURA-Switcher-<version>.zip`.
+Archive for other Macs: `./build.sh --release` → `dist/AURA-Switcher-<version>.zip`.
 
 ## Troubleshooting
 
@@ -79,7 +79,7 @@ Archive for other Macs: `~/Repo/aura-switcher/build.sh --release` → `dist/AURA
 
 ## How it works
 
-- A single Swift file: `~/Repo/aura-switcher/main.swift` (public repo https://github.com/klbk/aura-switcher-app), build script `build.sh` next to it. No external dependencies. Universal build: Apple Silicon + Intel.
+- A single Swift file: `main.swift` (public repo https://github.com/klbk/aura-switcher-app), build script `build.sh` next to it. No external dependencies. Universal build: Apple Silicon + Intel.
 - Keystrokes are read with a **listen-only** `CGEventTap`: the system never waits for AURA, so it can't freeze the keyboard or mouse.
 - Character tables are built from the macOS layouts themselves (`UCKeyTranslate`), so any layout works without manual setup.
 - Word checking uses the system spell checker (`NSSpellChecker`), after the Space has already been typed.
@@ -89,8 +89,8 @@ Archive for other Macs: `~/Repo/aura-switcher/build.sh --release` → `dist/AURA
 
 ## Windows (beta, tested on Windows x64)
 
-- Windows 10/11, x64 and ARM64 (ARM64 not tested yet). Archives: `~/Repo/aura-switcher/dist/AURA-Switcher-0.7.1-windows-x64.zip` (regular PCs, ~210 KB) and `AURA-Switcher-0.7.1-windows-arm64.zip` (ARM laptops: Snapdragon, Surface Pro X). No installer — copy `AURA Switcher.exe` anywhere and run it.
-- Build on a Mac: `~/Repo/aura-switcher/windows/build.sh` (needs Zig, located in `~/.local/zig`).
+- Windows 10/11, x64 and ARM64 (ARM64 not tested yet). Archives in the release (https://github.com/klbk/aura-switcher/releases/latest): `AURA-Switcher-windows-x64.zip` (regular PCs, ~210 KB) and `AURA-Switcher-windows-arm64.zip` (ARM laptops: Snapdragon, Surface Pro X). No installer — copy `AURA Switcher.exe` anywhere and run it.
+- Build on a Mac: `windows/build.sh` (needs [Zig](https://ziglang.org); path to it — `ZIG=…`, default `~/.local/bin/zig`).
 - Same features and menu as on Mac. The tray icon shows the language code: yellow letters on a rounded blue tile (grey — disabled), drawn at the exact tray size so it stays sharp.
   ![tray](docs/tray-preview.png) Click the icon for the menu.
 - Double ⇧ works the same as on Mac. To stop the "Sticky Keys" prompt after a few double ⇧, AURA turns off only its shortcut (5× Shift) while running. Not saved: quitting AURA or rebooting restores it.
