@@ -408,17 +408,21 @@ static void sendKey(WORD vk, bool shift = false) {
     if (shift) add(VK_SHIFT, true);
     SendInput(UINT(in.size()), in.data(), sizeof(INPUT));
 }
+// One character per SendInput with a short pause: the Windows 11 Notepad (WinUI + TSF) turns a solid burst of
+// VK_PACKET characters into spaces — «ghbdsn » became 7 spaces. Classic edit boxes don't care either way.
 static void typeText(const wstring& s) {
-    vector<INPUT> in;
-    for (wchar_t c : s) for (int up = 0; up < 2; up++) {
-        INPUT i{}; i.type = INPUT_KEYBOARD; i.ki.dwExtraInfo = kMagic;
-        if (c == L'\n' || c == L'\r') { i.ki.wVk = VK_RETURN; i.ki.dwFlags = up ? KEYEVENTF_KEYUP : 0; }  // line break = Enter
-        else { i.ki.wScan = c; i.ki.dwFlags = KEYEVENTF_UNICODE | (up ? KEYEVENTF_KEYUP : 0); }
-        in.push_back(i);
+    for (wchar_t c : s) {
+        INPUT in[2] = {};
+        for (int up = 0; up < 2; up++) {
+            INPUT& i = in[up]; i.type = INPUT_KEYBOARD; i.ki.dwExtraInfo = kMagic;
+            if (c == L'\n' || c == L'\r') { i.ki.wVk = VK_RETURN; i.ki.dwFlags = up ? KEYEVENTF_KEYUP : 0; }  // line break = Enter
+            else { i.ki.wScan = c; i.ki.dwFlags = KEYEVENTF_UNICODE | (up ? KEYEVENTF_KEYUP : 0); }
+        }
+        SendInput(2, in, sizeof(INPUT));
+        Sleep(2);
     }
-    if (!in.empty()) SendInput(UINT(in.size()), in.data(), sizeof(INPUT));
 }
-static void replaceText(int count, const wstring& s) { for (int i = 0; i < count; i++) sendKey(VK_BACK); typeText(s); }
+static void replaceText(int count, const wstring& s) { for (int i = 0; i < count; i++) sendKey(VK_BACK); Sleep(10); typeText(s); }
 
 // MARK: - Spell checking (Windows Spell Checking API)
 
