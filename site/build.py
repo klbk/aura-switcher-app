@@ -32,8 +32,15 @@ def render(html):
         for a in ASSETS: shutil.copy(SRC / a, tmp)
         page = Path(tmp) / "p.html"
         page.write_text(html.replace('"../', '"'))  # assets sit next to the temp page
-        dom = subprocess.run([CHROME, "--headless", "--disable-gpu", "--virtual-time-budget=1500",
-                              "--dump-dom", page.as_uri()], capture_output=True, text=True, check=True).stdout
+        # headless Chrome sometimes hangs on a page: give it a minute, then try again
+        for attempt in range(3):
+            try:
+                dom = subprocess.run([CHROME, "--headless", "--disable-gpu", "--virtual-time-budget=1500",
+                                      "--dump-dom", page.as_uri()], capture_output=True, text=True, check=True,
+                                     timeout=60).stdout
+                break
+            except subprocess.TimeoutExpired:
+                if attempt == 2: raise
     return "<!doctype html>\n" + dom
 
 def finish(dom, canonical, rel):
