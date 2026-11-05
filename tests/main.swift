@@ -106,6 +106,13 @@ for (m, t, w, want) in must {
     if got != want { mustFail += 1; print("MUST FAIL: \(w) (\(m) typed in \(t)) → \(got ?? "unchanged"), expected \(want ?? "unchanged")") }
 }
 
+// same keys give a frequent Russian word and a rare Ukrainian one («было» / «біло»): the frequent one wins
+engine.layouts = [layout(US), layout("com.apple.keylayout.Ukrainian-PC"), layout("com.apple.keylayout.RussianWin")]; engine.reliable = [:]
+for w in ["было", "была", "были"] {
+    let got = run(w, meant: engine.layouts[2], typed: engine.layouts[0])
+    if got != w { mustFail += 1; print("MUST FAIL: \(w) (ru typed in en, uk+ru+en) → \(got ?? "unchanged")") }
+}
+
 // report and compare with the baseline
 let out = results.map { String(format: "%@\t%.1f%%\t%d/%d", $0.0, 100 * Double($0.1) / Double(max($0.2, 1)), $0.1, $0.2) }
 for l in out { print(l) }

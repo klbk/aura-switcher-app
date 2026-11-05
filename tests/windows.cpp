@@ -164,6 +164,11 @@ int wmain(int argc, wchar_t** argv) {
             if (!k.empty()) { mustFail++; printf("MUST FAIL (RU,UK,EN): %s in RU -> %s\n", utf8(w).c_str(), utf8(k).c_str()); }
         }
     } else printf("skipped (no Russian spell checker): вінницею in RU\n");
+    // same keys give a frequent Russian word and a rare Ukrainian one («было» / «біло»): the frequent one wins
+    for (auto w : {L"было", L"была", L"были"}) {
+        wstring got = run(w, layouts[0], layouts[2]);
+        if (got != wstring(w) + L"\x01") { mustFail++; printf("MUST FAIL (RU,UK,EN): %s typed in EN -> %s\n", utf8(w).c_str(), got.empty() ? "unchanged" : utf8(got).c_str()); }
+    }
 
     std::string out;
     for (auto& r : results) {

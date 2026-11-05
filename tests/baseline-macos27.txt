@@ -2,10 +2,10 @@ uk+en uk typed in en: fixed	99.0%	294/297
 uk+en uk typed right: kept	100.0%	297/297
 uk+en en typed in uk: fixed	98.7%	296/300
 uk+en en typed right: kept	100.0%	300/300
-uk+ru+en uk typed in en: fixed	98.7%	293/297
+uk+ru+en uk typed in en: fixed	99.0%	294/297
 uk+ru+en uk typed right: kept	100.0%	297/297
-uk+ru+en en typed in uk: fixed	98.3%	295/300
-uk+ru+en ru typed in en: fixed	97.7%	293/300
+uk+ru+en en typed in uk: fixed	98.7%	296/300
+uk+ru+en ru typed in en: fixed	98.7%	296/300
 uk+ru+en ru typed right: kept	100.0%	300/300
 uk+ru+en en typed in ru: fixed	98.0%	294/300
 uk+ru+en en typed right: kept	100.0%	300/300

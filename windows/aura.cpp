@@ -595,7 +595,9 @@ static int autoFixTarget(const vector<Key>& keys) {
     // every other layout is a candidate; take the strongest kind of evidence, not the first layout in the
     // list: with RU, UK, EN in that order «ghbdsn» must become the Ukrainian word «привіт», not the
     // Russian look-alike «привыт» that only passes on letter statistics
-    int best = -1, bestTier = 0; double bestM = 0;
+    // equal evidence (both are dictionary words: «было» / «біло» from the same keys) — a frequent word of its
+    // language wins over a rare one, then the letter statistics decide
+    int best = -1, bestTier = 0, bestFreq = 0; double bestM = 0;
     for (size_t i = 1; i < layouts.size(); i++) {
         int j = int((cur + i) % layouts.size());
         wstring t = layouts[j].text(keys);
@@ -627,7 +629,10 @@ static int autoFixTarget(const vector<Key>& keys) {
                 layouts[j].locale.compare(0, 2, L"uk") == 0 && t.find_first_of(L"іїєґІЇЄҐ") != wstring::npos) tier = 1;
         }
         if (weak) { const LangModel* lm = model(layouts[j].locale); if (!lm || !lm->has(t)) tier = 0; }
-        if (tier > bestTier || (tier && tier == bestTier && m > bestM)) { best = j; bestTier = tier; bestM = m; }
+        const LangModel* fm = model(layouts[j].locale); int freq = fm && fm->has(t) ? 1 : 0;
+        if (tier > bestTier || (tier && tier == bestTier && (freq > bestFreq || (freq == bestFreq && m > bestM)))) {
+            best = j; bestTier = tier; bestFreq = freq; bestM = m;
+        }
     }
     return best;
 }

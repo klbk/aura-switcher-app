@@ -550,7 +550,9 @@ final class Engine {
         // every other layout is a candidate; take the strongest kind of evidence, not the first layout in the
         // list: with RU, UK, EN in that order «ghbdsn» must become the Ukrainian word «привіт», not the
         // Russian look-alike «привыт» that only passes on letter statistics
-        var best: (tier: Int, m: Double, l: Layout)? = nil
+        // equal evidence (both are dictionary words: «было» / «біло» from the same keys) — a frequent word of its
+        // language wins over a rare one, then the letter statistics decide
+        var best: (tier: Int, freq: Int, m: Double, l: Layout)? = nil
         let start = index(cur.lang)
         for i in 1..<max(layouts.count, 1) {
             let l = layouts[(start + i) % layouts.count]
@@ -574,7 +576,8 @@ final class Engine {
                 // no dictionary there: a frequent word, or clearly more typical than what was typed
                 if lm.has(t) { tier = 2 } else if m >= Engine.marginNeeded { tier = 1 }
             }
-            if tier > 0, best == nil || (tier, m) > (best!.tier, best!.m) { best = (tier, m, l) }
+            let freq = model(l.lang)?.has(t) == true ? 1 : 0
+            if tier > 0, best == nil || (tier, freq, m) > (best!.tier, best!.freq, best!.m) { best = (tier, freq, m, l) }
         }
         return best?.l
     }
