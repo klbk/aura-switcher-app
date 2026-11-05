@@ -177,7 +177,10 @@ int wmain(int argc, wchar_t** argv) {
     }
     fputs(out.c_str(), stdout);
     { std::ofstream f(utf8(root + L"\\tests\\failures.txt"), std::ios::binary); for (auto& l : failures) f << l << "\n"; }
-    std::string baseFile = utf8(root + L"\\tests\\baseline-windows.txt");
+    // results depend on which spell checkers Windows has: one baseline with all of them installed, one for
+    // machines without (the CI runner has only some)
+    bool allDicts = dicts.find('-') == std::string::npos;
+    std::string baseFile = utf8(root + (allDicts ? L"\\tests\\baseline-windows-dicts.txt" : L"\\tests\\baseline-windows.txt"));
     if (update) { std::ofstream(baseFile, std::ios::binary) << out; printf("baseline updated\n"); return mustFail ? 1 : 0; }
     int worse = 0;
     std::ifstream bf(baseFile, std::ios::binary); std::string l;
