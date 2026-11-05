@@ -408,6 +408,17 @@ static void sendKey(WORD vk, bool shift = false) {
     if (shift) add(VK_SHIFT, true);
     SendInput(UINT(in.size()), in.data(), sizeof(INPUT));
 }
+// Sleep(2) really sleeps a whole timer tick (~15.6 ms); a high-resolution waitable timer (Windows 10 1803+)
+// keeps short pauses short. Older systems fall back to Sleep.
+#ifndef CREATE_WAITABLE_TIMER_HIGH_RESOLUTION
+#define CREATE_WAITABLE_TIMER_HIGH_RESOLUTION 0x00000002
+#endif
+static void pauseMs(int ms) {
+    static HANDLE t = CreateWaitableTimerExW(nullptr, nullptr, CREATE_WAITABLE_TIMER_HIGH_RESOLUTION, TIMER_ALL_ACCESS);
+    if (!t) { Sleep(ms); return; }
+    LARGE_INTEGER due; due.QuadPart = -10000LL * ms;
+    if (SetWaitableTimer(t, &due, 0, nullptr, nullptr, FALSE)) WaitForSingleObject(t, 100); else Sleep(ms);
+}
 // One character per SendInput with a short pause: the Windows 11 Notepad (WinUI + TSF) turns a solid burst of
 // VK_PACKET characters into spaces — «ghbdsn » became 7 spaces. Classic edit boxes don't care either way.
 static void typeText(const wstring& s) {
@@ -419,10 +430,12 @@ static void typeText(const wstring& s) {
             else { i.ki.wScan = c; i.ki.dwFlags = KEYEVENTF_UNICODE | (up ? KEYEVENTF_KEYUP : 0); }
         }
         SendInput(2, in, sizeof(INPUT));
-        Sleep(2);
+        pauseMs(3);
     }
 }
-static void replaceText(int count, const wstring& s) { for (int i = 0; i < count; i++) sendKey(VK_BACK); Sleep(10); typeText(s); }
+// after the Backspaces give the app time to apply them: a character typed right away could take the deleted
+// one's place («ыыло» instead of «было» once in 15 in Notepad)
+static void replaceText(int count, const wstring& s) { for (int i = 0; i < count; i++) sendKey(VK_BACK); pauseMs(30); typeText(s); }
 
 // MARK: - Spell checking (Windows Spell Checking API)
 
