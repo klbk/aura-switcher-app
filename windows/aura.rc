@@ -35,8 +35,8 @@ BEGIN
       VALUE "CompanyName", "Made in Ukraine"
       VALUE "FileDescription", "AURA Switcher — keyboard layout fixer"
       VALUE "ProductName", "AURA Switcher"
-      VALUE "ProductVersion", "0.9.4 beta"
-      VALUE "FileVersion", "0.9.4"
+      VALUE "ProductVersion", "0.9.5 beta"
+      VALUE "FileVersion", "0.9.5"
       VALUE "LegalCopyright", "Oleksii Chernov, Ukraine"
     END
   END
