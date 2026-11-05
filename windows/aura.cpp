@@ -300,10 +300,17 @@ static vector<Layout> layouts;
 static HWND hwndMain;
 
 static HKL forcedLayout = nullptr;  // tests set the "active" layout here instead of switching the system's
+// The window that takes the keys: in the Windows 11 Notepad the text field («RichEditD2DPT») runs in another
+// thread than the main window, with its own layout — Win+Space changes only the field's. Read and switch there.
+static HWND focusWindow() {
+    HWND fg = GetForegroundWindow();
+    GUITHREADINFO gi{}; gi.cbSize = sizeof gi;
+    if (fg && GetGUIThreadInfo(GetWindowThreadProcessId(fg, nullptr), &gi) && gi.hwndFocus) return gi.hwndFocus;
+    return fg;
+}
 static HKL fgLayout() {
     if (forcedLayout) return forcedLayout;
-    HWND fg = GetForegroundWindow();
-    return GetKeyboardLayout(GetWindowThreadProcessId(fg, nullptr));
+    return GetKeyboardLayout(GetWindowThreadProcessId(focusWindow(), nullptr));
 }
 static int layoutIndex(HKL h) {
     // layouts are one per language (en-US and en-GB merged), so match by language, not by full LANGID
@@ -311,8 +318,7 @@ static int layoutIndex(HKL h) {
     return 0;
 }
 static void selectLayout(const Layout& l) {
-    HWND fg = GetForegroundWindow();
-    PostMessageW(fg, WM_INPUTLANGCHANGEREQUEST, 0, (LPARAM)l.hkl);
+    PostMessageW(focusWindow(), WM_INPUTLANGCHANGEREQUEST, 0, (LPARAM)l.hkl);
 }
 static wstring fgExe() {
     DWORD pid = 0; GetWindowThreadProcessId(GetForegroundWindow(), &pid);
