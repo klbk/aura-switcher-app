@@ -516,6 +516,12 @@ final class Engine {
         // switch first, then retype: switched after the text, the macOS indicator at the caret showed the old layout
         select(fix)
         let sp = String(repeating: " ", count: trailing)
+        // a password prompt doesn't show what is typed (sudo, ssh in Terminal — macOS doesn't hide those keys from us):
+        // if the app can say what's before the caret and the word isn't there, leave it alone
+        // (case-insensitive: some editors capitalize the first word; AX counts UTF-16 units)
+        if let typed, let seen = textBeforeCaret((typed + sp).utf16.count), seen.lowercased() != (typed + sp).lowercased() {
+            auraLog.notice("skip: not on screen (password?) (\(keys.count) letters)"); return
+        }
         if fixBefore { replace(count: bTyped.count + shown + 1 + trailing, with: b + " " + out + sp) }
         else if out != typed { replace(count: shown + trailing, with: out + sp) }
         auraLog.notice("fixed: \(src?.lang ?? "?", privacy: .public) → \(fix.lang, privacy: .public) (\(keys.count) letters\(trailing == 0 ? ", before Return" : "", privacy: .public))")
@@ -734,6 +740,27 @@ final class Engine {
     }
 
     // MARK: selection
+
+    /// the last `n` characters before the caret in the focused element, if the app tells (nil = it doesn't);
+    /// "" for a password field
+    func textBeforeCaret(_ n: Int) -> String? {
+        var f: CFTypeRef?
+        guard AXUIElementCopyAttributeValue(AXUIElementCreateSystemWide(), kAXFocusedUIElementAttribute as CFString, &f) == .success,
+              let f else { return nil }
+        let el = f as! AXUIElement
+        var sub: CFTypeRef?
+        AXUIElementCopyAttributeValue(el, kAXSubroleAttribute as CFString, &sub)
+        if sub as? String == kAXSecureTextFieldSubrole as String { return "" }
+        var r: CFTypeRef?, range = CFRange()
+        guard AXUIElementCopyAttributeValue(el, kAXSelectedTextRangeAttribute as CFString, &r) == .success, let r,
+              AXValueGetValue(r as! AXValue, .cfRange, &range), range.location >= n else { return nil }
+        var q = CFRange(location: range.location - n, length: n)
+        guard let qv = AXValueCreate(.cfRange, &q) else { return nil }
+        var t: CFTypeRef?
+        guard AXUIElementCopyParameterizedAttributeValue(el, kAXStringForRangeParameterizedAttribute as CFString, qv, &t) == .success
+        else { return nil }
+        return t as? String
+    }
 
     /// the selection as the focused element reports it: "" = nothing selected, nil = the app doesn't say
     func axSelectedText() -> String? {
