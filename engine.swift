@@ -457,9 +457,10 @@ final class Engine {
             && Engine.letterWords[src?.lang ?? ""]?.contains(bTyped.lowercased()) != true
         // UK/RU word spelled the same in both layouts: text is already right, only switch the layout
         let shown = typed?.count ?? keys.count  // on screen: accented letters are one character
+        // switch first, then retype: switched after the text, the macOS indicator at the caret showed the old layout
+        select(fix)
         if fixBefore { replace(count: bTyped.count + shown + 2, with: b + " " + out + " ") }
         else if out != typed { replace(count: shown + 1, with: out + " ") }
-        select(fix)
         Sounds.play(Sounds.auto)
     }
 
@@ -638,11 +639,13 @@ final class Engine {
     func cycleWord(_ keys: [Key], trailing: Int) {
         // first press: the most likely layout (as auto-correction would pick it), then the next ones in turn
         let again = keys == lastCycled && lastCycledLang != nil
-        guard let n = (again ? nil : autoFix(keys)) ?? next(after: again ? lastCycledLang : currentLang()) else { return }
+        // (not the layout the word is already in: right after auto-correction that would change nothing)
+        let cur = currentLang()
+        guard let n = (again ? nil : autoFix(keys).flatMap { $0.lang == cur ? nil : $0 }) ?? next(after: again ? lastCycledLang : cur) else { return }
         lastCycled = keys; lastCycledLang = n.lang
         let shown = typedLayout(keys)?.text(keys).count ?? keys.count
+        select(n)  // before the text: see autoCorrect
         replace(count: shown + trailing, with: n.text(keys) + String(repeating: " ", count: trailing))
-        select(n)
     }
 
     func convertSelection(_ text: String) {
