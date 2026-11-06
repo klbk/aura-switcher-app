@@ -469,11 +469,38 @@ static void typeText(const wstring& s) {
         pauseMs(c == L' ' && n + 1 < s.size() ? 40 : 3);
     }
 }
-// after the Backspaces give the app time to apply them: a character typed right away could take the deleted
-// one's place («ыыло» instead of «было» once in 15 in Notepad; 30 ms still lost «я» of «я удалил» once in 15)
-// and before them let the app finish the user's own space: right after it Notepad dropped a whole Backspace burst
-// («b yt и не» 2 of 5 times)
-static void replaceText(int count, const wstring& s) { pauseMs(25); for (int i = 0; i < count; i++) sendKey(VK_BACK); pauseMs(50); typeText(s); }
+
+// Replace the word with `s` in layout `l`: switch the window to `l` first and wait until it has it, then type `s`
+// with that layout's real keys, like a person. Win11 Notepad (TSF) sometimes blanks or drops VK_PACKET characters
+// right after Backspaces whatever the pause; real keys it takes in order. Characters the layout lacks (or with
+// Caps Lock on) still go as VK_PACKET.
+static void typeKeysIn(const wstring& s, HKL hkl) {
+    bool caps = GetKeyState(VK_CAPITAL) & 1;
+    for (wchar_t c : s) {
+        SHORT v = caps ? -1 : VkKeyScanExW(c, hkl);
+        if (v == -1 || (HIBYTE(v) & ~1)) { typeText(wstring(1, c)); continue; }  // not there, or needs Ctrl/Alt
+        WORD vk = LOBYTE(v); bool shift = HIBYTE(v) & 1;
+        INPUT in[4] = {}; int n = 0;
+        auto add = [&](WORD k, bool up) { INPUT& i = in[n++]; i.type = INPUT_KEYBOARD; i.ki.wVk = k;
+            i.ki.wScan = WORD(MapVirtualKeyExW(k, MAPVK_VK_TO_VSC, hkl)); i.ki.dwFlags = up ? KEYEVENTF_KEYUP : 0; i.ki.dwExtraInfo = kMagic; };
+        if (shift) add(VK_SHIFT, false);
+        add(vk, false); add(vk, true);
+        if (shift) add(VK_SHIFT, true);
+        SendInput(n, in, sizeof(INPUT));
+        pauseMs(3);
+    }
+}
+static void replaceIn(int count, const wstring& s, const Layout& l) {
+    selectLayout(l);
+    bool switched = false;
+    for (int i = 0; i < 40 && !(switched = GetKeyboardLayout(GetWindowThreadProcessId(focusWindow(), nullptr)) == l.hkl); i++) pauseMs(5);
+    // let the app finish the user's own space first (Notepad dropped a whole Backspace burst right after it), and
+    // apply the Backspaces before the text («ыыло» instead of «было» in Notepad)
+    pauseMs(25);
+    for (int i = 0; i < count; i++) sendKey(VK_BACK);
+    pauseMs(30);
+    if (switched) typeKeysIn(s, l.hkl); else typeText(s);
+}
 
 // MARK: - Spell checking (Windows Spell Checking API)
 
@@ -842,8 +869,7 @@ static void onDoubleShift(Snapshot* s) {
         lastSeq = s->seq; lastIdx = nIdx;
         const Layout& cur = layouts[curIdx];
         const Layout& n = layouts[nIdx];
-        replaceText(int(cur.text(s->keys).size()) + s->trailing, n.text(s->keys) + wstring(s->trailing, L' '));
-        selectLayout(n);
+        replaceIn(int(cur.text(s->keys).size()) + s->trailing, n.text(s->keys) + wstring(s->trailing, L' '), n);
         return;
     }
     if (fgIsConsole()) { cycleLayout(); return; }  // Ctrl+C there would interrupt the running command
@@ -897,9 +923,9 @@ static void applyFix(int j, Snapshot* s, int trailing) {
     // UK/RU word spelled the same in both layouts: text is already right, only switch the layout
     int shown = int(cur.text(s->keys).size());  // on screen: accented letters are one character
     wstring sp(trailing, L' ');
-    if (fixBefore) replaceText(int(bTyped.size()) + shown + 1 + trailing, b + L" " + out + sp);
-    else if (out != cur.text(s->keys)) replaceText(shown + trailing, out + sp);
-    selectLayout(layouts[j]);
+    if (fixBefore) replaceIn(int(bTyped.size()) + shown + 1 + trailing, b + L" " + out + sp, layouts[j]);
+    else if (out != cur.text(s->keys)) replaceIn(shown + trailing, out + sp, layouts[j]);
+    else selectLayout(layouts[j]);
     playSound(sndAuto);
 }
 
