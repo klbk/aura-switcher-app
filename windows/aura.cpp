@@ -455,7 +455,8 @@ static void pauseMs(int ms) {
 // One character per SendInput with a short pause: the Windows 11 Notepad (WinUI + TSF) turns a solid burst of
 // VK_PACKET characters into spaces — «ghbdsn » became 7 spaces. Classic edit boxes don't care either way.
 static void typeText(const wstring& s) {
-    for (wchar_t c : s) {
+    for (size_t n = 0; n < s.size(); n++) {
+        wchar_t c = s[n];
         INPUT in[2] = {};
         for (int up = 0; up < 2; up++) {
             INPUT& i = in[up]; i.type = INPUT_KEYBOARD; i.ki.dwExtraInfo = kMagic;
@@ -465,7 +466,7 @@ static void typeText(const wstring& s) {
         SendInput(2, in, sizeof(INPUT));
         // a space inside the text («я удалил»): Win11 Notepad handles a word end (its spell check) and drops or
         // repeats the next letters if they come right away
-        pauseMs(c == L' ' && &c != &s.back() ? 40 : 3);
+        pauseMs(c == L' ' && n + 1 < s.size() ? 40 : 3);
     }
 }
 // after the Backspaces give the app time to apply them: a character typed right away could take the deleted
