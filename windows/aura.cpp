@@ -21,6 +21,7 @@
 #include <spellcheck.h>
 #include <mmsystem.h>
 #include <commctrl.h>
+#include <uiautomation.h>
 #include <algorithm>
 #include <cmath>
 #include <atomic>
@@ -44,7 +45,7 @@ using std::wstring;
 using std::vector;
 
 static const ULONG_PTR kMagic = 0x4B535754;  // marks our own synthetic input
-enum { WM_TRAY = WM_APP + 1, WM_AUTO, WM_DSHIFT, WM_UPDATE, WM_UPDATE_READY };
+enum { WM_TRAY = WM_APP + 1, WM_AUTO, WM_DSHIFT, WM_UPDATE, WM_UPDATE_READY, WM_ENTER };
 enum { ID_ENABLED = 1, ID_AUTO, ID_SOUND, ID_WORDS, ID_DONATE, ID_REPORT, ID_UPDATE, ID_EXCLUDE, ID_NOBIND, ID_LOGIN, ID_UI_SYS, ID_QUIT,
        ID_BIND0 = 100, ID_EXDEL0 = 200, ID_BDDEL0 = 300, ID_RECENT0 = 400, ID_UI0 = 500 };
 
@@ -340,7 +341,11 @@ static ULONGLONG shiftDownAt = 0, lastShiftTap = 0; static bool sawOther = false
 
 struct Snapshot { vector<Key> keys; int trailing; unsigned seq; vector<Key> before; };
 
-static void resetState() { word.clear(); lastWord.clear(); before.clear(); trailing = 0; }
+// the user went back into the text (Backspace over a space, arrows, a Ctrl/Alt/Win combo in the middle of a word):
+// until the next space AURA neither checks nor converts what is typed — it's the user's own word
+static bool handsOff = false;
+static bool returnHeld = false;  // Return held for a moment to fix the word before it (see WM_ENTER); swallow its key-up
+static void resetState() { word.clear(); lastWord.clear(); before.clear(); trailing = 0; handsOff = false; }
 
 static LRESULT CALLBACK kbHook(int code, WPARAM wp, LPARAM lp) {
     auto* k = (KBDLLHOOKSTRUCT*)lp;
@@ -360,22 +365,42 @@ static LRESULT CALLBACK kbHook(int code, WPARAM wp, LPARAM lp) {
             if (sawOther || mods || now - shiftDownAt > 300) lastShiftTap = 0;
             else if (lastShiftTap && now - lastShiftTap < 450) {
                 lastShiftTap = 0;
+                // the word being typed, or the previous one right after a single space; after two or more spaces
+                // (or in the user's own word) double ⇧ only switches the layout
                 bool cur = !word.empty();
-                auto* s = new Snapshot{cur ? word : lastWord, cur ? 0 : trailing, seq.load()};
+                auto* s = new Snapshot{cur ? word : trailing == 1 ? lastWord : vector<Key>(), cur ? 0 : trailing, seq.load()};
                 PostMessageW(hwndMain, WM_DSHIFT, 0, (LPARAM)s);
             } else lastShiftTap = now;
         }
         return CallNextHookEx(nullptr, code, wp, lp);
     }
-    if (!down) return CallNextHookEx(nullptr, code, wp, lp);
+    if (!down) {
+        if (vk == VK_RETURN && returnHeld) { returnHeld = false; return 1; }  // its key-down is being re-sent
+        return CallNextHookEx(nullptr, code, wp, lp);
+    }
 
     sawOther = true; lastShiftTap = 0; seq++;
     bool ctrlAlt = (GetAsyncKeyState(VK_CONTROL) | GetAsyncKeyState(VK_MENU) | GetAsyncKeyState(VK_LWIN) | GetAsyncKeyState(VK_RWIN)) & 0x8000;
-    if (ctrlAlt) { resetState(); return CallNextHookEx(nullptr, code, wp, lp); }
+    if (ctrlAlt) { bool mid = !word.empty(); resetState(); handsOff = mid; return CallNextHookEx(nullptr, code, wp, lp); }
 
+    if (vk == VK_RETURN && !word.empty() && !handsOff && !returnHeld) {
+        // Return right after a word («z elfkbk⏎» in a chat): checked only on a space, the message went out unfixed.
+        // Hold Return, let the main thread fix the word, it sends Return on
+        returnHeld = true;
+        PostMessageW(hwndMain, WM_ENTER, 0, (LPARAM)new Snapshot{word, 0, seq.load(), before});
+        resetState();
+        return 1;
+    }
     if (vk == VK_BACK) {
-        if (trailing > 0) { if (--trailing == 0) { word = lastWord; lastWord.clear(); before.clear(); } }
-        else if (!word.empty()) word.pop_back();
+        // a typo while the word is being typed: AURA keeps watching it. Back over the space into a finished word
+        // (or into older text): the word is the user's now
+        if (!word.empty() && trailing == 0 && !handsOff) word.pop_back();
+        else { resetState(); handsOff = true; }
+    } else if (vk == VK_LEFT || vk == VK_RIGHT || vk == VK_UP || vk == VK_DOWN || vk == VK_HOME || vk == VK_END
+               || vk == VK_PRIOR || vk == VK_NEXT || vk == VK_DELETE) {
+        resetState(); handsOff = true;  // editing the text
+    } else if (handsOff) {
+        if (!isLetterVk(vk)) resetState();  // a space, Return, Tab…: the user's word is over
     } else if (vk == VK_SPACE) {
         if (!word.empty()) {
             lastWord = word; word.clear(); trailing = 1;
@@ -843,21 +868,50 @@ static int pairFixTarget(const vector<Key>& keys, const vector<Key>& before) {
     return -1;
 }
 
-static void onAuto(Snapshot* s) {
-    if (!S.autoFix || S.bindings.count(fgExe())) return;
-    int j = autoFixTarget(s->keys);
-    if (j < 0) j = pairFixTarget(s->keys, s->before);
-    if (j < 0 || seq.load() != s->seq) return;  // user kept typing meanwhile — skip
+// Windows lets a keyboard hook see what's typed into password fields too: never touch a word there
+// (UI Automation's IsPassword; asked only when a fix is about to happen)
+static bool focusIsPassword() {
+    static IUIAutomation* uia = nullptr;
+    static const GUID clsid = {0xff48dba4, 0x60ef, 0x4201, {0xaa, 0x87, 0x54, 0x10, 0x3e, 0xef, 0x59, 0x4e}};  // CUIAutomation
+    static const GUID iid = {0x30cbe57d, 0xd9d0, 0x452a, {0xab, 0x13, 0x7a, 0xc5, 0xac, 0x48, 0x25, 0xee}};    // IUIAutomation
+    if (!uia && FAILED(CoCreateInstance(clsid, nullptr, CLSCTX_INPROC_SERVER, iid, (void**)&uia))) { uia = nullptr; return false; }
+    IUIAutomationElement* el = nullptr; BOOL pw = FALSE;
+    if (SUCCEEDED(uia->GetFocusedElement(&el)) && el) { el->get_CurrentIsPassword(&pw); el->Release(); }
+    return pw;
+}
+
+// puts the fixed word on screen: `trailing` = spaces typed after it (1 after a space, 0 before Return)
+static void applyFix(int j, Snapshot* s, int trailing) {
+    if (focusIsPassword()) return;
     wstring out = layouts[j].text(s->keys);
     const Layout& cur = layouts[layoutIndex(fgLayout())];
     wstring b = layouts[j].text(s->before), bTyped = cur.text(s->before);
     bool fixBefore = s->before.size() == 1 && b != bTyped && isLetterWord(b, layouts[j].locale) && !isLetterWord(bTyped, cur.locale);
     // UK/RU word spelled the same in both layouts: text is already right, only switch the layout
     int shown = int(cur.text(s->keys).size());  // on screen: accented letters are one character
-    if (fixBefore) replaceText(int(bTyped.size()) + shown + 2, b + L" " + out + L" ");
-    else if (out != cur.text(s->keys)) replaceText(shown + 1, out + L" ");
+    wstring sp(trailing, L' ');
+    if (fixBefore) replaceText(int(bTyped.size()) + shown + 1 + trailing, b + L" " + out + sp);
+    else if (out != cur.text(s->keys)) replaceText(shown + trailing, out + sp);
     selectLayout(layouts[j]);
     playSound(sndAuto);
+}
+
+static void onAuto(Snapshot* s) {
+    if (!S.autoFix || S.bindings.count(fgExe())) return;
+    int j = autoFixTarget(s->keys);
+    if (j < 0) j = pairFixTarget(s->keys, s->before);
+    if (j < 0 || seq.load() != s->seq) return;  // user kept typing meanwhile — skip
+    applyFix(j, s, 1);
+}
+
+// Return held by the hook after a word: fix the word if it needs it, then send Return on
+static void onEnter(Snapshot* s) {
+    if (active && S.autoFix && !S.bindings.count(fgExe())) {
+        int j = autoFixTarget(s->keys);
+        if (j < 0) j = pairFixTarget(s->keys, s->before);
+        if (j >= 0) applyFix(j, s, 0);
+    }
+    sendKey(VK_RETURN);
 }
 
 // MARK: - Tray
@@ -1389,6 +1443,7 @@ static LRESULT CALLBACK wndProc(HWND h, UINT msg, WPARAM wp, LPARAM lp) {
         return 0;
     case WM_AUTO: { auto* s = (Snapshot*)lp; if (active) onAuto(s); delete s; return 0; }
     case WM_DSHIFT: { auto* s = (Snapshot*)lp; if (active) onDoubleShift(s); delete s; return 0; }
+    case WM_ENTER: { auto* s = (Snapshot*)lp; onEnter(s); delete s; return 0; }  // always sends Return on
     case WM_UPDATE: onUpdateInfo((UpdateInfo*)lp); return 0;
     case WM_UPDATE_READY: onUpdateReady((UpdateInfo*)lp); return 0;
     case WM_TIMER:
