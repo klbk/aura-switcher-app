@@ -39,7 +39,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             if now != engine.ownLang {  // the user switched: key events carry the right letters again
                 engine.ownLang = nil
                 // …in the middle of a word: they're mixing layouts on purpose («RghРак») — it's their word
-                if !engine.word.isEmpty { engine.reset(); engine.handsOff = true }
+                // (macOS sometimes repeats or delays the notice: only a real change from the word's layout counts)
+                if !engine.word.isEmpty, now != engine.wordStartLang { engine.reset(); engine.handsOff = true }
             }
             auraLog.notice("layout now: \(now ?? "?", privacy: .public) in \(engine.frontBundle, privacy: .public)")
             self.updateTitle()

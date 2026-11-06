@@ -317,6 +317,7 @@ final class Engine {
     /// the user went back into the text (Backspace over a space, arrows) or switched the layout in the middle of a
     /// word: until the next space AURA neither checks nor converts what is typed — it's the user's own word
     var handsOff = false
+    var wordStartLang: String?  // the layout the current word was started in
 
     func layout(_ lang: String?) -> Layout? { layouts.first { $0.lang == lang } }
     func index(_ lang: String?) -> Int { layouts.firstIndex { $0.lang == lang } ?? 0 }
@@ -416,14 +417,16 @@ final class Engine {
         default:
             if handsOff { if !codes.contains(code) { reset() }; return }  // Return, Tab…: the user's word is over
             if codes.contains(code) {
-                if word.isEmpty { before = lastWord.count == 1 && trailing == 1 ? lastWord : []; lastCycled = []; lastCycledLang = nil }
+                if word.isEmpty { before = lastWord.count == 1 && trailing == 1 ? lastWord : []; lastCycled = []; lastCycledLang = nil
+                                  wordStartLang = ownLang ?? currentLang() }
                 if trailing > 0 || !lastWord.isEmpty { lastWord = []; trailing = 0 }
                 var len = 0
                 var buf = [UniChar](repeating: 0, count: 4)
                 e.keyboardGetUnicodeString(maxStringLength: 4, actualStringLength: &len, unicodeString: &buf)
                 var ch = len == 1 ? Unicode.Scalar(buf[0]).map(Character.init) : nil
                 // after AURA switched the layout itself, key events keep the letters of the old one (macOS doesn't
-                // update them), while the app already types in the new one: read the key with the layout we selected
+                // update them), while the app already types in the new one: read the key with the layout we selected.
+                // (Asking the system for the current layout instead lags behind the keys when another program switches.)
                 if let own = ownLang, let l = layout(own), let c = l.toChar[Key(code: code, shift: f.contains(.maskShift))] {
                     let caps = f.contains(.maskAlphaShift) && !f.contains(.maskShift)
                     ch = caps ? Character(c.uppercased()) : c
