@@ -1,15 +1,19 @@
 // The latest release, for the update page (/update/). Edit on every release: version + what's new.
 // Notes: Ukrainian and English; other languages show the English notes.
 const LATEST = {
-  version: "0.9.6",
+  version: "0.9.7",
   notes: {
-    uk: ["Windows 11: у новому Блокноті виправлене слово більше не перетворюється на пробіли.",
-         "Windows: розкладка визначається й перемикається в полі, де стоїть курсор — у Блокноті Windows 11 значок і зміна мови тепер правильні.",
-         "Із 0.9.5: російські «было/была/были», набрані в англійській розкладці, більше не стають «біло/біла/біли»; італійське меню від носія мови.",
+    uk: ["Слово перед Enter теж виправляється: «z elfkbk⏎» у чаті надішлеться як «я удалил».",
+         "Ваше слово — ваше: якщо повернулися до нього (Backspace після пробілу, стрілки) або самі змінили розкладку посеред слова, AURA його не чіпає.",
+         "Подвійний ⇧ після двох пробілів лише перемикає розкладку, текст не змінює.",
+         "У полях пароля AURA нічого не виправляє.",
+         "Однолітерне слово виправляється разом із наступним: «b yt» → «и не». Mac: після виправлення наступні слова розпізнаються правильно, подвійний ⇧ без виділення перемикає одразу.",
          "Якщо у вас 0.9 або новіша — «Перевірити оновлення» → «Оновити»."],
-    en: ["Windows 11: in the new Notepad a fixed word no longer turns into spaces.",
-         "Windows: the layout is read and switched in the field with the cursor — in the Windows 11 Notepad the icon and language switch are right now.",
-         "From 0.9.5: Russian «было/была/были» typed in the English layout no longer become «біло/біла/біли»; Italian menu by a native speaker.",
+    en: ["The word before Enter is fixed too: «z elfkbk⏎» in a chat goes out as «я удалил».",
+         "Your word is yours: go back to it (Backspace after the space, arrows) or switch the layout in the middle of it yourself, and AURA leaves it alone.",
+         "Double ⇧ after two spaces only switches the layout and leaves the text.",
+         "AURA never changes anything in password fields.",
+         "A one-letter word is fixed together with the next one: «b yt» → «и не». Mac: after a fix the next words are read right, double ⇧ with nothing selected switches at once.",
          "On 0.9 or newer: «Check for updates» → «Update»."],
   },
 };
