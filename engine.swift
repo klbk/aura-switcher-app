@@ -313,7 +313,10 @@ final class Engine {
 
     var active: Bool { settings.enabled && !frontIsGame && !settings.excluded.contains(frontBundle) }
 
-    func reset() { word = []; lastWord = []; trailing = 0; before = []; lastCycled = []; lastCycledLang = nil }
+    func reset() { word = []; lastWord = []; trailing = 0; before = []; lastCycled = []; lastCycledLang = nil; handsOff = false }
+    /// the user went back into the text (Backspace over a space, arrows) or switched the layout in the middle of a
+    /// word: until the next space AURA neither checks nor converts what is typed — it's the user's own word
+    var handsOff = false
 
     func layout(_ lang: String?) -> Layout? { layouts.first { $0.lang == lang } }
     func index(_ lang: String?) -> Int { layouts.firstIndex { $0.lang == lang } ?? 0 }
@@ -390,9 +393,12 @@ final class Engine {
         if !f.intersection([.maskCommand, .maskControl, .maskAlternate]).isEmpty { reset(); return }
         switch code {
         case 51: // backspace
-            if trailing > 0 { trailing -= 1; if trailing == 0 { word = lastWord; lastWord = []; before = [] } }
-            else if !word.isEmpty { word.removeLast() }
+            // a typo while the word is being typed: AURA keeps watching it. Back over the space into a finished word
+            // (or into older text): the word is the user's now — not checked, not converted, until the next space
+            if !word.isEmpty, trailing == 0, !handsOff { word.removeLast() }
+            else { reset(); handsOff = true }
         case 49: // space (already delivered to the app)
+            if handsOff { reset(); return }  // the end of the user's own word: leave it as it is
             if !word.isEmpty {
                 lastWord = word; word = []; trailing = 1
                 if settings.auto, settings.bindings[frontBundle] == nil {
@@ -400,7 +406,10 @@ final class Engine {
                     DispatchQueue.main.async { self.autoCorrect(keys, before: pre, spaceAt: at) }
                 }
             } else if !lastWord.isEmpty { trailing += 1 }
+        case 123...126, 115, 116, 117, 119, 121: // arrows, Home, Page Up, Forward Delete, End, Page Down: editing the text
+            reset(); handsOff = true
         default:
+            if handsOff { if !codes.contains(code) { reset() }; return }  // Return, Tab…: the user's word is over
             if codes.contains(code) {
                 if word.isEmpty { before = lastWord.count == 1 && trailing == 1 ? lastWord : []; lastCycled = []; lastCycledLang = nil }
                 if trailing > 0 || !lastWord.isEmpty { lastWord = []; trailing = 0 }
