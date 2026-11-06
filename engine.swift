@@ -468,7 +468,7 @@ final class Engine {
         let keys = word, pre = before, code = CGKeyCode(e.getIntegerValueField(.keyboardEventKeycode)), flags = e.flags
         heldReturnUp = true
         DispatchQueue.main.async {
-            if self.word == keys, let fix = self.autoFix(keys) ?? self.pairFix(keys, before: pre) {
+            if self.word == keys, let fix = self.pairFix(keys, before: pre) ?? self.autoFix(keys) {
                 self.applyFix(fix, keys, before: pre, trailing: 0)
             }
             self.reset()
@@ -493,7 +493,8 @@ final class Engine {
         // (its keys still carry the letters first typed, so the check would see the old language)
         if keys == lastCycled { return }
         noFix = ""
-        let found = autoFix(keys) ?? pairFix(keys, before: before)
+        // «b yt»: both «и не» (ru) and «не» alone (uk) fit; the pair that makes both words a language wins
+        let found = pairFix(keys, before: before) ?? autoFix(keys)
         let ms = Int((ProcessInfo.processInfo.systemUptime - t0) * 1000)
         if ms > 100 { auraLog.notice("slow check: \(ms) ms") }
         guard let fix = found else {

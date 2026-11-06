@@ -470,8 +470,8 @@ static void typeText(const wstring& s) {
     }
 }
 // after the Backspaces give the app time to apply them: a character typed right away could take the deleted
-// one's place («ыыло» instead of «было» once in 15 in Notepad)
-static void replaceText(int count, const wstring& s) { for (int i = 0; i < count; i++) sendKey(VK_BACK); pauseMs(30); typeText(s); }
+// one's place («ыыло» instead of «было» once in 15 in Notepad; 30 ms still lost «я» of «я удалил» once in 15)
+static void replaceText(int count, const wstring& s) { for (int i = 0; i < count; i++) sendKey(VK_BACK); pauseMs(50); typeText(s); }
 
 // MARK: - Spell checking (Windows Spell Checking API)
 
@@ -903,8 +903,9 @@ static void applyFix(int j, Snapshot* s, int trailing) {
 
 static void onAuto(Snapshot* s) {
     if (!S.autoFix || S.bindings.count(fgExe())) return;
-    int j = autoFixTarget(s->keys);
-    if (j < 0) j = pairFixTarget(s->keys, s->before);
+    // «b yt»: both «и не» (ru) and «не» alone (uk) fit; the pair that makes both words a language wins
+    int j = pairFixTarget(s->keys, s->before);
+    if (j < 0) j = autoFixTarget(s->keys);
     if (j < 0 || seq.load() != s->seq) return;  // user kept typing meanwhile — skip
     applyFix(j, s, 1);
 }
@@ -912,8 +913,8 @@ static void onAuto(Snapshot* s) {
 // Return held by the hook after a word: fix the word if it needs it, then send Return on
 static void onEnter(Snapshot* s) {
     if (active && S.autoFix && !S.bindings.count(fgExe())) {
-        int j = autoFixTarget(s->keys);
-        if (j < 0) j = pairFixTarget(s->keys, s->before);
+        int j = pairFixTarget(s->keys, s->before);
+        if (j < 0) j = autoFixTarget(s->keys);
         if (j >= 0) applyFix(j, s, 0);
     }
     // Return goes on as the user pressed it: same scan code, numpad Enter stays numpad Enter
