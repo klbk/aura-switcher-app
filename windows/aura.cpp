@@ -476,7 +476,8 @@ static void typeText(const wstring& s) {
 // Caps Lock on) still go as VK_PACKET.
 static void typeKeysIn(const wstring& s, HKL hkl) {
     bool caps = GetKeyState(VK_CAPITAL) & 1;
-    for (wchar_t c : s) {
+    for (size_t at = 0; at < s.size(); at++) {
+        wchar_t c = s[at];
         SHORT v = caps ? -1 : VkKeyScanExW(c, hkl);
         if (v == -1 || (HIBYTE(v) & ~1)) { typeText(wstring(1, c)); continue; }  // not there, or needs Ctrl/Alt
         WORD vk = LOBYTE(v); bool shift = HIBYTE(v) & 1;
@@ -487,7 +488,9 @@ static void typeKeysIn(const wstring& s, HKL hkl) {
         add(vk, false); add(vk, true);
         if (shift) add(VK_SHIFT, true);
         SendInput(n, in, sizeof(INPUT));
-        pauseMs(3);
+        // a person's pace, not a burst: Win11 Notepad loses real keys 5 ms apart in a longer replacement
+        // («я удалил» → «я удил»), and after a word's space it's busy for a moment (its spell check)
+        pauseMs(c == L' ' && at + 1 < s.size() ? 40 : 12);
     }
 }
 static void replaceIn(int count, const wstring& s, const Layout& l) {
