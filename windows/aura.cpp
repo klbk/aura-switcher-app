@@ -345,6 +345,7 @@ struct Snapshot { vector<Key> keys; int trailing; unsigned seq; vector<Key> befo
 // until the next space AURA neither checks nor converts what is typed — it's the user's own word
 static bool handsOff = false;
 static bool returnHeld = false;  // Return held for a moment to fix the word before it (see WM_ENTER); swallow its key-up
+static std::atomic<DWORD> returnScan{0}, returnFlags{0};  // the held Return's scan code and extended flag (numpad Enter)
 static void resetState() { word.clear(); lastWord.clear(); before.clear(); trailing = 0; handsOff = false; }
 
 static LRESULT CALLBACK kbHook(int code, WPARAM wp, LPARAM lp) {
@@ -387,6 +388,7 @@ static LRESULT CALLBACK kbHook(int code, WPARAM wp, LPARAM lp) {
         // Return right after a word («z elfkbk⏎» in a chat): checked only on a space, the message went out unfixed.
         // Hold Return, let the main thread fix the word, it sends Return on
         returnHeld = true;
+        returnScan = k->scanCode; returnFlags = k->flags & LLKHF_EXTENDED;
         PostMessageW(hwndMain, WM_ENTER, 0, (LPARAM)new Snapshot{word, 0, seq.load(), before});
         resetState();
         return 1;
@@ -461,7 +463,9 @@ static void typeText(const wstring& s) {
             else { i.ki.wScan = c; i.ki.dwFlags = KEYEVENTF_UNICODE | (up ? KEYEVENTF_KEYUP : 0); }
         }
         SendInput(2, in, sizeof(INPUT));
-        pauseMs(3);
+        // a space inside the text («я удалил»): Win11 Notepad handles a word end (its spell check) and drops or
+        // repeats the next letters if they come right away
+        pauseMs(c == L' ' && &c != &s.back() ? 40 : 3);
     }
 }
 // after the Backspaces give the app time to apply them: a character typed right away could take the deleted
@@ -911,7 +915,14 @@ static void onEnter(Snapshot* s) {
         if (j < 0) j = pairFixTarget(s->keys, s->before);
         if (j >= 0) applyFix(j, s, 0);
     }
-    sendKey(VK_RETURN);
+    // Return goes on as the user pressed it: same scan code, numpad Enter stays numpad Enter
+    INPUT in[2] = {};
+    for (int up = 0; up < 2; up++) {
+        INPUT& i = in[up]; i.type = INPUT_KEYBOARD; i.ki.wVk = VK_RETURN; i.ki.dwExtraInfo = kMagic;
+        i.ki.wScan = WORD(returnScan ? returnScan.load() : MapVirtualKeyW(VK_RETURN, MAPVK_VK_TO_VSC));
+        i.ki.dwFlags = (returnFlags ? KEYEVENTF_EXTENDEDKEY : 0) | (up ? KEYEVENTF_KEYUP : 0);
+    }
+    SendInput(2, in, sizeof(INPUT));
 }
 
 // MARK: - Tray
