@@ -518,8 +518,11 @@ final class Engine {
         let sp = String(repeating: " ", count: trailing)
         // a password prompt doesn't show what is typed (sudo, ssh in Terminal — macOS doesn't hide those keys from us):
         // if the app can say what's before the caret and the word isn't there, leave it alone
-        // (case-insensitive: some editors capitalize the first word; AX counts UTF-16 units)
-        if let typed, let seen = textBeforeCaret((typed + sp).utf16.count), seen.lowercased() != (typed + sp).lowercased() {
+        // The app may not have drawn the last keys yet when we ask (Terminal lags a few ms), so the word counts as
+        // shown when its start is there; a prompt that doesn't echo shows none of it. Case-insensitive: editors
+        // capitalize the first word
+        if let typed, let seen = textBeforeCaret((typed + sp).utf16.count + 8),
+           !seen.lowercased().contains(String(typed.prefix(2)).lowercased()) {
             auraLog.notice("skip: not on screen (password?) (\(keys.count) letters)"); return
         }
         if fixBefore { replace(count: bTyped.count + shown + 1 + trailing, with: b + " " + out + sp) }
@@ -753,8 +756,8 @@ final class Engine {
         if sub as? String == kAXSecureTextFieldSubrole as String { return "" }
         var r: CFTypeRef?, range = CFRange()
         guard AXUIElementCopyAttributeValue(el, kAXSelectedTextRangeAttribute as CFString, &r) == .success, let r,
-              AXValueGetValue(r as! AXValue, .cfRange, &range), range.location >= n else { return nil }
-        var q = CFRange(location: range.location - n, length: n)
+              AXValueGetValue(r as! AXValue, .cfRange, &range), range.location > 0 else { return nil }
+        var q = CFRange(location: max(0, range.location - n), length: min(n, range.location))
         guard let qv = AXValueCreate(.cfRange, &q) else { return nil }
         var t: CFTypeRef?
         guard AXUIElementCopyParameterizedAttributeValue(el, kAXStringForRangeParameterizedAttribute as CFString, qv, &t) == .success
