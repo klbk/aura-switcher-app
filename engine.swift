@@ -461,6 +461,7 @@ final class Engine {
         select(fix)
         if fixBefore { replace(count: bTyped.count + shown + 2, with: b + " " + out + " ") }
         else if out != typed { replace(count: shown + 1, with: out + " ") }
+        auraLog.notice("fixed: \(src?.lang ?? "?", privacy: .public) → \(fix.lang, privacy: .public) (\(keys.count) letters)")
         Sounds.play(Sounds.auto)
     }
 
@@ -643,6 +644,7 @@ final class Engine {
         let cur = currentLang()
         guard let n = (again ? nil : autoFix(keys).flatMap { $0.lang == cur ? nil : $0 }) ?? next(after: again ? lastCycledLang : cur) else { return }
         lastCycled = keys; lastCycledLang = n.lang
+        auraLog.notice("double ⇧: word → \(n.lang, privacy: .public)")
         let shown = typedLayout(keys)?.text(keys).count ?? keys.count
         select(n)  // before the text: see autoCorrect
         replace(count: shown + trailing, with: n.text(keys) + String(repeating: " ", count: trailing))

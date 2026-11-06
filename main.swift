@@ -34,7 +34,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         }
 
         DistributedNotificationCenter.default().addObserver(forName: NSNotification.Name(kTISNotifySelectedKeyboardInputSourceChanged as String),
-                                                            object: nil, queue: .main) { _ in self.updateTitle() }
+                                                            object: nil, queue: .main) { _ in
+            auraLog.notice("layout now: \(currentLang() ?? "?", privacy: .public) in \(engine.frontBundle, privacy: .public)")
+            self.updateTitle()
+        }
         DistributedNotificationCenter.default().addObserver(forName: NSNotification.Name(kTISNotifyEnabledKeyboardInputSourcesChanged as String),
                                                             object: nil, queue: .main) { _ in engine.layouts = loadLayouts(); engine.codes = engine.allCodes; engine.lastSelOut = nil; engine.warmUpDictionaries() }
         NSWorkspace.shared.notificationCenter.addObserver(forName: NSWorkspace.didActivateApplicationNotification,
