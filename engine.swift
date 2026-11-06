@@ -631,6 +631,16 @@ final class Engine {
         // after «word + space» with a word that is fine where it was typed, double ⇧ means «next word in another
         // language»: just switch (converting would spoil the word). A wrong word («ghbdsn ») is still converted,
         // and a word being cycled by double ⇧ keeps cycling
+        // right after auto-correction: the first double ⇧ undoes it (the user may have meant exactly what they typed),
+        // further presses cycle on
+        if word.isEmpty, !keys.isEmpty, keys == fixedKeys, keys != lastCycled, let fixL = layout(fixedLang),
+           let src = typedLayout(keys), src.lang != fixL.lang {
+            select(src)
+            replace(count: fixL.text(keys).count + trailing, with: src.text(keys) + String(repeating: " ", count: trailing))
+            lastCycled = keys; lastCycledLang = src.lang
+            auraLog.notice("double ⇧: undo the fix → \(src.lang, privacy: .public)")
+            return
+        }
         if word.isEmpty, !keys.isEmpty, keys == switchOnly || wordIsFine(keys) {
             switchOnly = keys  // further presses keep switching (the word's layout is no longer clear from the keys)
             auraLog.notice("double ⇧ after a fine word: switch only"); cycleLayout(); return
@@ -647,8 +657,8 @@ final class Engine {
     var switchOnly: [Key] = []  // the word after which double ⇧ only switched the layout
     /// the word is right in the layout it was typed in (dictionary, the user's own words, or the language model)
     func wordIsFine(_ keys: [Key]) -> Bool {
-        // converted by double ⇧ or auto-corrected: it's on screen in that layout
-        guard let cur = keys == lastCycled ? layout(lastCycledLang) : keys == fixedKeys ? layout(fixedLang) : typedLayout(keys) else { return false }
+        // converted by double ⇧: it's on screen in that layout
+        guard let cur = keys == lastCycled ? layout(lastCycledLang) : typedLayout(keys) else { return false }
         let t = cur.text(keys)
         return settings.words.contains(t.lowercased()) || (dictionaryWorks(cur.lang) ? isWord(t, cur.lang) : model(cur.lang)?.has(t) == true)
     }
