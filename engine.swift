@@ -469,6 +469,7 @@ final class Engine {
         select(fix)
         if fixBefore { replace(count: bTyped.count + shown + 2, with: b + " " + out + " ") }
         else if out != typed { replace(count: shown + 1, with: out + " ") }
+        fixedKeys = keys; fixedLang = fix.lang
         auraLog.notice("fixed: \(src?.lang ?? "?", privacy: .public) → \(fix.lang, privacy: .public) (\(keys.count) letters)")
         Sounds.play(Sounds.auto)
     }
@@ -627,12 +628,29 @@ final class Engine {
         let sel = axSelectedText()
         if let sel, !sel.isEmpty { convertSelection(sel); return }
         let keys = word.isEmpty ? lastWord : word
+        // after «word + space» with a word that is fine where it was typed, double ⇧ means «next word in another
+        // language»: just switch (converting would spoil the word). A wrong word («ghbdsn ») is still converted,
+        // and a word being cycled by double ⇧ keeps cycling
+        if word.isEmpty, !keys.isEmpty, keys == switchOnly || wordIsFine(keys) {
+            switchOnly = keys  // further presses keep switching (the word's layout is no longer clear from the keys)
+            auraLog.notice("double ⇧ after a fine word: switch only"); cycleLayout(); return
+        }
         if !keys.isEmpty { cycleWord(keys, trailing: word.isEmpty ? trailing : 0); return }
         // the app says nothing is selected and can be trusted: switch now, without the ⌘C round trip (up to 0.4 s)
         if sel != nil, !webEngine(frontBundle) { cycleLayout(); return }
         clipboardSelection { sel in
             if let sel, !sel.isEmpty, !isCopiedLine(sel) { self.convertSelection(sel) } else { self.cycleLayout() }
         }
+    }
+
+    var fixedKeys: [Key] = [], fixedLang: String?  // the last word auto-correction fixed, and where to
+    var switchOnly: [Key] = []  // the word after which double ⇧ only switched the layout
+    /// the word is right in the layout it was typed in (dictionary, the user's own words, or the language model)
+    func wordIsFine(_ keys: [Key]) -> Bool {
+        // converted by double ⇧ or auto-corrected: it's on screen in that layout
+        guard let cur = keys == lastCycled ? layout(lastCycledLang) : keys == fixedKeys ? layout(fixedLang) : typedLayout(keys) else { return false }
+        let t = cur.text(keys)
+        return settings.words.contains(t.lowercased()) || (dictionaryWorks(cur.lang) ? isWord(t, cur.lang) : model(cur.lang)?.has(t) == true)
     }
 
     func next(after lang: String?) -> Layout? {
