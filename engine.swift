@@ -435,6 +435,9 @@ final class Engine {
         guard lastWord == keys, word.isEmpty, trailing == 1 else {
             auraLog.notice("skip: kept typing (\(keys.count) letters, waited \(Int((t0 - spaceAt) * 1000)) ms)"); return
         }
+        // the word was just switched by double ⇧: the user chose its layout, don't undo it
+        // (its keys still carry the letters first typed, so the check would see the old language)
+        if keys == lastCycled { return }
         noFix = ""
         let found = autoFix(keys) ?? pairFix(keys, before: before)
         let ms = Int((ProcessInfo.processInfo.systemUptime - t0) * 1000)
