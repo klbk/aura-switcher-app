@@ -35,7 +35,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
         DistributedNotificationCenter.default().addObserver(forName: NSNotification.Name(kTISNotifySelectedKeyboardInputSourceChanged as String),
                                                             object: nil, queue: .main) { _ in
-            auraLog.notice("layout now: \(currentLang() ?? "?", privacy: .public) in \(engine.frontBundle, privacy: .public)")
+            let now = currentLang()
+            if now != engine.ownLang { engine.ownLang = nil }  // the user switched: key events carry the right letters again
+            auraLog.notice("layout now: \(now ?? "?", privacy: .public) in \(engine.frontBundle, privacy: .public)")
             self.updateTitle()
         }
         DistributedNotificationCenter.default().addObserver(forName: NSNotification.Name(kTISNotifyEnabledKeyboardInputSourcesChanged as String),

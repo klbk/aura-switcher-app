@@ -317,7 +317,9 @@ final class Engine {
 
     func layout(_ lang: String?) -> Layout? { layouts.first { $0.lang == lang } }
     func index(_ lang: String?) -> Int { layouts.firstIndex { $0.lang == lang } ?? 0 }
-    func select(_ l: Layout) { TISSelectInputSource(l.source) }
+    /// the layout AURA selected itself, until the user switches to another one (see handleKey)
+    var ownLang: String?
+    func select(_ l: Layout) { ownLang = l.lang; TISSelectInputSource(l.source) }
 
     /// The first spell check in a language loads its dictionary (can take a moment). If that happens
     /// while the user types on, the correction is skipped — so load all dictionaries up front.
@@ -405,7 +407,13 @@ final class Engine {
                 var len = 0
                 var buf = [UniChar](repeating: 0, count: 4)
                 e.keyboardGetUnicodeString(maxStringLength: 4, actualStringLength: &len, unicodeString: &buf)
-                let ch = len == 1 ? Unicode.Scalar(buf[0]).map(Character.init) : nil
+                var ch = len == 1 ? Unicode.Scalar(buf[0]).map(Character.init) : nil
+                // after AURA switched the layout itself, key events keep the letters of the old one (macOS doesn't
+                // update them), while the app already types in the new one: read the key with the layout we selected
+                if let own = ownLang, let l = layout(own), let c = l.toChar[Key(code: code, shift: f.contains(.maskShift))] {
+                    let caps = f.contains(.maskAlphaShift) && !f.contains(.maskShift)
+                    ch = caps ? Character(c.uppercased()) : c
+                }
                 word.append(Key(code: code, shift: f.contains(.maskShift), caps: f.contains(.maskAlphaShift), ch: ch))
             } else { reset() }
         }
