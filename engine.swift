@@ -2,10 +2,13 @@ import Cocoa
 import Carbon
 import ServiceManagement
 import ApplicationServices
+import os
 
 // MARK: - Layouts
 
 let kMagic: Int64 = 0x4B535754 // marks our own synthetic events
+/// why a word was left alone — no typed text, only the reason (`log show --predicate 'subsystem == "com.chernov.aura"'`)
+let auraLog = Logger(subsystem: "com.chernov.aura", category: "auto")
 func langName(_ code: String) -> String { Locale(identifier: uiCode()).localizedString(forLanguageCode: code)?.capitalized ?? code }
 
 /// A key press. `ch` is the character it actually produced (from the event), which tells which layout
@@ -341,7 +344,13 @@ final class Engine {
             if let tap { CGEvent.tapEnable(tap: tap, enable: true) }
             return pass
         }
-        if e.getIntegerValueField(.eventSourceUserData) == kMagic || !active { return pass }
+        if e.getIntegerValueField(.eventSourceUserData) == kMagic { return pass }
+        if !active {
+            if type == .keyDown, e.getIntegerValueField(.keyboardEventKeycode) == 49 {
+                auraLog.notice("skip: paused (\(self.settings.enabled ? (self.frontIsGame ? "game" : "excluded app") : "turned off", privacy: .public) \(self.frontBundle, privacy: .public))")
+            }
+            return pass
+        }
 
         switch type {
         case .leftMouseDown, .rightMouseDown:
@@ -385,8 +394,8 @@ final class Engine {
             if !word.isEmpty {
                 lastWord = word; word = []; trailing = 1
                 if settings.auto, settings.bindings[frontBundle] == nil {
-                    let keys = lastWord, pre = before
-                    DispatchQueue.main.async { self.autoCorrect(keys, before: pre) }
+                    let keys = lastWord, pre = before, at = ProcessInfo.processInfo.systemUptime
+                    DispatchQueue.main.async { self.autoCorrect(keys, before: pre, spaceAt: at) }
                 }
             } else if !lastWord.isEmpty { trailing += 1 }
         default:
@@ -420,9 +429,23 @@ final class Engine {
         return nil
     }
 
-    func autoCorrect(_ keys: [Key], before: [Key] = []) {
+    func autoCorrect(_ keys: [Key], before: [Key] = [], spaceAt: Double = 0) {
+        let t0 = ProcessInfo.processInfo.systemUptime
         // user kept typing meanwhile — skip
-        guard lastWord == keys, word.isEmpty, trailing == 1, let fix = autoFix(keys) ?? pairFix(keys, before: before) else { return }
+        guard lastWord == keys, word.isEmpty, trailing == 1 else {
+            auraLog.notice("skip: kept typing (\(keys.count) letters, waited \(Int((t0 - spaceAt) * 1000)) ms)"); return
+        }
+        noFix = ""
+        let found = autoFix(keys) ?? pairFix(keys, before: before)
+        let ms = Int((ProcessInfo.processInfo.systemUptime - t0) * 1000)
+        if ms > 100 { auraLog.notice("slow check: \(ms) ms") }
+        guard let fix = found else {
+            if !noFix.isEmpty { auraLog.notice("skip: \(self.noFix, privacy: .public) (\(keys.count) letters)") }
+            return
+        }
+        if lastWord != keys || !word.isEmpty || trailing != 1 {
+            auraLog.notice("skip: kept typing during a \(ms) ms check"); return
+        }
         let out = fix.text(keys)
         let src = typedLayout(keys), typed = src?.text(keys)
         let b = fix.text(before), bTyped = src?.text(before) ?? ""
@@ -540,13 +563,14 @@ final class Engine {
     // more typical than what was typed; a real dictionary word only somewhat more
     static let marginNeeded = 20.0, marginForDictWord = 5.0, marginCyrillic = 11.0  // Belarusian ↔ Russian: «длінный» 13, true «сіла» 4
 
+    var noFix = ""  // why autoFix found nothing (for the log)
     func autoFix(_ keys: [Key]) -> Layout? {
-        guard keys.count >= 2, let cur = typedLayout(keys) else { return nil }
+        guard keys.count >= 2, let cur = typedLayout(keys) else { noFix = keys.count >= 2 ? "layout not recognized" : ""; return nil }
         let typed = cur.text(keys)
         let curDict = dictionaryWorks(cur.lang)
         // typed in a language we can't check at all: it may well be right — leave it
-        guard curDict || model(cur.lang) != nil else { return nil }
-        if settings.words.contains(typed.lowercased()) || (curDict ? isWord(typed, cur.lang) : model(cur.lang)!.has(typed)) { return nil }
+        guard curDict || model(cur.lang) != nil else { noFix = "no dictionary for \(cur.lang)"; return nil }
+        if settings.words.contains(typed.lowercased()) || (curDict ? isWord(typed, cur.lang) : model(cur.lang)!.has(typed)) { noFix = "already a word in \(cur.lang)"; return nil }
         // every other layout is a candidate; take the strongest kind of evidence, not the first layout in the
         // list: with RU, UK, EN in that order «ghbdsn» must become the Ukrainian word «привіт», not the
         // Russian look-alike «привыт» that only passes on letter statistics
@@ -579,6 +603,7 @@ final class Engine {
             let freq = model(l.lang)?.has(t) == true ? 1 : 0
             if tier > 0, best == nil || (tier, freq, m) > (best!.tier, best!.freq, best!.m) { best = (tier, freq, m, l) }
         }
+        if best == nil { noFix = "not a word in \(cur.lang), nothing better in other layouts" }
         return best?.l
     }
 
