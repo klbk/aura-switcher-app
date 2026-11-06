@@ -611,9 +611,12 @@ final class Engine {
 
     func doubleShift() {
         Sounds.play(Sounds.shift)
-        if let sel = axSelectedText(), !sel.isEmpty { convertSelection(sel); return }
+        let sel = axSelectedText()
+        if let sel, !sel.isEmpty { convertSelection(sel); return }
         let keys = word.isEmpty ? lastWord : word
         if !keys.isEmpty { cycleWord(keys, trailing: word.isEmpty ? trailing : 0); return }
+        // the app says nothing is selected and can be trusted: switch now, without the ⌘C round trip (up to 0.4 s)
+        if sel != nil, !webEngine(frontBundle) { cycleLayout(); return }
         clipboardSelection { sel in
             if let sel, !sel.isEmpty, !isCopiedLine(sel) { self.convertSelection(sel) } else { self.cycleLayout() }
         }
@@ -665,6 +668,7 @@ final class Engine {
 
     // MARK: selection
 
+    /// the selection as the focused element reports it: "" = nothing selected, nil = the app doesn't say
     func axSelectedText() -> String? {
         let sys = AXUIElementCreateSystemWide()
         var focused: CFTypeRef?
@@ -672,7 +676,27 @@ final class Engine {
               let el = focused else { return nil }
         var sel: CFTypeRef?
         AXUIElementCopyAttributeValue(el as! AXUIElement, kAXSelectedTextAttribute as CFString, &sel)
-        return sel as? String
+        guard let s = sel as? String else { return nil }
+        if s.isEmpty {  // empty text with a non-empty range: the app reports it wrong
+            var r: CFTypeRef?, range = CFRange()
+            guard AXUIElementCopyAttributeValue(el as! AXUIElement, kAXSelectedTextRangeAttribute as CFString, &r) == .success,
+                  let r, AXValueGetValue(r as! AXValue, .cfRange, &range), range.length == 0 else { return nil }
+        }
+        return s
+    }
+
+    /// Chrome-based browsers and Electron apps (VS Code, Slack, Discord) report an empty selection while
+    /// text is selected when their accessibility is on: there the "" isn't trusted
+    var webEngineCache: [String: Bool] = [:]
+    func webEngine(_ bundle: String) -> Bool {
+        if let r = webEngineCache[bundle] { return r }
+        var r = true  // unknown app: the safe way
+        if let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundle) {
+            let fw = (try? FileManager.default.contentsOfDirectory(atPath: url.appendingPathComponent("Contents/Frameworks").path)) ?? []
+            r = fw.contains { $0.contains("Electron") || $0.contains("Chrom") || $0.hasSuffix(" Framework.framework") }
+        }
+        webEngineCache[bundle] = r
+        return r
     }
 
     /// Copies the selection with ⌘C and puts the user's clipboard back exactly as it was
