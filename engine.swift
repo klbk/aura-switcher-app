@@ -626,7 +626,9 @@ final class Engine {
         Sounds.play(Sounds.shift)
         let sel = axSelectedText()
         if let sel, !sel.isEmpty { convertSelection(sel); return }
-        let keys = word.isEmpty ? lastWord : word
+        // the word being typed, or the previous one right after a single space; after two or more spaces the text
+        // stays as it is and double ⇧ only switches the layout
+        let keys = !word.isEmpty ? word : trailing == 1 ? lastWord : []
         if !keys.isEmpty { cycleWord(keys, trailing: word.isEmpty ? trailing : 0); return }
         // the app says nothing is selected and can be trusted: switch now, without the ⌘C round trip (up to 0.4 s)
         if sel != nil, !webEngine(frontBundle) { cycleLayout(); return }
