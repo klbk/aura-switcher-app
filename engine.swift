@@ -331,9 +331,10 @@ final class Engine {
     // MARK: tap
 
     func start() -> Bool {
-        let mask: CGEventMask = (1 << CGEventType.keyDown.rawValue) | (1 << CGEventType.flagsChanged.rawValue)
+        let mask: CGEventMask = (1 << CGEventType.keyDown.rawValue) | (1 << CGEventType.keyUp.rawValue) | (1 << CGEventType.flagsChanged.rawValue)
             | (1 << CGEventType.leftMouseDown.rawValue) | (1 << CGEventType.rightMouseDown.rawValue)
-        tap = CGEvent.tapCreate(tap: .cgSessionEventTap, place: .tailAppendEventTap, options: .listenOnly,
+        // an active tap only to hold Return for a moment (see holdReturn); every other event passes untouched
+        tap = CGEvent.tapCreate(tap: .cgSessionEventTap, place: .tailAppendEventTap, options: .defaultTap,
                                 eventsOfInterest: mask, callback: { _, type, event, _ in
             engine.handle(type, event)
         }, userInfo: nil)
@@ -364,7 +365,11 @@ final class Engine {
             handleShift(e)
         case .keyDown:
             sawOther = true; lastShiftTap = 0
+            if shouldHoldReturn(e) { holdReturn(e); return nil }
             handleKey(e)
+        case .keyUp:
+            let code = e.getIntegerValueField(.keyboardEventKeycode)
+            if heldReturnUp, code == 36 || code == 76 { heldReturnUp = false; return nil }
         default: break
         }
         return pass
@@ -386,7 +391,7 @@ final class Engine {
         }
     }
 
-    /// listen-only: never blocks input; heavy work runs after the tap returns
+    /// never blocks input (only Return, see holdReturn); heavy work runs after the tap returns
     func handleKey(_ e: CGEvent) {
         let code = UInt16(e.getIntegerValueField(.keyboardEventKeycode))
         let f = e.flags
@@ -446,6 +451,35 @@ final class Engine {
         return nil
     }
 
+    /// Return right after a word («z elfkbk⏎» in a chat): the word is checked only on a space, so the message went out
+    /// unfixed. Return is held, the word fixed (if it needs it), then Return is sent on — a few milliseconds.
+    var heldReturnUp = false
+    func shouldHoldReturn(_ e: CGEvent) -> Bool {
+        let code = e.getIntegerValueField(.keyboardEventKeycode)
+        guard code == 36 || code == 76, e.getIntegerValueField(.keyboardEventAutorepeat) == 0,
+              e.flags.intersection([.maskCommand, .maskControl, .maskAlternate]).isEmpty,
+              !word.isEmpty, !handsOff, word != lastCycled, settings.auto, settings.bindings[frontBundle] == nil else { return false }
+        return true
+    }
+    func holdReturn(_ e: CGEvent) {
+        let keys = word, pre = before, code = CGKeyCode(e.getIntegerValueField(.keyboardEventKeycode)), flags = e.flags
+        heldReturnUp = true
+        DispatchQueue.main.async {
+            if self.word == keys, let fix = self.autoFix(keys) ?? self.pairFix(keys, before: pre) {
+                self.applyFix(fix, keys, before: pre, trailing: 0)
+            }
+            self.reset()
+            for down in [true, false] {  // Return goes on, after the fixed text
+                guard let r = CGEvent(keyboardEventSource: self.src, virtualKey: code, keyDown: down) else { continue }
+                r.flags = flags
+                r.setIntegerValueField(.eventSourceUserData, value: kMagic)
+                r.post(tap: .cghidEventTap)
+            }
+            // the real key-up may already have come and gone: stop waiting for it
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1) { self.heldReturnUp = false }
+        }
+    }
+
     func autoCorrect(_ keys: [Key], before: [Key] = [], spaceAt: Double = 0) {
         let t0 = ProcessInfo.processInfo.systemUptime
         // user kept typing meanwhile — skip
@@ -466,6 +500,11 @@ final class Engine {
         if lastWord != keys || !word.isEmpty || trailing != 1 {
             auraLog.notice("skip: kept typing during a \(ms) ms check"); return
         }
+        applyFix(fix, keys, before: before, trailing: 1)
+    }
+
+    /// puts the fixed word on screen: `trailing` = spaces typed after it (1 after a space, 0 before Return)
+    func applyFix(_ fix: Layout, _ keys: [Key], before: [Key], trailing: Int) {
         let out = fix.text(keys)
         let src = typedLayout(keys), typed = src?.text(keys)
         let b = fix.text(before), bTyped = src?.text(before) ?? ""
@@ -476,9 +515,10 @@ final class Engine {
         let shown = typed?.count ?? keys.count  // on screen: accented letters are one character
         // switch first, then retype: switched after the text, the macOS indicator at the caret showed the old layout
         select(fix)
-        if fixBefore { replace(count: bTyped.count + shown + 2, with: b + " " + out + " ") }
-        else if out != typed { replace(count: shown + 1, with: out + " ") }
-        auraLog.notice("fixed: \(src?.lang ?? "?", privacy: .public) → \(fix.lang, privacy: .public) (\(keys.count) letters)")
+        let sp = String(repeating: " ", count: trailing)
+        if fixBefore { replace(count: bTyped.count + shown + 1 + trailing, with: b + " " + out + sp) }
+        else if out != typed { replace(count: shown + trailing, with: out + sp) }
+        auraLog.notice("fixed: \(src?.lang ?? "?", privacy: .public) → \(fix.lang, privacy: .public) (\(keys.count) letters\(trailing == 0 ? ", before Return" : "", privacy: .public))")
         Sounds.play(Sounds.auto)
     }
 
