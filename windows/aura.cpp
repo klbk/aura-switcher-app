@@ -471,7 +471,9 @@ static void typeText(const wstring& s) {
 }
 // after the Backspaces give the app time to apply them: a character typed right away could take the deleted
 // one's place («ыыло» instead of «было» once in 15 in Notepad; 30 ms still lost «я» of «я удалил» once in 15)
-static void replaceText(int count, const wstring& s) { for (int i = 0; i < count; i++) sendKey(VK_BACK); pauseMs(50); typeText(s); }
+// and before them let the app finish the user's own space: right after it Notepad dropped a whole Backspace burst
+// («b yt и не» 2 of 5 times)
+static void replaceText(int count, const wstring& s) { pauseMs(25); for (int i = 0; i < count; i++) sendKey(VK_BACK); pauseMs(50); typeText(s); }
 
 // MARK: - Spell checking (Windows Spell Checking API)
 
