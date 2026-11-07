@@ -348,6 +348,12 @@ static bool returnHeld = false;  // Return held for a moment to fix the word bef
 static std::atomic<DWORD> returnScan{0}, returnFlags{0};  // the held Return's scan code and extended flag (numpad Enter)
 static void resetState() { word.clear(); lastWord.clear(); before.clear(); trailing = 0; handsOff = false; }
 
+static Key readKey(const KBDLLHOOKSTRUCT* k) {
+    bool shift = (GetAsyncKeyState(VK_SHIFT) & 0x8000) != 0;
+    bool caps = (GetKeyState(VK_CAPITAL) & 1) != 0;
+    return {BYTE(k->scanCode), shift, caps};
+}
+
 static LRESULT CALLBACK kbHook(int code, WPARAM wp, LPARAM lp) {
     auto* k = (KBDLLHOOKSTRUCT*)lp;
     if (code != HC_ACTION || k->dwExtraInfo == kMagic || !active) return CallNextHookEx(nullptr, code, wp, lp);
@@ -367,7 +373,7 @@ static LRESULT CALLBACK kbHook(int code, WPARAM wp, LPARAM lp) {
             else if (lastShiftTap && now - lastShiftTap < 450) {
                 lastShiftTap = 0;
                 // the word being typed, or the previous one right after a single space; after two or more spaces
-                // (or in the user's own word) double ⇧ only switches the layout
+                // double ⇧ only switches the layout. In the user's own word it converts what was typed since the edit
                 bool cur = !word.empty();
                 auto* s = new Snapshot{cur ? word : trailing == 1 ? lastWord : vector<Key>(), cur ? 0 : trailing, seq.load()};
                 PostMessageW(hwndMain, WM_DSHIFT, 0, (LPARAM)s);
@@ -396,13 +402,15 @@ static LRESULT CALLBACK kbHook(int code, WPARAM wp, LPARAM lp) {
     if (vk == VK_BACK) {
         // a typo while the word is being typed: AURA keeps watching it. Back over the space into a finished word
         // (or into older text): the word is the user's now
-        if (!word.empty() && trailing == 0 && !handsOff) word.pop_back();
+        if (!word.empty() && trailing == 0) word.pop_back();
         else { resetState(); handsOff = true; }
     } else if (vk == VK_LEFT || vk == VK_RIGHT || vk == VK_UP || vk == VK_DOWN || vk == VK_HOME || vk == VK_END
                || vk == VK_PRIOR || vk == VK_NEXT || vk == VK_DELETE) {
         resetState(); handsOff = true;  // editing the text
     } else if (handsOff) {
-        if (!isLetterVk(vk)) resetState();  // a space, Return, Tab…: the user's word is over
+        // the user's own word: not checked, but its keys are kept — double ⇧ is an explicit command and converts it
+        if (isLetterVk(vk)) word.push_back(readKey(k));
+        else resetState();  // a space, Return, Tab…: the user's word is over
     } else if (vk == VK_SPACE) {
         if (!word.empty()) {
             lastWord = word; word.clear(); trailing = 1;
@@ -411,9 +419,7 @@ static LRESULT CALLBACK kbHook(int code, WPARAM wp, LPARAM lp) {
     } else if (isLetterVk(vk)) {
         if (word.empty()) before = lastWord.size() == 1 && trailing == 1 ? lastWord : vector<Key>();
         if (trailing > 0 || !lastWord.empty()) { lastWord.clear(); trailing = 0; }
-        bool shift = (GetAsyncKeyState(VK_SHIFT) & 0x8000) != 0;
-        bool caps = (GetKeyState(VK_CAPITAL) & 1) != 0;
-        word.push_back({BYTE(k->scanCode), shift, caps});
+        word.push_back(readKey(k));
     } else resetState();
     return CallNextHookEx(nullptr, code, wp, lp);
 }

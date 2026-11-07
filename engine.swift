@@ -400,8 +400,8 @@ final class Engine {
         switch code {
         case 51: // backspace
             // a typo while the word is being typed: AURA keeps watching it. Back over the space into a finished word
-            // (or into older text): the word is the user's now — not checked, not converted, until the next space
-            if !word.isEmpty, trailing == 0, !handsOff { word.removeLast() }
+            // (or into older text): the word is the user's now — not checked until the next space (double ⇧ still converts it)
+            if !word.isEmpty, trailing == 0 { word.removeLast() }
             else { reset(); handsOff = true }
         case 49: // space (already delivered to the app)
             if handsOff { reset(); return }  // the end of the user's own word: leave it as it is
@@ -415,25 +415,31 @@ final class Engine {
         case 123...126, 115, 116, 117, 119, 121: // arrows, Home, Page Up, Forward Delete, End, Page Down: editing the text
             reset(); handsOff = true
         default:
-            if handsOff { if !codes.contains(code) { reset() }; return }  // Return, Tab…: the user's word is over
+            // the user's own word: not checked, but its keys are kept — double ⇧ is an explicit command and converts it
+            if handsOff { if codes.contains(code) { word.append(key(e, code)) } else { reset() }; return }  // Return, Tab…: over
             if codes.contains(code) {
                 if word.isEmpty { before = lastWord.count == 1 && trailing == 1 ? lastWord : []; lastCycled = []; lastCycledLang = nil
                                   wordStartLang = ownLang ?? currentLang() }
                 if trailing > 0 || !lastWord.isEmpty { lastWord = []; trailing = 0 }
-                var len = 0
-                var buf = [UniChar](repeating: 0, count: 4)
-                e.keyboardGetUnicodeString(maxStringLength: 4, actualStringLength: &len, unicodeString: &buf)
-                var ch = len == 1 ? Unicode.Scalar(buf[0]).map(Character.init) : nil
-                // after AURA switched the layout itself, key events keep the letters of the old one (macOS doesn't
-                // update them), while the app already types in the new one: read the key with the layout we selected.
-                // (Asking the system for the current layout instead lags behind the keys when another program switches.)
-                if let own = ownLang, let l = layout(own), let c = l.toChar[Key(code: code, shift: f.contains(.maskShift))] {
-                    let caps = f.contains(.maskAlphaShift) && !f.contains(.maskShift)
-                    ch = caps ? Character(c.uppercased()) : c
-                }
-                word.append(Key(code: code, shift: f.contains(.maskShift), caps: f.contains(.maskAlphaShift), ch: ch))
+                word.append(key(e, code))
             } else { reset() }
         }
+    }
+
+    func key(_ e: CGEvent, _ code: UInt16) -> Key {
+        let f = e.flags
+        var len = 0
+        var buf = [UniChar](repeating: 0, count: 4)
+        e.keyboardGetUnicodeString(maxStringLength: 4, actualStringLength: &len, unicodeString: &buf)
+        var ch = len == 1 ? Unicode.Scalar(buf[0]).map(Character.init) : nil
+        // after AURA switched the layout itself, key events keep the letters of the old one (macOS doesn't
+        // update them), while the app already types in the new one: read the key with the layout we selected.
+        // (Asking the system for the current layout instead lags behind the keys when another program switches.)
+        if let own = ownLang, let l = layout(own), let c = l.toChar[Key(code: code, shift: f.contains(.maskShift))] {
+            let caps = f.contains(.maskAlphaShift) && !f.contains(.maskShift)
+            ch = caps ? Character(c.uppercased()) : c
+        }
+        return Key(code: code, shift: f.contains(.maskShift), caps: f.contains(.maskAlphaShift), ch: ch)
     }
 
     // one-letter words: a single letter before a fixed word is fixed too («z буду» → «я буду»),
