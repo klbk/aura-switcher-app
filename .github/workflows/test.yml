@@ -11,7 +11,7 @@ jobs:
       - name: Build
         run: ./build.sh --release
       - name: Auto-correction test
-        run: tests/run.sh
+        run: tests/run.sh -v
       - name: Failures
         if: always()
         run: cat tests/failures.txt || true
@@ -26,7 +26,7 @@ jobs:
         with:
           version: 0.17.0
       - name: Auto-correction test
-        run: tests/run-windows.sh
+        run: tests/run-windows.sh -v
       - name: Failures
         if: always()
         run: cat tests/failures.txt || true

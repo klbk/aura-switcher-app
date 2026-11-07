@@ -90,9 +90,10 @@ static void check(const std::string& name, const vector<Case>& cases) {
 }
 
 int wmain(int argc, wchar_t** argv) {
-    if (argc < 2) { printf("usage: aura-test <repo> [--update]\n"); return 2; }
+    if (argc < 2) { printf("usage: aura-test <repo> [--update] [-v]\n"); return 2; }
     root = argv[1];
-    bool update = argc > 2 && wstring(argv[2]) == L"--update";
+    bool update = false, verbose = false;  // -v: print every result line (by default only what got worse)
+    for (int i = 2; i < argc; i++) { update |= wstring(argv[i]) == L"--update"; verbose |= wstring(argv[i]) == L"-v"; }
     CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
     CoCreateInstance(__uuidof(SpellCheckerFactory), nullptr, CLSCTX_INPROC_SERVER, __uuidof(ISpellCheckerFactory), (void**)&factory);
 
@@ -175,7 +176,7 @@ int wmain(int argc, wchar_t** argv) {
         char line[256]; snprintf(line, sizeof line, "%s\t%.1f%%\t%d/%d\n", r.name.c_str(), 100.0 * r.ok / (r.total ? r.total : 1), r.ok, r.total);
         out += line;
     }
-    fputs(out.c_str(), stdout);
+    if (verbose) fputs(out.c_str(), stdout);
     { std::ofstream f(utf8(root + L"\\tests\\failures.txt"), std::ios::binary); for (auto& l : failures) f << l << "\n"; }
     // results depend on which spell checkers Windows has: one baseline with all of them installed, one for
     // machines without (the CI runner has only some)

@@ -2,6 +2,7 @@
 // Runs the real engine (engine.swift) on macOS layouts and spell checkers, without the app or key events.
 //   tests/run.sh            — run, compare with tests/baseline-macos<version>.txt
 //   tests/run.sh --update   — accept the current results as the new baseline
+//   tests/run.sh -v         — print every result line (by default: only what got worse, and OK/FAILED)
 import Cocoa
 import Carbon
 
@@ -115,7 +116,7 @@ for w in ["было", "была", "были"] {
 
 // report and compare with the baseline
 let out = results.map { String(format: "%@\t%.1f%%\t%d/%d", $0.0, 100 * Double($0.1) / Double(max($0.2, 1)), $0.1, $0.2) }
-for l in out { print(l) }
+if CommandLine.arguments.contains("-v") { for l in out { print(l) } }
 let failFile = root.appendingPathComponent("tests/failures.txt")
 try? failures.joined(separator: "\n").write(to: failFile, atomically: true, encoding: .utf8)
 // spell-check dictionaries differ between macOS versions: one baseline per version
