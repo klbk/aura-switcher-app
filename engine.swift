@@ -523,18 +523,19 @@ final class Engine {
             && Engine.letterWords[src?.lang ?? ""]?.contains(bTyped.lowercased()) != true
         // UK/RU word spelled the same in both layouts: text is already right, only switch the layout
         let shown = typed?.count ?? keys.count  // on screen: accented letters are one character
-        // switch first, then retype: switched after the text, the macOS indicator at the caret showed the old layout
-        select(fix)
         let sp = String(repeating: " ", count: trailing)
         // a password prompt doesn't show what is typed (sudo, ssh in Terminal — macOS doesn't hide those keys from us):
-        // if the app can say what's before the caret and the word isn't there, leave it alone
+        // if the app can say what's before the caret and the word isn't there, leave it alone — the layout too.
         // The app may not have drawn the last keys yet when we ask (Terminal lags a few ms), so the word counts as
-        // shown when its start is there; a prompt that doesn't echo shows none of it. Case-insensitive: editors
-        // capitalize the first word
-        if let typed, let seen = textBeforeCaret((typed + sp).utf16.count + 8),
-           !seen.lowercased().contains(String(typed.prefix(2)).lowercased()) {
+        // shown when its start is there; a prompt that doesn't echo shows none of it. In any layout: the letters the
+        // key events carry may be another layout's than the app typed (in Terminal 24 of 300 fixes were skipped).
+        // Case-insensitive: editors capitalize the first word
+        if let seen = textBeforeCaret((typed ?? out).utf16.count + sp.utf16.count + 8)?.lowercased(),
+           !layouts.contains(where: { seen.contains(String($0.text(keys).prefix(2)).lowercased()) }) {
             auraLog.notice("skip: not on screen (password?) (\(keys.count) letters)"); return
         }
+        // switch first, then retype: switched after the text, the macOS indicator at the caret showed the old layout
+        select(fix)
         if fixBefore { replace(count: bTyped.count + shown + 1 + trailing, with: b + " " + out + sp) }
         else if out != typed { replace(count: shown + trailing, with: out + sp) }
         auraLog.notice("fixed: \(src?.lang ?? "?", privacy: .public) → \(fix.lang, privacy: .public) (\(keys.count) letters\(trailing == 0 ? ", before Return" : "", privacy: .public))")
