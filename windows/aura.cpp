@@ -507,7 +507,9 @@ static void replaceIn(int count, const wstring& s, const Layout& l) {
     // apply the Backspaces before the text («ыыло» instead of «было» in Notepad)
     pauseMs(25);
     for (int i = 0; i < count; i++) sendKey(VK_BACK);
-    pauseMs(30);
+    // Win11 Notepad sometimes applies the last Backspaces after the first new letters («ривіт»): 30 ms lost
+    // 2–4 of 20 replacements, double ⇧ and auto-correction alike; 100 ms lost none of 60
+    pauseMs(100);
     if (switched) typeKeysIn(s, l.hkl); else typeText(s);
 }
 
