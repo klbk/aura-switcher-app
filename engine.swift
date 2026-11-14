@@ -639,7 +639,10 @@ final class Engine {
     /// how much more typical `t` is of its language than `typed` of its own (trigram costs); nil without both models
     func margin(_ typed: String, _ cur: String, _ t: String, _ lang: String) -> Double? {
         guard let a = model(cur), let b = model(lang) else { return nil }
-        return a.cost(typed) - b.cost(t)
+        // a comma or «?» stuck to the word («шейдерам,») is an unknown trigram on one side only: judge the letters
+        let trim = { (w: String) in w.trimmingCharacters(in: CharacterSet(charactersIn: ",.;:!?")) }
+        let (x, y) = (trim(typed), trim(t))
+        return a.cost(x.count >= 2 ? x : typed) - b.cost(y.count >= 2 ? y : t)
     }
     // tuned on ~2000 words per language (tools/langmodel.py): a word with no dictionary must look clearly
     // more typical than what was typed; a real dictionary word only somewhat more
