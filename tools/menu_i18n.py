@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-"""Menu translations for both apps. Edit here, then run: python3 tools/menu_i18n.py
-Rewrites the generated blocks in engine.swift and windows/aura.cpp (between the BEGIN/END markers).
+"""Menu translations for all three apps. Edit here, then run: python3 tools/menu_i18n.py
+Rewrites the generated blocks in engine.swift, windows/aura.cpp and linux/aura.cpp (between the BEGIN/END markers).
 Russian system → Ukrainian menu (no Russian translation on purpose)."""
 import re
 from pathlib import Path
@@ -2074,4 +2074,5 @@ for i, k in enumerate(KEYS):
     cpp += "    {" + ", ".join(f'L"{esc(l[i])}"' for _, _, l in langs) + "},\n"
 cpp += "};\n"
 put("windows/aura.cpp", B, E, cpp)
+put("linux/aura.cpp", B, E, cpp)   # the same block: wchar_t strings
 print(f"{len(langs)} languages × {len(KEYS)} strings")

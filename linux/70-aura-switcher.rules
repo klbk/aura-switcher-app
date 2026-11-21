@@ -1,0 +1,13 @@
+# AURA Switcher (Linux): lets the person at the computer — the user of the active local session, nobody else —
+# read the keyboards (to see what was typed) and create a virtual keyboard (to retype the word).
+# Mice, touchpads, touch screens and tablets are read only for clicks: a click moves the caret, so the word being
+# typed starts over. With keyboards alone AURA shows "!" and stays off.
+#   sudo cp linux/70-aura-switcher.rules /etc/udev/rules.d/
+#   sudo udevadm control --reload && sudo udevadm trigger
+# The number matters: after 60-input-id.rules (sets ID_INPUT_*), before 73-seat-late.rules (applies "uaccess").
+KERNEL=="uinput", SUBSYSTEM=="misc", TAG+="uaccess", OPTIONS+="static_node=uinput"
+SUBSYSTEM=="input", KERNEL=="event*", ENV{ID_INPUT_KEYBOARD}=="1", TAG+="uaccess"
+SUBSYSTEM=="input", KERNEL=="event*", ENV{ID_INPUT_MOUSE}=="1", TAG+="uaccess"
+SUBSYSTEM=="input", KERNEL=="event*", ENV{ID_INPUT_TOUCHPAD}=="1", TAG+="uaccess"
+SUBSYSTEM=="input", KERNEL=="event*", ENV{ID_INPUT_TOUCHSCREEN}=="1", TAG+="uaccess"
+SUBSYSTEM=="input", KERNEL=="event*", ENV{ID_INPUT_TABLET}=="1", TAG+="uaccess"
