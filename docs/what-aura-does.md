@@ -5,7 +5,7 @@
 ## Trust: why it is not a keylogger
 - **Open source (GPL-3.0).** Everything is in the public repo; you can read it and build it yourself.
 - **Network only when you ask.** AURA goes online only when you click Menu → "Check for updates…". No background checks, no analytics, no accounts. Typed text is never sent anywhere or written to a log.
-- **Password fields.** On Windows AURA does nothing when the focused field is a password field. On Mac it does not read or edit secure text fields.
+- **Password fields.** On Windows AURA does nothing when the focused field is a password field. On Mac it does not read or edit secure text fields. On Linux it cannot tell a password field: a password is checked only if it has a space in it, and AURA is paused while the screen is locked — see [Linux](linux.md).
 - Full policy: [privacy page](https://klbk.github.io/aura-switcher/privacy/).
 
 ## When AURA leaves a word alone

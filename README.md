@@ -3,7 +3,7 @@
 > 🇺🇦  Designed and developed in Ukraine.
 > Українська версія — [README.uk.md](README.uk.md)
 
-A macOS & Windows app that fixes text typed in the wrong keyboard layout ("ghbdsn" → "привіт"). It lives in the menu bar, runs in the background and starts automatically at login.
+A macOS & Windows app that fixes text typed in the wrong keyboard layout ("ghbdsn" → "привіт"). It lives in the menu bar, runs in the background and starts automatically at login. There is a Linux version too (beta, built from source) — [docs/linux.md](docs/linux.md).
 
 Quick start — [docs/INSTALL-mac.md](docs/INSTALL-mac.md).
 
@@ -26,7 +26,7 @@ Website — https://klbk.github.io/aura-switcher/ · Support ☕ — https://don
 - **Exclusions.** AURA does nothing in the apps you choose.
 - **Per-app language.** The layout is set automatically when you switch to an app (e.g. Terminal → EN). Auto-correction is off in apps with a bound language.
 - **Single instance.** A second running copy of AURA quits immediately, so text is never corrected twice.
-- **Games.** AURA pauses itself in games (double ⇧ is often sprint there): on Mac — apps in the Games category, on Windows — full-screen games. A game AURA didn't recognise can be excluded after leaving it: menu → "Don't work in (recent apps)". The pause covers the game's chat too: a word typed there in the wrong layout stays as typed.
+- **Games.** AURA pauses itself in games (double ⇧ is often sprint there): on Mac — apps in the Games category, on Windows — full-screen games, on Linux — full-screen Steam, Wine and "Game"-category apps. A game AURA didn't recognise can be excluded after leaving it: menu → "Don't work in (recent apps)". The pause covers the game's chat too: a word typed there in the wrong layout stays as typed.
 - **Update in one click, only when you ask.** AURA goes online only when you click Menu → "Check for updates…": it reads the version file on klbk.github.io and, if you agree, downloads the new version from GitHub Releases, checks it (Mac: AURA's signature and version; Windows: the signed version file and the exe's SHA-256), puts it in place of the old one and restarts. Nothing you typed and no personal data is sent. If anything goes wrong, it offers the site's update page instead (its address holds only the version number and menu language). 30 days after the build (or after the last check) a dot appears next to the language code and the menu says "⬆︎ An update may be available — check".
 
 ## Languages
@@ -49,7 +49,7 @@ The icon shows the current language: `EN`, `УК`, `РУ`… — each language i
 
 - **Enabled** — master switch.
 - **Auto-correction** — on/off (double ⇧ always works).
-- **Sound** — a short beep: one tone on auto-correction, two on double ⇧. Same on Mac and Windows.
+- **Sound** — a short beep: one tone on auto-correction, two on double ⇧. Same on Mac, Windows and Linux.
 - **Don't work in this app** — add the current app to exclusions.
 - **Language for this app** — bind a layout.
 - **Exclusions / Language bindings** — lists; click an item to remove it.
@@ -77,15 +77,16 @@ Archive for other Macs: `./build.sh --release` → `dist/AURA-Switcher-<version>
 - **Something hangs** — icon → "Quit", or `pkill "AURA Switcher"` in Terminal.
 - **Uninstall** — "Quit", uncheck "Launch at login", delete `/Applications/AURA Switcher.app`.
 
-## How it works and Windows
+## How it works, Windows and Linux
 
 - [How it works](docs/how-it-works.md) — keystrokes, dictionaries, language models, files.
 - [What AURA does and doesn't do](docs/what-aura-does.md) — why it is not a keylogger, when it leaves a word alone, Russian.
 - [Windows version](docs/windows.md) — install, differences, limits (beta).
+- [Linux version](docs/linux.md) — build, access to the keyboard, supported desktops, differences (beta).
 
 ## Limitations
 
-- macOS 13+ and Windows 10/11. On iPhone/iPad/Android only as a separate keyboard, with little practical value.
+- macOS 13+ and Windows 10/11; Linux — KDE Plasma 5 and 6 (Wayland; X11 should work, not tested yet) and other X11 desktops (tested: Xfce, Cinnamon). On iPhone/iPad/Android only as a separate keyboard, with little practical value.
 - Auto-correction only sees continuous typing: a mouse click, arrow keys or ⌘/⌥/⌃ shortcuts reset the current word.
 - Password fields and some apps (terminals, games) may behave differently — add them to exclusions.
 
