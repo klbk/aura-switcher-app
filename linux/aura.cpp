@@ -1,13 +1,15 @@
 // AURA Switcher for Linux — fixes text typed in the wrong keyboard layout.
 // Made in Ukraine. Single file: evdev + uinput for the keys, libxkbcommon for the layouts, D-Bus (sd-bus) for the
-// tray and the desktop. The engine is windows/aura.cpp's, function for function where the platform allows.
+// tray, the desktop and the session's state (logind). The engine is windows/aura.cpp's, function for function where
+// the platform allows.
 //
 // Threads:
 //   reader thread — reads key events from /dev/input (listen-only: never grabs a device, never delays a key)
 //   main thread   — tray icon, menu, spell checking, text replacement
 //
-// Desktops: KDE Plasma (Wayland and X11) through org.kde.keyboard + a KWin script; any other X11 desktop through
-// XKB (built with -DAURA_X11). A new desktop needs the five desk*() functions below and nothing else.
+// Desktops: KDE Plasma 5 and 6 (Wayland and X11) through org.kde.keyboard + a KWin script; any other X11 desktop
+// through XKB (built with -DAURA_X11). A new desktop needs the five desk*() functions below and nothing else.
+// Nothing is typed unless the session is the active one and unlocked.
 
 #include <linux/input.h>
 #include <linux/uinput.h>

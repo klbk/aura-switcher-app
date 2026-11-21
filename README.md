@@ -49,7 +49,7 @@ The icon shows the current language: `EN`, `УК`, `РУ`… — each language i
 
 - **Enabled** — master switch.
 - **Auto-correction** — on/off (double ⇧ always works).
-- **Sound** — a short beep: one tone on auto-correction, two on double ⇧. Same on Mac and Windows.
+- **Sound** — a short beep: one tone on auto-correction, two on double ⇧. Same on Mac, Windows and Linux.
 - **Don't work in this app** — add the current app to exclusions.
 - **Language for this app** — bind a layout.
 - **Exclusions / Language bindings** — lists; click an item to remove it.

@@ -5,7 +5,7 @@
 # Needs a C++17 compiler (g++ or clang++), pkg-config and the headers of libxkbcommon and libsystemd (sd-bus);
 # with the libX11 headers the X11 backend is built in too. Access to the keyboard: docs/linux.md.
 set -e
-cd "$(dirname "$0")/.."   # the language models are compiled in by their path from here (lang/*.txt)
+cd "$(dirname "$0")/.."   # the repository root
 VERSION=0.10.2
 LIBS="xkbcommon libsystemd"
 X11=""
