@@ -11,7 +11,8 @@ LIBS="xkbcommon libsystemd"
 X11=""
 if pkg-config --exists x11; then LIBS="$LIBS x11"; X11="-DAURA_X11"; fi
 mkdir -p build
-${CXX:-c++} -std=c++17 -O2 -s -DAPP_VERSION="L\"$VERSION\"" $X11 linux/aura.cpp -o build/aura-switcher \
+# -Wa,-I: the assembler finds lang/*.txt (built into the binary) from any directory; ccache can't see those files
+CCACHE_DISABLE=1 ${CXX:-c++} -std=c++17 -O2 -s -Wa,-I"$PWD" -DAPP_VERSION="L\"$VERSION\"" $X11 linux/aura.cpp -o build/aura-switcher \
   $(pkg-config --cflags --libs $LIBS) -ldl -lpthread
 echo "build/aura-switcher${X11:+ (with X11)}"
 if [ "$1" = "--install" ]; then

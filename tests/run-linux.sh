@@ -8,5 +8,5 @@
 set -e
 cd "$(dirname "$0")/.."
 mkdir -p build
-${CXX:-c++} -std=c++17 -O2 tests/linux.cpp -o build/aura-test $(pkg-config --cflags --libs xkbcommon libsystemd) -ldl -lpthread
+CCACHE_DISABLE=1 ${CXX:-c++} -std=c++17 -O2 -Wa,-I"$PWD" tests/linux.cpp -o build/aura-test $(pkg-config --cflags --libs xkbcommon libsystemd) -ldl -lpthread
 build/aura-test "$PWD" "$@"

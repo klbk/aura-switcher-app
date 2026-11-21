@@ -21,6 +21,7 @@
 #include <dlfcn.h>
 #include <fcntl.h>
 #include <iconv.h>
+#include <langinfo.h>
 #include <locale.h>
 #include <poll.h>
 #include <signal.h>
@@ -117,8 +118,21 @@ static void makeDirs(const std::string& path) {
     for (size_t i = 1; i <= path.size(); i++) if (i == path.size() || path[i] == '/') mkdir(path.substr(0, i).c_str(), 0700);
 }
 static std::string configDir() { return envOr("XDG_CONFIG_HOME", envOr("HOME", "") + "/.config"); }
+// our icons, sounds, the KWin script and the single-instance lock
 static std::string runtimeDir() {
-    static std::string d = [] { std::string r = envOr("XDG_RUNTIME_DIR", "/tmp/aura-" + std::to_string(getuid())) + "/aura-switcher"; makeDirs(r); return r; }();
+    static std::string d = [] {
+        const char* x = getenv("XDG_RUNTIME_DIR");
+        if (x && *x) { std::string r = std::string(x) + "/aura-switcher"; makeDirs(r); return r; }
+        // no runtime dir (started outside a login session): a directory in /tmp that is ours alone — another user
+        // may have created the name first, and the KWin script in it runs in the desktop
+        std::string r = "/tmp/aura-switcher-" + std::to_string(getuid());
+        mkdir(r.c_str(), 0700);
+        struct stat st;
+        if (lstat(r.c_str(), &st) == 0 && S_ISDIR(st.st_mode) && st.st_uid == getuid() && !(st.st_mode & 077)) return r;
+        char t[] = "/tmp/aura-switcher-XXXXXX";
+        if (mkdtemp(t)) return std::string(t);
+        r = configDir() + "/aura-switcher/run"; makeDirs(r); return r;
+    }();
     return d;
 }
 static bool readFile(const std::string& path, std::string& out) {
@@ -132,17 +146,22 @@ static bool writeFile(const std::string& path, const std::string& data) {
 
 // MARK: - Helper programs (clipboard, sound, dialogs, opening a link) — started directly, never through a shell
 
-static bool have(const char* cmd) {
-    static std::map<std::string, bool> known;
-    auto it = known.find(cmd); if (it != known.end()) return it->second;
+static bool have(const char* cmd) {  // only "found" is remembered: a tool installed later is picked up
+    static std::set<std::string> found;
+    if (found.count(cmd)) return true;
     bool ok = false; std::stringstream ss(envOr("PATH", "/usr/bin:/bin")); std::string d;
     while (!ok && std::getline(ss, d, ':')) ok = !d.empty() && access((d + "/" + cmd).c_str(), X_OK) == 0;
-    return known[cmd] = ok;
+    if (ok) found.insert(cmd);
+    return ok;
 }
+// the exit code of the last run() on this thread; -1 = it didn't start, took too long, or was killed
+static thread_local int runExit = -1;
 // waits for the program: `in` goes to its stdin, its stdout comes back in `out`; false = failed or took too long
 static bool run(const vector<std::string>& args, const std::string* in = nullptr, std::string* out = nullptr, int timeoutMs = 2000) {
     int pin[2] = {-1, -1}, pout[2] = {-1, -1};
-    if ((in && pipe2(pin, O_CLOEXEC)) || (out && pipe2(pout, O_CLOEXEC))) return false;
+    runExit = -1;
+    if (in && pipe2(pin, O_CLOEXEC)) return false;
+    if (out && pipe2(pout, O_CLOEXEC)) { if (in) { close(pin[0]); close(pin[1]); } return false; }
     posix_spawn_file_actions_t fa; posix_spawn_file_actions_init(&fa);
     if (in) posix_spawn_file_actions_adddup2(&fa, pin[0], 0); else posix_spawn_file_actions_addopen(&fa, 0, "/dev/null", O_RDONLY, 0);
     if (out) posix_spawn_file_actions_adddup2(&fa, pout[1], 1); else posix_spawn_file_actions_addopen(&fa, 1, "/dev/null", O_WRONLY, 0);
@@ -154,9 +173,22 @@ static bool run(const vector<std::string>& args, const std::string* in = nullptr
     if (out) close(pout[1]);
     if (err) { if (in) close(pin[1]); if (out) close(pout[0]); return false; }
     long long deadline = timeoutMs > 0 ? nowMs() + timeoutMs : 0;
-    if (in) { size_t at = 0; while (at < in->size()) { ssize_t n = write(pin[1], in->data() + at, in->size() - at); if (n <= 0) break; at += size_t(n); } close(pin[1]); }
     bool ok = true;
-    if (out) {
+    if (in) {  // a program that doesn't read its input must not hang us either
+        fcntl(pin[1], F_SETFL, O_NONBLOCK);
+        size_t at = 0;
+        while (at < in->size()) {
+            ssize_t n = write(pin[1], in->data() + at, in->size() - at);
+            if (n > 0) { at += size_t(n); continue; }
+            if (n < 0 && errno != EAGAIN && errno != EINTR) break;
+            pollfd p{pin[1], POLLOUT, 0};
+            int left = deadline ? int(deadline - nowMs()) : -1;
+            if (deadline && left <= 0) { ok = false; break; }
+            if (poll(&p, 1, left) < 0 && errno != EINTR) break;
+        }
+        close(pin[1]);
+    }
+    if (out && ok) {
         out->clear(); char buf[65536];
         for (;;) {
             pollfd p{pout[0], POLLIN, 0};
@@ -168,8 +200,8 @@ static bool run(const vector<std::string>& args, const std::string* in = nullptr
             out->append(buf, size_t(n));
             if (out->size() > (64u << 20)) { ok = false; break; }
         }
-        close(pout[0]);
     }
+    if (out) close(pout[0]);
     int st = 0;
     for (;;) {
         pid_t r = waitpid(pid, &st, deadline ? WNOHANG : 0);
@@ -178,7 +210,8 @@ static bool run(const vector<std::string>& args, const std::string* in = nullptr
         if (deadline && (!ok || nowMs() > deadline)) { kill(pid, SIGKILL); waitpid(pid, &st, 0); return false; }
         if (deadline) pauseMs(2);
     }
-    return ok && WIFEXITED(st) && WEXITSTATUS(st) == 0;
+    if (WIFEXITED(st)) runExit = WEXITSTATUS(st);
+    return ok && runExit == 0;
 }
 // starts the program and forgets it (a sound, a browser): detached, so it never becomes a zombie of ours
 static void launch(const vector<std::string>& args) {
@@ -684,6 +717,12 @@ static void scanDevices() {
     denied = deniedNow;
 }
 
+// the Caps Lock light of the keyboard the key came from: the desktop keeps it in step
+static bool capsOn(const Dev& dev) {
+    if (!dev.leds) return false;
+    unsigned long led[LED_MAX / (8 * sizeof(long)) + 1] = {};
+    return ioctl(dev.fd, EVIOCGLED(sizeof led), led) >= 0 && bit(led, LED_CAPSL);
+}
 static void onKey(Dev& dev, int code, int value, long long now) {
     if (value == 1) { held.insert(code); downAt[code] = now; } else if (value == 0) held.erase(code);
     auto isHeld = [](std::initializer_list<int> ks) { for (int k : ks) if (held.count(k)) return true; return false; };
@@ -732,7 +771,7 @@ static void onKey(Dev& dev, int code, int value, long long now) {
         resetState(); handsOff = true;  // editing the text
     } else if (handsOff) {
         // the user's own word: not checked, but its keys are kept — double ⇧ is an explicit command and converts it
-        if (isCharKey(code)) word.push_back({uint16_t(code), shift, false});
+        if (isCharKey(code)) word.push_back({uint16_t(code), shift, capsOn(dev)});
         else resetState();  // a space, Return, Tab…: the user's word is over
     } else if (code == KEY_SPACE) {
         if (!word.empty()) {
@@ -742,8 +781,7 @@ static void onKey(Dev& dev, int code, int value, long long now) {
     } else if (isCharKey(code)) {
         if (word.empty()) before = lastWord.size() == 1 && trailing == 1 ? lastWord : vector<Key>();
         if (trailing > 0 || !lastWord.empty()) { lastWord.clear(); trailing = 0; }
-        bool caps = false;  // the Caps Lock light of the keyboard the key came from: the desktop keeps it in step
-        if (dev.leds) { unsigned long led[LED_MAX / (8 * sizeof(long)) + 1] = {}; if (ioctl(dev.fd, EVIOCGLED(sizeof led), led) >= 0) caps = bit(led, LED_CAPSL); }
+        bool caps = capsOn(dev);
         capsNow = caps;
         word.push_back({uint16_t(code), shift, caps});
     } else resetState();
@@ -783,6 +821,10 @@ static void readerThread() {
         }
         if (p[0].revents) {
             char buf[4096]; while (read(ino, buf, sizeof buf) > 0) {}
+            // the session went inactive (another user, the login screen): logind takes our access away, but an open
+            // device would go on reading — close what we may no longer read; scanDevices opens it again on return
+            for (size_t i = devs.size(); i-- > 0;)
+                if (access(devs[i].path.c_str(), R_OK) != 0) { if (devs[i].keyboard) keyboards--; close(devs[i].fd); devs.erase(devs.begin() + long(i)); held.clear(); }
             scanDevices();
         }
         if (keyboards * 1000 + denied != told) { told = keyboards * 1000 + denied; post(MSG_DEVICES); }
@@ -846,13 +888,16 @@ static void typeKeys(const vector<Key>& keys) {
 }
 // Replace the word: switch the desktop to `l` first and wait until it has it, erase, then press the word's own
 // keys again — in the right layout they type the right letters, dead keys and all. Nothing is erased unless the
-// layout really switched.
-static bool replaceIn(int count, const vector<Key>& keys, const Layout& l) {
+// layout really switched and the user typed nothing since `want` (the reader's key counter when the word ended):
+// the Backspaces would take their letters instead of the word's.
+static bool replaceIn(int count, const vector<Key>& keys, const Layout& l, unsigned want) {
     checkEcho();
+    int from = deskCurrent();
     selectLayout(l);
     bool switched = false;
     for (int i = 0; i < 40 && !(switched = deskCurrent() == l.group); i++) pauseMs(5);
     if (!switched) { logf("layout didn't switch: nothing replaced"); return false; }
+    if (seq.load() != want) { if (forcedLayout < 0) deskSelect(from); logf("typing went on: nothing replaced"); return false; }
     for (int i = 0; i < count; i++) tapKey(KEY_BACKSPACE);
     typeKeys(keys);
     return true;
@@ -1001,7 +1046,8 @@ static bool isLatin(const wstring& s) { for (wchar_t c : s) if (c >= 0x250) retu
 #define AURA_LANGS(X) X(ar) X(az) X(be) X(bg) X(cs) X(cy) X(da) X(de) X(el) X(en) X(es) X(et) X(fa) X(fi) X(fr) X(ga) X(he) \
     X(hi) X(hr) X(hu) X(hy) X(is) X(it) X(ka) X(kk) X(ko) X(ky) X(lt) X(lv) X(mk) X(mn) X(mt) X(nb) X(nl) X(pl) X(pt) X(ro) \
     X(ru) X(sk) X(sl) X(sq) X(sr) X(sv) X(tg) X(tr) X(tt) X(uk) X(uz) X(vi)
-// the assembler copies each file into the binary as it is (paths from the repository root: the build scripts run there)
+// the assembler copies each file into the binary as it is. Paths are looked up from the repository root: the build
+// scripts pass it with -Wa,-I. ccache doesn't see these files, so they turn its cache off (CCACHE_DISABLE)
 #define AURA_LM(c) extern "C" const char aura_lm_##c[], aura_lm_##c##_end[]; \
     __asm__(".pushsection .rodata\n.global aura_lm_" #c "\naura_lm_" #c ":\n.incbin \"lang/" #c ".txt\"\n" \
             ".global aura_lm_" #c "_end\naura_lm_" #c "_end:\n.byte 0\n.popsection\n");
@@ -1302,24 +1348,43 @@ static bool clipText(std::string& out) {
     }
     return false;
 }
+// Plasma 5 on Wayland: what wl-copy puts on the clipboard (data-control) can be read back, but applications get nothing
+// when they paste (KWin 5.27) — neither our text nor the user's clipboard put back. Klipper's D-Bus call does reach
+// them; it takes text only.
+static bool nameHasOwner(const char* name);
+static bool viaKlipper() {
+    return desk == DESK_KDE && clipTool() == 1 && envOr("KDE_SESSION_VERSION", "") == "5" && nameHasOwner("org.kde.klipper");
+}
+static bool isTextMime(const std::string& m) { return m.empty() || m == "text/plain;charset=utf-8" || m == "text/plain" || m == "UTF8_STRING" || m == "STRING" || m == "TEXT"; }
+// wl-copy --sensitive is in wl-clipboard 2.3+ (2025); older ones refuse the whole command
+static bool wlSensitive() {
+    static int ok = -1;
+    if (ok < 0) { std::string h; run({"wl-copy", "--help"}, nullptr, &h, 1000); ok = h.find("--sensitive") != std::string::npos; }
+    return ok == 1;
+}
 // `hidden`: our own short-lived text — clipboard managers (Klipper) are asked not to keep it in their history
-static void clipSet(const std::string& data, const std::string& mime = "", bool hidden = false) {
+static bool clipSet(const std::string& data, const std::string& mime = "", bool hidden = false) {
+    if (viaKlipper()) {
+        if (!isTextMime(mime) || data.find('\0') != std::string::npos) return false;
+        return sd_bus_call_method(bus, "org.kde.klipper", "/klipper", "org.kde.klipper.klipper", "setClipboardContents", nullptr, nullptr, "s", data.c_str()) >= 0;
+    }
     vector<std::string> a;
     switch (clipTool()) {
-    case 1: a = {"wl-copy"}; if (hidden) a.push_back("--sensitive"); if (!mime.empty()) { a.push_back("-t"); a.push_back(mime); } break;
+    case 1: a = {"wl-copy"}; if (hidden && wlSensitive()) a.push_back("--sensitive"); if (!mime.empty()) { a.push_back("-t"); a.push_back(mime); } break;
     case 2: a = {"xclip", "-i", "-selection", "clipboard"}; break;
     case 3: a = {"xsel", "-b", "-i"}; break;
-    default: return;
+    default: return false;
     }
-    run(a, &data, nullptr, 1000);
+    return run(a, &data, nullptr, 1000);
 }
 // The user's clipboard, to put back after the copy: its text, or — when it holds something else (an image, files) —
-// its first format.
-struct Clip { bool any = false; std::string mime, data; };
+// its first format. `ok`: we know what it was (maybe nothing); without that it is not touched at all.
+struct Clip { bool ok = false, any = false; std::string mime, data; };
 static Clip clipSave() {
     Clip c; std::string types;
     if (clipTool() == 1) {
-        if (!run({"wl-paste", "-l"}, nullptr, &types, 500)) return c;
+        // wl-paste exits at once with an error when nothing is copied; a timeout is a clipboard we couldn't read
+        if (!run({"wl-paste", "-l"}, nullptr, &types, 500)) { c.ok = runExit > 0; return c; }
         std::stringstream ss(types); std::string t, first;
         while (std::getline(ss, t)) {
             if (t.empty() || t.find("x-kde-") != std::string::npos || t == "SAVE_TARGETS" || t == "TARGETS" || t == "TIMESTAMP" || t == "MULTIPLE") continue;
@@ -1327,12 +1392,16 @@ static Clip clipSave() {
             if (t == "text/plain;charset=utf-8") { c.mime = t; break; }
         }
         if (c.mime.empty()) c.mime = first;
-        c.any = !c.mime.empty() && run({"wl-paste", "-n", "-t", c.mime}, nullptr, &c.data, 2000);
-    } else c.any = clipText(c.data);
+        if (c.mime.empty()) { c.ok = true; return c; }
+        if (viaKlipper() && !isTextMime(c.mime)) return c;  // an image or files: Klipper couldn't put them back
+        c.ok = c.any = run({"wl-paste", "-n", "-t", c.mime}, nullptr, &c.data, 2000);
+    } else { c.any = clipText(c.data); c.ok = c.any || runExit > 0; }
     return c;
 }
 static void clipRestore(const Clip& c) {
+    if (!c.ok) return;
     if (c.any) clipSet(c.data, c.mime);
+    else if (viaKlipper()) sd_bus_call_method(bus, "org.kde.klipper", "/klipper", "org.kde.klipper.klipper", "clearClipboardContents", nullptr, nullptr, "");
     else if (clipTool() == 1) run({"wl-copy", "--clear"});
 }
 
@@ -1348,9 +1417,25 @@ static void chord(int mod, int key) { emitKey(mod, 1); emitKey(key, 1); emitKey(
 // in the user's history and race with the application's own copy. The price: a selection that is exactly what the
 // clipboard already holds looks like no selection, and double ⇧ only switches the layout.
 static std::string clipBefore; static bool clipHad = false;
+// The user's clipboard is put back a moment after a conversion. A double ⇧ before that (converting the selection on
+// to the next layout) must not take our own copy for the user's: it takes over the clipboard still waiting to go back.
+static Clip pendingClip; static bool restorePending = false, savedFromPending = false; static unsigned restoreGen = 0;
+static void restoreLateCopy(const Clip& saved);
+static void scheduleRestore(const Clip& c, int ms, bool onlyIfCopied) {
+    if (!c.ok) return;
+    pendingClip = c; restorePending = true; unsigned g = ++restoreGen;
+    later(ms, [g, onlyIfCopied] {
+        if (g != restoreGen || !restorePending) return;
+        restorePending = false;
+        if (onlyIfCopied) restoreLateCopy(pendingClip); else clipRestore(pendingClip);
+    });
+}
 static bool copySelection(wstring& sel, Clip& saved) {
     if (!clipTool()) return false;
-    saved = clipSave();
+    savedFromPending = restorePending;
+    if (restorePending) { saved = pendingClip; restorePending = false; ++restoreGen; }
+    else saved = clipSave();
+    if (!saved.ok) { logf("copy: couldn't read the clipboard to put it back: not copying"); return false; }
     std::string got;
     clipHad = clipText(clipBefore);
     checkEcho();
@@ -1365,6 +1450,7 @@ static bool copySelection(wstring& sel, Clip& saved) {
 }
 // a slow application: if its copy lands after we gave up, still put the user's clipboard back
 static void restoreLateCopy(const Clip& saved) {
+    if (!saved.ok) return;
     std::string now; bool has = clipText(now);
     if (has && (!clipHad || now != clipBefore)) clipRestore(saved);
 }
@@ -1381,8 +1467,9 @@ static void cycleLayout() { if (!layouts.empty()) selectLayout(layouts[size_t(cu
 
 static wstring lastSelOut; static int lastSelLang = 0;
 
-static void convertSelection(wstring text) {
-    if (layouts.empty()) return;
+// `want`: the reader's key counter at the double ⇧ — the user typing meanwhile cancels it
+static bool convertSelection(wstring text, unsigned want) {
+    if (layouts.empty()) return false;
     for (size_t i; (i = text.find(L"\r\n")) != wstring::npos;) text.erase(i, 1);
     int src;
     if (text == lastSelOut && lastSelLang < int(layouts.size())) src = lastSelLang;
@@ -1413,19 +1500,26 @@ static void convertSelection(wstring text) {
     }
     selectLayout(layouts[dst]);
     if (typed) { for (int i = 0; i < 40 && !(typed = deskCurrent() == layouts[dst].group); i++) pauseMs(5); }
+    if (seq.load() != want) { logf("typing went on: selection left alone"); return false; }
     if (typed) typeKeys(keys);
     else {
         // pasted: the text may hold anything (line breaks, emoji, letters no layout has). Shift+Insert pastes in
-        // every toolkit, whatever the layout; Backspace first — some (Tk) paste next to the selection, not over it
+        // every toolkit, whatever the layout; Backspace first — some (Tk) paste next to the selection, not over it.
+        // Only once the clipboard really holds the new text: otherwise the selection would be erased for nothing
+        // Plasma 5: Klipper sets the primary selection too, and GTK fields drop their selection before the paste —
+        // the Backspace would then erase a character of the text. Several lines are left alone there
+        if (viaKlipper()) { logf("paste: not on Plasma 5 (Klipper): selection left alone"); return false; }
         std::string u = utf8(out), got;
-        clipSet(u, "", true);
-        for (int i = 0; i < 20 && !(clipText(got) && got == u); i++) pauseMs(5);
+        bool ready = clipSet(u, "", true);
+        for (int i = 0; ready && i < 20 && !(clipText(got) && got == u); i++) pauseMs(5);
+        if (!ready || got != u) { logf("paste: the clipboard didn't take the text: selection left alone"); return false; }
         tapKey(KEY_BACKSPACE);
         chord(KEY_LEFTSHIFT, KEY_INSERT);
         pauseMs(200);  // the application reads the clipboard before it gets the arrows
     }
     if (out.size() <= 400) { emitKey(KEY_LEFTSHIFT, 1); for (size_t i = 0; i < out.size(); i++) { emitKey(KEY_LEFT, 1); emitKey(KEY_LEFT, 0); } emitKey(KEY_LEFTSHIFT, 0); }  // reselect
     lastSelOut = out; lastSelLang = dst;
+    return true;
 }
 
 // MARK: - Sounds (synthesized, identical on Mac, Windows and Linux)
@@ -1478,14 +1572,17 @@ static void onDoubleShift(Snapshot* s) {
         int nIdx = best >= 0 ? best : (curIdx + 1) % int(layouts.size());
         lastSeq = s->seq; lastIdx = nIdx;
         vector<Key> keys = s->keys; for (int i = 0; i < s->trailing; i++) keys.push_back({KEY_SPACE, false});
-        replaceIn(int(layouts[curIdx].text(s->keys).size()) + s->trailing, keys, layouts[nIdx]);
+        // not replaced: the word on screen is still in its old layout, the next double ⇧ starts afresh
+        if (!replaceIn(int(layouts[curIdx].text(s->keys).size()) + s->trailing, keys, layouts[nIdx], s->seq)) { lastSeq = ~0u; lastIdx = -1; }
         updateTray();
         return;
     }
     Clip saved; wstring sel;
     if (isTerminal(curApp) || !clipTool()) cycleLayout();
-    else if (copySelection(sel, saved) && !isCopiedLine(sel)) { convertSelection(sel); later(400, [saved] { clipRestore(saved); }); }
-    else { cycleLayout(); later(600, [saved] { restoreLateCopy(saved); }); }
+    // Plasma 5: Klipper puts the clipboard back together with the primary selection, and GTK fields then drop their
+    // selection — later, so that a quick next double ⇧ still finds it
+    else if (copySelection(sel, saved) && !isCopiedLine(sel)) { convertSelection(sel, s->seq); scheduleRestore(saved, viaKlipper() ? 2500 : 400, false); }
+    else { cycleLayout(); scheduleRestore(saved, 600, !savedFromPending); }
     updateTray();
 }
 
@@ -1525,8 +1622,8 @@ static void applyFix(int j, Snapshot* s, int trailing) {
     if (fixBefore) { keys = s->before; keys.push_back({KEY_SPACE, false}); }
     keys.insert(keys.end(), s->keys.begin(), s->keys.end());
     for (int i = 0; i < trailing; i++) keys.push_back({KEY_SPACE, false});
-    if (fixBefore) replaceIn(int(bTyped.size()) + shown + 1 + trailing, keys, layouts[j]);
-    else if (out != cur.text(s->keys)) replaceIn(shown + trailing, keys, layouts[j]);
+    if (fixBefore) replaceIn(int(bTyped.size()) + shown + 1 + trailing, keys, layouts[j], s->seq);
+    else if (out != cur.text(s->keys)) replaceIn(shown + trailing, keys, layouts[j], s->seq);
     else selectLayout(layouts[j]);
     playSound(SND_AUTO);
     updateTray();
@@ -1635,12 +1732,24 @@ static void registerTray() {
 
 static std::string autostartFile() { return configDir() + "/autostart/aura-switcher.desktop"; }
 static bool loginEnabled() { return access(autostartFile().c_str(), R_OK) == 0; }
+// a path as one quoted Exec argument (Desktop Entry spec: " ` $ \ escaped by the quoting rule, then every \ doubled
+// by the string rule; % is a field code)
+static std::string execArg(const std::string& path) {
+    std::string r = "\"";
+    for (char c : path) {
+        if (c == '"' || c == '`' || c == '$') r += "\\\\" + std::string(1, c);
+        else if (c == '\\') r += "\\\\\\\\";
+        else if (c == '%') r += "%%";
+        else r += c;
+    }
+    return r + "\"";
+}
 static void setLogin(bool on) {
     if (!on) { unlink(autostartFile().c_str()); return; }
     char self[4096]; ssize_t n = readlink("/proc/self/exe", self, sizeof self - 1); if (n <= 0) return;
     makeDirs(configDir() + "/autostart");
     writeFile(autostartFile(), "[Desktop Entry]\nType=Application\nName=AURA Switcher\nComment=Fixes text typed in the wrong keyboard layout\n"
-                               "Exec=\"" + std::string(self, size_t(n)) + "\"\nIcon=aura-switcher\nX-GNOME-Autostart-enabled=true\n");
+                               "Exec=" + execArg(std::string(self, size_t(n))) + "\nIcon=aura-switcher\nX-GNOME-Autostart-enabled=true\n");
 }
 
 // MARK: - Menu
@@ -1911,9 +2020,44 @@ static void reloadLayouts() {
 }
 static int onLayoutChanged(sd_bus_message*, void*, sd_bus_error*) { updateTray(); return 0; }
 static int onLayoutList(sd_bus_message*, void*, sd_bus_error*) { reloadLayouts(); return 0; }
-// the lock screen takes the keys while the session is locked: a password is nobody's word to fix
+// AURA is paused while the screen is locked (a password is nobody's word to fix) and while the session is not the
+// active one (another user, the login screen): its virtual keyboard types into whatever session is in front.
+// logind knows both (Active, LockedHint); the screen savers of the desktops that don't set LockedHint say it too.
+static sd_bus* sysBus = nullptr;
+static std::string sessionPath;
+static bool sessionInactive = false, sessionLockedHint = false, saverActive = false;
+static void updateLocked() {
+    bool was = sessionLocked;
+    sessionLocked = sessionInactive || sessionLockedHint || saverActive;
+    if (sessionLocked != was) logf("session %s", sessionLocked ? "locked or inactive: paused" : "active again");
+    resetReq = true; refreshActive(); updateTray();
+}
+static void readSession() {
+    if (!sysBus || sessionPath.empty()) return;
+    int a = 1, l = 0; sd_bus_error e = SD_BUS_ERROR_NULL;
+    if (sd_bus_get_property_trivial(sysBus, "org.freedesktop.login1", sessionPath.c_str(), "org.freedesktop.login1.Session", "Active", &e, 'b', &a) < 0) a = 1;
+    sd_bus_error_free(&e);
+    if (sd_bus_get_property_trivial(sysBus, "org.freedesktop.login1", sessionPath.c_str(), "org.freedesktop.login1.Session", "LockedHint", &e, 'b', &l) < 0) l = 0;
+    sd_bus_error_free(&e);
+    sessionInactive = !a; sessionLockedHint = l != 0;
+}
+static int onSessionProps(sd_bus_message*, void*, sd_bus_error*) { readSession(); updateLocked(); return 0; }
+static void watchSession() {
+    if (sd_bus_open_system(&sysBus) < 0) { sysBus = nullptr; logf("no system bus: the session's state is unknown"); return; }
+    sd_bus_set_method_call_timeout(sysBus, 800 * 1000);
+    sd_bus_message* r = nullptr; const char* path = nullptr; const char* id = getenv("XDG_SESSION_ID");
+    if (id && *id && sd_bus_call_method(sysBus, "org.freedesktop.login1", "/org/freedesktop/login1", "org.freedesktop.login1.Manager", "GetSession", nullptr, &r, "s", id) >= 0)
+        sd_bus_message_read(r, "o", &path);
+    else if (sd_bus_call_method(sysBus, "org.freedesktop.login1", "/org/freedesktop/login1", "org.freedesktop.login1.Manager", "GetSessionByPID", nullptr, &r, "u", uint32_t(getpid())) >= 0)
+        sd_bus_message_read(r, "o", &path);
+    if (path) sessionPath = path;
+    sd_bus_message_unref(r);
+    if (sessionPath.empty()) { logf("no login session: the session's state is unknown"); return; }
+    sd_bus_match_signal(sysBus, nullptr, "org.freedesktop.login1", sessionPath.c_str(), "org.freedesktop.DBus.Properties", "PropertiesChanged", onSessionProps, nullptr);
+    readSession();
+}
 static int onLocked(sd_bus_message* m, void*, sd_bus_error*) {
-    int on = 0; if (sd_bus_message_read(m, "b", &on) >= 0) { sessionLocked = on != 0; resetReq = true; refreshActive(); updateTray(); }
+    int on = 0; if (sd_bus_message_read(m, "b", &on) >= 0) { saverActive = on != 0; updateLocked(); }
     return 0;
 }
 static void startKde() {
@@ -1990,7 +2134,9 @@ static void printCheck() {
     printf("virtual keyboard (/dev/uinput): %s\n", ui >= 0 ? "ok" : "no access (see docs/linux.md)");
     if (ui >= 0) { pauseMs(700); checkEcho(); printf("key remapper grabbing it: %s\n", echoMode ? "yes (handled)" : "no"); }
     for (auto& l : layouts) printf("%s: %s%s\n", utf8(l.locale).c_str(), dictionaryWorks(l.locale) ? "dictionary + " : "", model(l.locale) ? "language model" : "no language model (double Shift only)");
-    printf("clipboard tool (selection conversion): %s\n", clipTool() == 1 ? "wl-clipboard" : clipTool() == 2 ? "xclip" : clipTool() == 3 ? "xsel" : "none");
+    printf("clipboard tool (selection conversion): %s\n", viaKlipper() ? "wl-clipboard + Klipper (Plasma 5)" : clipTool() == 1 ? "wl-clipboard" : clipTool() == 2 ? "xclip" : clipTool() == 3 ? "xsel" : "none");
+    printf("login session: %s\n", sessionPath.empty() ? "unknown (pausing on a locked screen relies on the screen saver)" :
+           sessionInactive ? "inactive" : sessionLockedHint ? "locked" : "active");
     printf("tray: %s\n", nameHasOwner("org.kde.StatusNotifierWatcher") ? "ok" : "no StatusNotifierWatcher (no tray icon)");
 }
 
@@ -1999,7 +2145,8 @@ static void onSignal(int) { quitReq = true; Msg m{0, nullptr}; if (write(msgPipe
 
 int main(int argc, char** argv) {
     // letters of every script count as letters whatever the system language: any UTF-8 locale will do
-    if (!setlocale(LC_CTYPE, "") || !iswalpha(L'я')) { if (!setlocale(LC_CTYPE, "C.UTF-8")) setlocale(LC_CTYPE, "en_US.UTF-8"); }
+    setlocale(LC_CTYPE, "");
+    if (strcmp(nl_langinfo(CODESET), "UTF-8") != 0 && !setlocale(LC_CTYPE, "C.UTF-8")) setlocale(LC_CTYPE, "en_US.UTF-8");
     bool check = false;
     for (int i = 1; i < argc; i++) {
         std::string a = argv[i];
@@ -2021,7 +2168,14 @@ int main(int argc, char** argv) {
 #endif
     bool uinputOk = openUinput();
     layouts = loadLayouts();
-    if (check) { printCheck(); closeUinput(); return 0; }
+    if (check) {
+        watchSession();
+        printCheck();
+#ifdef AURA_X11
+        if (desk == DESK_X11) { pauseMs(800); x11KeepLayouts(); }  // our keyboard appeared: same as in the app
+#endif
+        closeUinput(); return 0;
+    }
     if (!uinputOk) fprintf(stderr, "AURA Switcher: no access to /dev/uinput (see docs/linux.md)\n");
     if (desk == DESK_NONE) fprintf(stderr, "AURA Switcher: this desktop isn't supported yet (see docs/linux.md)\n");
 
@@ -2034,7 +2188,10 @@ int main(int argc, char** argv) {
     sd_bus_add_object_vtable(bus, nullptr, kMenuPath, "com.canonical.dbusmenu", kMenuVtable, nullptr);
     sd_bus_add_object_vtable(bus, nullptr, "/App", kBusName, kAppVtable, nullptr);
     sd_bus_match_signal(bus, nullptr, "org.freedesktop.DBus", "/org/freedesktop/DBus", "org.freedesktop.DBus", "NameOwnerChanged", onNameOwner, nullptr);
-    sd_bus_match_signal(bus, nullptr, nullptr, nullptr, "org.freedesktop.ScreenSaver", "ActiveChanged", onLocked, nullptr);
+    for (const char* saver : {"org.freedesktop.ScreenSaver", "org.cinnamon.ScreenSaver", "org.mate.ScreenSaver", "org.gnome.ScreenSaver", "org.xfce.ScreenSaver"})
+        sd_bus_match_signal(bus, nullptr, nullptr, nullptr, saver, "ActiveChanged", onLocked, nullptr);
+    watchSession();
+    sessionLocked = sessionInactive || sessionLockedHint;
 
     warmUpDictionaries();
     repeatMs = deskRepeatMs();
@@ -2051,7 +2208,13 @@ int main(int argc, char** argv) {
     logf("started: desktop %s, %d layouts", deskName(), int(layouts.size()));
 
     while (!quitReq) {
-        while (sd_bus_process(bus, nullptr) > 0) {}
+        int r;
+        while ((r = sd_bus_process(bus, nullptr)) > 0) {}
+        if (r < 0) { fprintf(stderr, "AURA Switcher: the session bus is gone (%s)\n", strerror(-r)); break; }  // the session is over
+        if (sysBus) {
+            while ((r = sd_bus_process(sysBus, nullptr)) > 0) {}
+            if (r < 0) { logf("system bus lost: the session's state is no longer followed"); sysBus = sd_bus_unref(sysBus); }
+        }
         if (pendingCmd) { int c = pendingCmd; pendingCmd = 0; onMenuCommand(c); continue; }
         long long now = nowMs();
         for (size_t i = 0; i < timers.size();) {
@@ -2066,11 +2229,14 @@ int main(int argc, char** argv) {
             int w = int(std::max(0LL, (long long)usec - (ts.tv_sec * 1000000LL + ts.tv_nsec / 1000)) / 1000);
             wait = wait < 0 ? w : std::min(wait, w);
         }
-        pollfd p[3] = {{sd_bus_get_fd(bus), short(sd_bus_get_events(bus)), 0}, {msgPipe[0], POLLIN, 0}, {-1, 0, 0}};
+        int ev = sd_bus_get_events(bus);
+        if (ev < 0) break;
+        pollfd p[4] = {{sd_bus_get_fd(bus), short(ev), 0}, {msgPipe[0], POLLIN, 0}, {-1, 0, 0}, {-1, 0, 0}};
+        if (sysBus) { int sev = sd_bus_get_events(sysBus); if (sev >= 0) p[3] = {sd_bus_get_fd(sysBus), short(sev), 0}; }
 #ifdef AURA_X11
         if (dpy) { p[2] = {ConnectionNumber(dpy), POLLIN, 0}; if (XPending(dpy)) wait = 0; }
 #endif
-        if (poll(p, 3, wait) < 0 && errno != EINTR) break;
+        if (poll(p, 4, wait) < 0 && errno != EINTR) break;
         Msg m;
         while (read(msgPipe[0], &m, sizeof m) == sizeof m) {
             if (m.type == MSG_AUTO) { auto* s = (Snapshot*)m.p; if (active) onAuto(s); delete s; }
@@ -2091,6 +2257,9 @@ int main(int argc, char** argv) {
     if (desk == DESK_KDE) kwinScript(false);
     closeUinput();
     sd_bus_flush(bus);
-    return 0;
+    // _exit, not return: the reader thread is still running, and the static objects it uses must not be destroyed
+    // under it
+    fflush(nullptr);
+    _exit(0);
 }
 #endif

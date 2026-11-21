@@ -86,7 +86,7 @@ Archive for other Macs: `./build.sh --release` → `dist/AURA-Switcher-<version>
 
 ## Limitations
 
-- macOS 13+ and Windows 10/11; Linux — KDE Plasma (Wayland, X11) and other X11 desktops. On iPhone/iPad/Android only as a separate keyboard, with little practical value.
+- macOS 13+ and Windows 10/11; Linux — KDE Plasma 5 and 6 (Wayland; X11 should work, not tested yet) and other X11 desktops (tested: Xfce, Cinnamon). On iPhone/iPad/Android only as a separate keyboard, with little practical value.
 - Auto-correction only sees continuous typing: a mouse click, arrow keys or ⌘/⌥/⌃ shortcuts reset the current word.
 - Password fields and some apps (terminals, games) may behave differently — add them to exclusions.
 
