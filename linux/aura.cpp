@@ -504,6 +504,20 @@ static vector<LayoutId> x11Layouts() {  // _XKB_RULES_NAMES: rules, model, layou
     for (size_t i = 0; i < l.size(); i++) r.push_back({l[i], i < v.size() ? v[i] : "", ""});
     return r;
 }
+// A keyboard that appears later than `setxkbmap` was run gets the system's default layouts, and the X server then
+// switches everything to them: our own virtual keyboard would undo the user's layouts. Desktops that manage layouts
+// themselves put them back at once; for the rest (layouts set by a bare setxkbmap) we do — the same names again.
+static std::string xRulesAtStart;
+static void x11KeepLayouts() {
+    std::string now = xProp(DefaultRootWindow(dpy), aRules);
+    if (xRulesAtStart.empty() || now == xRulesAtStart) return;
+    vector<std::string> part; size_t a = 0;
+    while (a < xRulesAtStart.size() && part.size() < 5) { size_t b = xRulesAtStart.find('\0', a); if (b == std::string::npos) b = xRulesAtStart.size(); part.push_back(xRulesAtStart.substr(a, b - a)); a = b + 1; }
+    if (part.size() < 3) return;
+    vector<std::string> cmd = {"setxkbmap", "-rules", part[0], "-model", part[1], "-layout", part[2], "-variant", part.size() > 3 ? part[3] : "", "-option", ""};
+    if (part.size() > 4 && !part[4].empty()) { cmd.push_back("-option"); cmd.push_back(part[4]); }
+    logf("our keyboard reset the X layouts: putting them back%s", run(cmd) ? "" : " failed (no setxkbmap?)");
+}
 static int x11Current() { XkbStateRec st; return XkbGetState(dpy, XkbUseCoreKbd, &st) == Success ? st.group : 0; }
 static void x11Select(int g) { XkbLockGroup(dpy, XkbUseCoreKbd, unsigned(g)); XSync(dpy, False); }
 #endif
@@ -1148,7 +1162,13 @@ static bool accessOk = false;      // the keyboards can be read and the virtual 
 static void updateTray(bool force = false);
 static void menuChanged();
 
-static bool isShellApp(const wstring& a) { return a.empty() || a == L"plasmashell" || a == L"kdialog" || a == L"org.kde.kdialog" || a == L"zenity"; }
+// the desktop itself (panel, desktop icons) and our own dialogs are not "the app in front" for the menu
+static bool isShellApp(const wstring& a) {
+    for (const wchar_t* s : {L"", L"plasmashell", L"xfdesktop", L"xfce4-panel", L"wrapper-2.0", L"cinnamon", L"nemo-desktop", L"mate-panel", L"caja",
+                             L"lxqt-panel", L"kdialog", L"org.kde.kdialog", L"zenity"})
+        if (a == s) return true;
+    return false;
+}
 // terminals: Ctrl+Insert there is not "copy", and a selection can't be replaced by typing over it
 static bool isTerminal(const wstring& a) {
     for (const wchar_t* t : {L"konsole", L"yakuake", L"kitty", L"alacritty", L"foot", L"wezterm", L"ghostty", L"xterm", L"urxvt", L"terminator",
@@ -1534,9 +1554,11 @@ static void onAuto(Snapshot* s) {
 
 // MARK: - Tray (StatusNotifierItem + DBusMenu, spoken directly over D-Bus)
 
-static const char* kSniPath = "/StatusNotifierItem";
-static const char* kMenuPath = "/MenuBar";
-static std::string sniName, iconName;
+// the paths AppIndicator apps use: the tray of Cinnamon and MATE (xapp-sn-watcher) opens the menu on a left click
+// only for those — for any other item it calls Activate and keeps the menu for the right button
+static const char* kSniPath = "/org/ayatana/NotificationItem/aura_switcher";
+static const char* kMenuPath = "/org/ayatana/NotificationItem/aura_switcher/Menu";
+static std::string iconName;
 static wstring shownCode;
 
 // Tray icon: language code in yellow on a rounded Ukrainian-blue tile (grey when off). An SVG file the tray draws
@@ -1606,7 +1628,7 @@ static const sd_bus_vtable kSniVtable[] = {
 // the tray may start after us, or restart (plasmashell --replace): register again whenever it appears
 static void registerTray() {
     sd_bus_call_method(bus, "org.kde.StatusNotifierWatcher", "/StatusNotifierWatcher", "org.kde.StatusNotifierWatcher",
-                       "RegisterStatusNotifierItem", nullptr, nullptr, "s", sniName.c_str());
+                       "RegisterStatusNotifierItem", nullptr, nullptr, "s", kSniPath);
 }
 
 // MARK: - Login item (~/.config/autostart)
@@ -1994,6 +2016,9 @@ int main(int argc, char** argv) {
     sd_bus_set_method_call_timeout(bus, 800 * 1000);  // a stuck desktop must not stick us
     detectDesktop();
     if (check) scanDevices();  // before our own keyboard appears: its node isn't readable in its first moment
+#ifdef AURA_X11
+    if (desk == DESK_X11) xRulesAtStart = xProp(DefaultRootWindow(dpy), aRules);
+#endif
     bool uinputOk = openUinput();
     layouts = loadLayouts();
     if (check) { printCheck(); closeUinput(); return 0; }
@@ -2004,9 +2029,7 @@ int main(int argc, char** argv) {
     if (pipe2(msgPipe, O_CLOEXEC) < 0) return 1;
     fcntl(msgPipe[0], F_SETFL, O_NONBLOCK);
 
-    sniName = "org.kde.StatusNotifierItem-" + std::to_string(getpid()) + "-1";
     sd_bus_request_name(bus, kBusName, 0);
-    sd_bus_request_name(bus, sniName.c_str(), 0);
     sd_bus_add_object_vtable(bus, nullptr, kSniPath, "org.kde.StatusNotifierItem", kSniVtable, nullptr);
     sd_bus_add_object_vtable(bus, nullptr, kMenuPath, "com.canonical.dbusmenu", kMenuVtable, nullptr);
     sd_bus_add_object_vtable(bus, nullptr, "/App", kBusName, kAppVtable, nullptr);
@@ -2022,7 +2045,7 @@ int main(int argc, char** argv) {
     updateTray(true);
     if (desk == DESK_KDE) startKde();
 #ifdef AURA_X11
-    if (desk == DESK_X11) x11Active();
+    if (desk == DESK_X11) { x11Active(); later(1500, x11KeepLayouts); }
 #endif
     std::thread(readerThread).detach();
     logf("started: desktop %s, %d layouts", deskName(), int(layouts.size()));
