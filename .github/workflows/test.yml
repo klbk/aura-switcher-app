@@ -1,4 +1,4 @@
-# On every push: build the apps and run the auto-correction tests (tests/run.sh, tests/run-windows.sh).
+# On every push: build the apps and run the auto-correction tests (tests/run.sh, tests/run-windows.sh, tests/run-linux.sh).
 name: test
 on: [push, pull_request]
 permissions:
@@ -27,6 +27,19 @@ jobs:
           version: 0.17.0
       - name: Auto-correction test
         run: tests/run-windows.sh -v
+      - name: Failures
+        if: always()
+        run: cat tests/failures.txt || true
+  linux:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Packages
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends g++ pkg-config libxkbcommon-dev libsystemd-dev libx11-dev
+      - name: Build
+        run: linux/build.sh
+      - name: Auto-correction test
+        run: tests/run-linux.sh -v
       - name: Failures
         if: always()
         run: cat tests/failures.txt || true
