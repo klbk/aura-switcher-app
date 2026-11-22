@@ -157,9 +157,12 @@ for (m, t, w, want) in must {
 // signs next to a word: «ghbdsn,» (the comma key is «б» in Ukrainian) and «"ghbdsn» (the quote key is «Є») must still be fixed,
 // the signs stay as typed; a real sign after a right word changes nothing. (meant word with the letters the sign keys give, typed in, expected)
 engine.layouts = [layout(US), layout("com.apple.keylayout.Ukrainian-PC")]; engine.reliable = [:]
-let uk = engine.layouts[1], enL = engine.layouts[0]
+let uk = engine.layouts[1], enL = engine.layouts[0], ruApple = layout("com.apple.keylayout.Russian")
+engine.layouts.append(ruApple)
 for (meant, m, t, want) in [("привітб", uk, enL, "привіт,"), ("привітю", uk, enL, "привіт."), ("Єпривіт", uk, enL, "\"привіт"),
-                            ("Єпривітб", uk, enL, "\"привіт,"), ("hello,", enL, enL, nil), ("привіт,", uk, uk, nil)] as [(String, Layout, Layout, String?)] {
+                            ("Єпривітб", uk, enL, "\"привіт,"), ("hello,", enL, enL, nil), ("привіт,", uk, uk, nil),
+                            // Apple «Russian»: the comma is ⇧6, and ⇧/ types «?» — a right word with either sign is left alone
+                            ("привет?", ruApple, ruApple, nil), ("привет,", ruApple, ruApple, nil)] as [(String, Layout, Layout, String?)] {
     guard let k = keys(meant, in: m, typedIn: t) else { mustFail += 1; print("MUST FAIL: no keys for \(meant)"); continue }
     forcedLang = t.lang
     let r = engine.autoFixEdges(k)

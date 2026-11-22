@@ -172,6 +172,19 @@ run("Ctrl+Space (system) with Ctrl as the key", "one system switch, AURA adds no
 run("tap Ctrl, then Ctrl+Space", "one system switch only", hotkey: "ctrl", {
     tap(K.ct.l, K.ct.m); spin(0.1); mod(K.ct.l, K.ct.m, true); key(49, flags: .maskControl); mod(K.ct.l, K.ct.m, false) }, check: { let now = idx(); let d = ((now - 0) % n + n) % n; return ("moved \(d) step(s) → \(short(now))", d == 1 || d == n - 1) })
 }
+if want("6"), let ruIdx = ids.firstIndex(where: { $0.hasSuffix(".Russian") || $0.hasSuffix(".RussianWin") }) {
+    // «слово, » typed in a Russian layout: the same text with auto-correction on and with AURA switched off (Apple «Russian»
+    // has the comma on ⇧6 — ⇧/ types «?»; RussianWin has it on ⇧/)
+    var texts: [String] = []
+    for on in [true, false] {
+        defaults.set(on, forKey: "enabled"); reset(layout: ruIdx)
+        for c: CGKeyCode in [5, 4, 11, 2, 17, 45] { key(c) }   // ghbdtn = привет
+        key(44, flags: .maskShift); key(49); spin(0.8)
+        texts.append(hostText())
+    }
+    defaults.removeObject(forKey: "enabled")
+    record(("\(short(ruIdx)): «привет» + ⇧/ + space", "same text with AURA on and off", "on «\(texts[0])», off «\(texts[1])»", texts[0] == texts[1]))
+}
 // restore
 defaults.set("shift", forKey: "hotkey"); select(startID); spin(0.5)
 host("quit")
