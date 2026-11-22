@@ -1437,9 +1437,13 @@ static void showMenu() {
     auto item = [](HMENU h, UINT id, const wstring& t, bool checked = false, bool enabled = true) {
         AppendMenuW(h, MF_STRING | (checked ? MF_CHECKED : 0) | (enabled ? 0 : MF_GRAYED), id, t.c_str());
     };
-    item(m, ID_ENABLED, L_(L"Enabled", L"Увімкнено"), S.enabled);
-    item(m, ID_AUTO, L_(L"Auto-correction", L"Автовиправлення"), S.autoFix, S.enabled);
-    item(m, ID_SOUND, L_(L"Sound", L"Звук"), S.sound, S.enabled);
+    // on/off switches show ☑/☐ in the title, so the off state shows too (the native check mark is not used)
+    auto tog = [&](HMENU h, UINT id, const wstring& t, bool on, bool enabled = true) { item(h, id, (on ? L"☑ " : L"☐ ") + t, false, enabled); };
+    tog(m, ID_ENABLED, L_(L"Enabled", L"Увімкнено"), S.enabled);
+    tog(m, ID_AUTO, L_(L"Auto-correction", L"Автовиправлення"), S.autoFix, S.enabled);
+    tog(m, ID_SOUND, L_(L"Sound", L"Звук"), S.sound, S.enabled);
+    // Store version: login start is the package's startup task, switched in Windows Settings → Apps → Startup
+    tog(m, ID_LOGIN, L_(L"Launch at login", L"Запускати під час входу"), packaged() || loginEnabled());
     // hint with the chosen key's symbol in place of the translated ⇧ (hidden when the key is off)
     static const wchar_t* const hkSym[] = {L"⇧", L"⌃", L"⌥"};
     static const wchar_t* const hkKeys[] = {L"shift", L"ctrl", L"alt", L"off"};
@@ -1458,7 +1462,7 @@ static void showMenu() {
 
     if (!menuExe.empty()) {
         item(m, 0, wstring(L_(L"Current app: ", L"Поточна програма: ")) + menuExe, false, false);
-        item(m, ID_EXCLUDE, L_(L"Don't work in this app", L"Не працювати в цій програмі"), S.isExcluded(menuExe));
+        tog(m, ID_EXCLUDE, L_(L"Don't work in this app", L"Не працювати в цій програмі"), S.isExcluded(menuExe));
         HMENU lm = CreatePopupMenu();
         auto b = S.bindings.find(menuExe);
         item(lm, ID_NOBIND, L_(L"No binding", L"Без прив'язки"), b == S.bindings.end());
@@ -1488,8 +1492,6 @@ static void showMenu() {
     }
     AppendMenuW(sm, MF_POPUP, (UINT_PTR)bm, L_(L"Language bindings", L"Прив'язки мов"));
 
-    // Store version: login start is the package's startup task, switched in Windows Settings → Apps → Startup
-    item(sm, ID_LOGIN, L_(L"Launch at login", L"Запускати під час входу"), packaged() || loginEnabled());
     item(sm, ID_WORDS, L_(L"My words…", L"Мої слова…"));
     HMENU um = CreatePopupMenu();
     item(um, ID_UI_SYS, L_(L"System", L"Системна"), S.uiLang.empty());

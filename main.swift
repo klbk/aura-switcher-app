@@ -96,6 +96,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         m.addItem(i)
     }
 
+    /// an on/off switch of the menu: ☑/☐ in the title, so the off state shows too (the native check mark is not used)
+    func toggle(_ m: NSMenu, _ title: String, _ on: Bool, enabled: Bool = true, _ action: @escaping () -> Void) {
+        add(m, (on ? "☑ " : "☐ ") + title, nil, enabled: enabled, action)
+    }
+
     func appName(_ id: String) -> String {
         guard let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: id) else { return id }
         return FileManager.default.displayName(atPath: url.path).replacingOccurrences(of: ".app", with: "")
@@ -127,9 +132,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     func menuNeedsUpdate(_ m: NSMenu) {
         m.removeAllItems()
-        add(m, L("enabled"), s.enabled) { self.s.enabled.toggle(); self.updateTitle() }
-        add(m, L("auto"), s.auto, enabled: s.enabled) { self.s.auto.toggle() }
-        add(m, L("sound"), s.sound, enabled: s.enabled) { self.s.sound.toggle(); if self.s.sound { Sounds.play(Sounds.auto) } }
+        toggle(m, L("enabled"), s.enabled) { self.s.enabled.toggle(); self.updateTitle() }
+        toggle(m, L("auto"), s.auto, enabled: s.enabled) { self.s.auto.toggle() }
+        toggle(m, L("sound"), s.sound, enabled: s.enabled) { self.s.sound.toggle(); if self.s.sound { Sounds.play(Sounds.auto) } }
+        let login = SMAppService.mainApp.status == .enabled
+        toggle(m, L("login"), login) {
+            if login { try? SMAppService.mainApp.unregister() } else { try? SMAppService.mainApp.register() }
+        }
         let hk = s.hotkey
         let hkSym = ["shift": "⇧", "ctrl": "⌃", "alt": "⌥"][hk]
         if let hkSym { add(m, L("hint").replacingOccurrences(of: "⇧", with: hkSym)) }
@@ -149,7 +158,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         add(m, L("app") + appName(id))
         if engine.frontIsGame { add(m, L("game")) }
         let ex = s.excluded.contains(id)
-        add(m, L("exclude"), ex) {
+        toggle(m, L("exclude"), ex) {
             self.s.excluded = ex ? self.s.excluded.filter { $0 != id } : self.s.excluded + [id]
         }
         let langMenu = NSMenu()
@@ -182,10 +191,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         }
 
         let bi = NSMenuItem(title: L("bindings"), action: nil, keyEquivalent: ""); bi.submenu = bMenu; setMenu.addItem(bi)
-        let login = SMAppService.mainApp.status == .enabled
-        add(setMenu, L("login"), login) {
-            if login { try? SMAppService.mainApp.unregister() } else { try? SMAppService.mainApp.register() }
-        }
         add(setMenu, L("words")) { self.editWords() }
         let uiMenu = NSMenu()
         add(uiMenu, L("system"), s.uiLang == nil) { self.s.uiLang = nil }
