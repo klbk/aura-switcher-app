@@ -873,15 +873,24 @@ final class Engine {
         guard layouts.indices.contains(src), layouts.count > 1 else { return fallback }
         let srcL = layouts[src]
         var votes: [Int: Int] = [:]
-        let words = text.split(whereSeparator: \.isWhitespace)
-        for w in words where w.count >= 2 && w.count <= 40 {
+        for w in text.split(whereSeparator: \.isWhitespace) where w.count >= 2 && w.count <= 40 {
             var keys: [Key] = []
             for c in w {
                 guard let ks = srcL.keys(for: c), ks.count == 1 else { keys = []; break }
                 keys.append(Key(code: ks[0].code, shift: ks[0].shift, ch: c))
             }
-            guard keys.count >= 2, let r = autoFixEdges(keys), r.layout !== srcL, let i = layouts.firstIndex(where: { $0 === r.layout }) else { continue }
-            votes[i, default: 0] += 1
+            guard keys.count >= 2 else { continue }
+            // every layout where the word (without the signs at its edges) is a real word counts, not only the one the engine
+            // would pick for it alone: «собака» is a word in UK and RU, «привіт» only in UK — together UK wins
+            let r = autoFixEdges(keys)
+            let core = r.map { Array(keys[$0.lead..<(keys.count - $0.tail)]) } ?? keys
+            var counted = Set<Int>()
+            for (i, l) in layouts.enumerated() where i != src && l.maps(core) {
+                let t = l.text(core)
+                if dictionaryWorks(l.lang) ? isWord(t, l.lang) : model(l.lang)?.has(t) == true { votes[i, default: 0] += 1; counted.insert(i) }
+            }
+            // slang the engine accepts but the dictionaries don't know
+            if let r, r.layout !== srcL, let i = layouts.firstIndex(where: { $0 === r.layout }), !counted.contains(i) { votes[i, default: 0] += 1 }
         }
         guard let top = votes.values.max() else { return fallback }
         // ties: the nearest after the source in the cycle

@@ -175,6 +175,7 @@ for (order, text, srcLang, wantLang) in [
     ([US, "com.apple.keylayout.Ukrainian-PC", "com.apple.keylayout.RussianWin"], "ghbdsn", "en", "uk"),
     (["com.apple.keylayout.RussianWin", "com.apple.keylayout.Ukrainian-PC", US], "ghbdsn", "en", "uk"),          // next in the cycle would be RU
     ([US, "com.apple.keylayout.Ukrainian-PC", "com.apple.keylayout.RussianWin"], "ghbdsn xfc", "en", "uk"),     // 2 words
+    (["com.apple.keylayout.RussianWin", "com.apple.keylayout.Ukrainian-PC", US], "cj,frf, ghbdsn", "en", "uk"),   // «собака» is UK and RU, «привіт» UK only: a 1:1 tie must not go to RU
     ([US, "com.apple.keylayout.Ukrainian-PC", "com.apple.keylayout.RussianWin"], "ghbdtn", "en", "ru"),         // «привет» → RU
     ([US, "com.apple.keylayout.Ukrainian-PC", "com.apple.keylayout.RussianWin"], "привіт", "uk", "ru"),                   // a real word where it is: nobody votes, next in the cycle
     ([US, "com.apple.keylayout.Ukrainian-PC", "com.apple.keylayout.RussianWin"], "qqwwzz", "en", "uk"),         // nothing found: next in the cycle
