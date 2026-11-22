@@ -47,7 +47,7 @@ using std::vector;
 static const ULONG_PTR kMagic = 0x4B535754;  // marks our own synthetic input
 enum { WM_TRAY = WM_APP + 1, WM_AUTO, WM_DSHIFT, WM_UPDATE, WM_UPDATE_READY, WM_ENTER, WM_EMPTYCHK };
 enum { ID_ENABLED = 1, ID_AUTO, ID_SOUND, ID_WORDS, ID_DONATE, ID_REPORT, ID_UPDATE, ID_EXCLUDE, ID_NOBIND, ID_LOGIN, ID_UI_SYS, ID_QUIT,
-       ID_BIND0 = 100, ID_EXDEL0 = 200, ID_BDDEL0 = 300, ID_RECENT0 = 400, ID_UI0 = 500 };
+       ID_BIND0 = 100, ID_HK0 = 600, ID_EXDEL0 = 200, ID_BDDEL0 = 300, ID_RECENT0 = 400, ID_UI0 = 500 };
 
 // MARK: - Settings (HKCU\Software\AURA)
 
@@ -75,16 +75,22 @@ static vector<wstring> split(const wstring& s) {
 }
 static wstring join(const vector<wstring>& v) { wstring r; for (auto& s : v) r += s + L";"; return r; }
 
+// the correction key (double tap, either side): VK_SHIFT (default), VK_CONTROL, VK_MENU (Alt) or 0 = off; read by the hook thread
+static std::atomic<int> hkVk{VK_SHIFT};
+static int hkFromName(const wstring& n) { return n == L"ctrl" ? VK_CONTROL : n == L"alt" ? VK_MENU : n == L"off" ? 0 : VK_SHIFT; }
+
 struct Settings {
     bool enabled = regGet(L"enabled", L"1") == L"1";
     bool autoFix = regGet(L"auto", L"1") == L"1";
     bool sound = regGet(L"sound", L"1") == L"1";
+    wstring hotkey = regGet(L"hotkey", L"shift");       // shift | ctrl | alt | off
     wstring uiLang = regGet(L"uiLang", L"");            // "" = system
     vector<wstring> excluded = split(regGet(L"excluded", L""));
     vector<wstring> words = split(regGet(L"words", L""));  // never auto-corrected («хз», «ща»), lowercased
     std::map<wstring, wstring> bindings;                // exe name → locale name
-    Settings() { for (auto& p : split(regGet(L"bindings", L""))) { size_t e = p.find(L'='); if (e != wstring::npos) bindings[p.substr(0, e)] = p.substr(e + 1); } }
+    Settings() { hkVk = hkFromName(hotkey); for (auto& p : split(regGet(L"bindings", L""))) { size_t e = p.find(L'='); if (e != wstring::npos) bindings[p.substr(0, e)] = p.substr(e + 1); } }
     void save() {
+        hkVk = hkFromName(hotkey); regSet(L"hotkey", hotkey);
         regSet(L"enabled", enabled ? L"1" : L"0"); regSet(L"auto", autoFix ? L"1" : L"0"); regSet(L"sound", sound ? L"1" : L"0");
         regSet(L"uiLang", uiLang); regSet(L"excluded", join(excluded)); regSet(L"words", join(words));
         vector<wstring> b; for (auto& kv : bindings) b.push_back(kv.first + L"=" + kv.second); regSet(L"bindings", join(b));
@@ -139,7 +145,7 @@ static const wchar_t* const UI_STR[][UI_N] = { // row: English first, then the o
     {L"Auto-correction", L"Автовиправлення", L"Autokorekta", L"Autokorrektur", L"Autocorrección", L"Correction automatique", L"Correzione automatica", L"Correção automática", L"Otomatik düzeltme", L"Autocorrectie", L"Automatické opravy", L"Autokorrigering", L"Automaattinen korjaus", L"Corectare automată", L"Automatikus javítás", L"Αυτόματη διόρθωση", L"Автокорекция", L"תיקון אוטומטי", L"التصحيح التلقائي", L"स्वतः सुधार", L"자동 수정", L"Аўтавыпраўленне", L"Автотүзету", L"Авто оңдоо", L"ავტოშესწორება", L"Ինքնաուղղում", L"Avtomatik düzəliş", L"Аутокорекција", L"Автокорекција", L"Automatické opravy", L"Automatski ispravak", L"Samodejni popravki", L"Automatinis taisymas", L"Automātiskā labošana", L"Automaatne parandus", L"Automatisk rettelse", L"Autokorrigering", L"Sjálfvirk leiðrétting", L"Korrigjim automatik", L"تصحیح خودکار", L"Tự động sửa", L"Ислоҳи худкор", L"Автомат засвар", L"Автоматик төзәтү", L"Avtomatik tuzatish", L"Ceartú uathoibríoch", L"Korrezzjoni awtomatika", L"Cywiro awtomatig"},
     {L"Sound", L"Звук", L"Dźwięk", L"Ton", L"Sonido", L"Son", L"Suono", L"Som", L"Ses", L"Geluid", L"Zvuk", L"Ljud", L"Ääni", L"Sunet", L"Hang", L"Ήχος", L"Звук", L"צליל", L"الصوت", L"ध्वनि", L"소리", L"Гук", L"Дыбыс", L"Үн", L"ხმა", L"Ձայն", L"Səs", L"Звук", L"Звук", L"Zvuk", L"Zvuk", L"Zvok", L"Garsas", L"Skaņa", L"Heli", L"Lyd", L"Lyd", L"Hljóð", L"Zëri", L"صدا", L"Âm thanh", L"Овоз", L"Дуу", L"Тавыш", L"Tovush", L"Fuaim", L"Ħoss", L"Sain"},
     {L"⚠︎ Grant access: Accessibility, Input Monitoring", L"⚠︎ Надайте доступ: Універсальний доступ, Моніторинг введення", L"⚠︎ Nadaj dostęp: Dostępność, Monitorowanie wejścia", L"⚠︎ Zugriff erlauben: Bedienungshilfen, Eingabeüberwachung", L"⚠︎ Conceder acceso: Accesibilidad, Monitorización de entrada", L"⚠︎ Autoriser l'accès : Accessibilité, Surveillance de l’entrée", L"⚠︎ Concedi l’accesso: Accessibilità, Monitoraggio input", L"⚠︎ Conceder acesso: Acessibilidade, Monitoramento de entrada", L"⚠︎ Erişim izni verin: Erişilebilirlik, Girdi İzleme", L"⚠︎ Geef toegang: Toegankelijkheid, Invoercontrole (Input Monitoring)", L"⚠︎ Udělte přístup: Zpřístupnění, Sledování vstupu", L"⚠︎ Ge åtkomst: Hjälpmedel, Indataövervakning (Input Monitoring)", L"⚠︎ Anna käyttöoikeus: Käyttöapu, Syötteen valvonta (Input Monitoring)", L"⚠︎ Acordați acces: Accesibilitate, Monitorizare intrare (Input Monitoring)", L"⚠︎ Hozzáférés megadása: Kisegítő lehetőségek, Bevitelfigyelés (Input Monitoring)", L"⚠︎ Δώστε πρόσβαση: Προσβασιμότητα, Παρακολούθηση εισόδου (Input Monitoring)", L"⚠︎ Дайте достъп: Достъпност, Input Monitoring", L"⚠︎ תנו גישה: נגישות, ניטור קלט (Input Monitoring)", L"⚠︎ امنح الوصول: تسهيلات الاستخدام، مراقبة الإدخال (Input Monitoring)", L"⚠︎ अनुमति दें: सुलभता, इनपुट मॉनिटरिंग (Input Monitoring)", L"⚠︎ 접근 권한 허용: 손쉬운 사용, 입력 모니터링", L"⚠︎ Дайце доступ: Спецыяльныя магчымасці, Input Monitoring", L"⚠︎ Рұқсат беріңіз: Арнайы мүмкіндіктер, Input Monitoring", L"⚠︎ Мүмкүнчүлүк бериңиз: Атайын мүмкүнчүлүктөр, Input Monitoring", L"⚠︎ მიეცით წვდომა: მისაწვდომობა, Input Monitoring", L"⚠︎ Տվեք թույլտվություն՝ Հասանելիություն, Input Monitoring", L"⚠︎ İcazə verin: Əlçatımlılıq, Input Monitoring", L"⚠︎ Дозволите приступ: Приступачност, Input Monitoring", L"⚠︎ Дозволете пристап: Пристапност, Input Monitoring", L"⚠︎ Povoľte prístup: Zjednodušenie ovládania, Monitorovanie vstupu (Input Monitoring)", L"⚠︎ Dopustite pristup: Pristupačnost, Praćenje unosa (Input Monitoring)", L"⚠︎ Dovolite dostop: Dostopnost, Input Monitoring", L"⚠︎ Suteikite prieigą: Pritaikymas neįgaliesiems, Input Monitoring", L"⚠︎ Atļaujiet piekļuvi: Pieejamība, Input Monitoring", L"⚠︎ Andke juurdepääs: Juurdepääsetavus, Input Monitoring", L"⚠︎ Giv adgang: Tilgængelighed, Inputovervågning (Input Monitoring)", L"⚠︎ Gi tilgang: Tilgjengelighet, Inndataovervåking (Input Monitoring)", L"⚠︎ Veittu aðgang: Algildur aðgangur, Input Monitoring", L"⚠︎ Jepni qasje: Përdorimi i lehtë, Input Monitoring", L"⚠︎ دسترسی بدهید: دسترسی‌پذیری، Input Monitoring", L"⚠︎ Cấp quyền: Trợ năng, Giám sát đầu vào (Input Monitoring)", L"⚠︎ Дастрасӣ диҳед: Дастрасии универсалӣ, Input Monitoring", L"⚠︎ Хандалт өгнө үү: Хүртээмж, Input Monitoring", L"⚠︎ Кереп җитү рөхсәт итегез: Махсус мөмкинлекләр, Input Monitoring", L"⚠︎ Ruxsat bering: Maxsus imkoniyatlar, Input Monitoring", L"⚠︎ Tabhair rochtain: Inrochtaineacht, Input Monitoring", L"⚠︎ Agħti aċċess: Aċċessibbiltà, Input Monitoring", L"⚠︎ Rhowch fynediad: Hygyrchedd, Input Monitoring"},
-    {L"App: ", L"Програма: ", L"Aplikacja: ", L"App: ", L"App: ", L"App : ", L"App: ", L"App: ", L"Uygulama: ", L"App: ", L"Aplikace: ", L"App: ", L"Ohjelma: ", L"Aplicație: ", L"Alkalmazás: ", L"Εφαρμογή: ", L"Програма: ", L"יישום: ", L"التطبيق: ", L"ऐप: ", L"앱: ", L"Праграма: ", L"Қолданба: ", L"Колдонмо: ", L"აპლიკაცია: ", L"Հավելված՝ ", L"Tətbiq: ", L"Апликација: ", L"Апликација: ", L"Aplikácia: ", L"Aplikacija: ", L"Aplikacija: ", L"Programa: ", L"Lietotne: ", L"Rakendus: ", L"App: ", L"App: ", L"Forrit: ", L"Aplikacioni: ", L"برنامه: ", L"Ứng dụng: ", L"Барнома: ", L"Апп: ", L"Кушымта: ", L"Ilova: ", L"Aip: ", L"Applikazzjoni: ", L"Ap: "},
+    {L"Current app: ", L"Поточна програма: ", L"Bieżąca aplikacja: ", L"Aktuelle App: ", L"App actual: ", L"App actuelle : ", L"App attuale: ", L"App atual: ", L"Geçerli uygulama: ", L"Huidige app: ", L"Aktuální aplikace: ", L"Aktuell app: ", L"Nykyinen ohjelma: ", L"Aplicația curentă: ", L"Jelenlegi alkalmazás: ", L"Τρέχουσα εφαρμογή: ", L"Текуща програма: ", L"יישום נוכחי: ", L"التطبيق الحالي: ", L"वर्तमान ऐप: ", L"현재 앱: ", L"Бягучая праграма: ", L"Ағымдағы қолданба: ", L"Учурдагы колдонмо: ", L"მიმდინარე აპლიკაცია: ", L"Ընթացիկ հավելված՝ ", L"Cari tətbiq: ", L"Тренутна апликација: ", L"Тековна апликација: ", L"Aktuálna aplikácia: ", L"Trenutna aplikacija: ", L"Trenutna aplikacija: ", L"Dabartinė programa: ", L"Pašreizējā lietotne: ", L"Praegune rakendus: ", L"Nuværende app: ", L"Gjeldende app: ", L"Núverandi forrit: ", L"Aplikacioni aktual: ", L"برنامه فعلی: ", L"Ứng dụng hiện tại: ", L"Барномаи ҷорӣ: ", L"Одоогийн апп: ", L"Хәзерге кушымта: ", L"Joriy ilova: ", L"Aip reatha: ", L"Applikazzjoni attwali: ", L"Ap cyfredol: "},
     {L"Don't work in this app", L"Не працювати в цій програмі", L"Nie działaj w tej aplikacji", L"In dieser App nicht aktiv", L"No funcionar en esta app", L"Ne pas fonctionner dans cette app", L"Disattiva in questa app", L"Não funcionar nesta app", L"Bu uygulamada çalışma", L"Niet werken in deze app", L"Nefungovat v této aplikaci", L"Arbeta inte i den här appen", L"Älä toimi tässä ohjelmassa", L"Nu funcționa în această aplicație", L"Ne működjön ebben az alkalmazásban", L"Να μη λειτουργεί σε αυτή την εφαρμογή", L"Да не работи в тази програма", L"לא לפעול ביישום זה", L"لا تعمل في هذا التطبيق", L"इस ऐप में काम न करें", L"이 앱에서 작동 안 함", L"Не працаваць у гэтай праграме", L"Бұл қолданбада жұмыс істемеу", L"Бул колдонмодо иштебөө", L"ამ აპლიკაციაში არ იმუშაოს", L"Չաշխատել այս հավելվածում", L"Bu tətbiqdə işləmə", L"Не радити у овој апликацији", L"Не работи во оваа апликација", L"V tejto aplikácii nepracovať", L"Ne radi u ovoj aplikaciji", L"V tej aplikaciji ne delajte", L"Šioje programoje nedirbti", L"Šajā lietotnē nedarboties", L"Selles rakenduses mitte töötada", L"Deaktiver i denne app", L"Ikke aktiv i denne appen", L"Ekki virkt í þessu forriti", L"Mos vepro në këtë aplikacion", L"در این برنامه کار نکن", L"Không hoạt động trong ứng dụng này", L"Дар ин барнома кор накунед", L"Энэ аппад ажиллахгүй", L"Бу кушымтада эшләмәскә", L"Bu ilovada ishlamasin", L"Ná oibrigh san aip seo", L"Taħdimx f’din l-applikazzjoni", L"Peidio â gweithio yn yr ap hwn"},
     {L"Game — AURA paused", L"Гра — AURA на паузі", L"Gra — AURA wstrzymana", L"Spiel — AURA pausiert", L"Juego — AURA en pausa", L"Jeu — AURA en pause", L"Gioco — AURA in pausa", L"Jogo — AURA em pausa", L"Oyun — AURA duraklatıldı", L"Game — AURA gepauzeerd", L"Hra — AURA pozastavena", L"Spel — AURA pausad", L"Peli — AURA tauolla", L"Joc — AURA în pauză", L"Játék — AURA szüneteltetve", L"Παιχνίδι — AURA σε παύση", L"Игра — AURA е на пауза", L"משחק — AURA מושהית", L"لعبة — AURA متوقف مؤقتًا", L"गेम — AURA रुका हुआ", L"게임 — AURA 일시 중지됨", L"Гульня — AURA на паўзе", L"Ойын — AURA кідіртілді", L"Оюн — AURA тыныгууда", L"თამაში — AURA დაპაუზებულია", L"Խաղ — AURA-ն դադարի վրա է", L"Oyun — AURA fasilədədir", L"Игра — AURA паузирана", L"Игра — AURA паузирана", L"Hra — AURA pozastavená", L"Igra — AURA pauzirana", L"Igra — AURA zaustavljena", L"Žaidimas — AURA pristabdyta", L"Spēle — AURA apturēta", L"Mäng — AURA peatatud", L"Spil — AURA på pause", L"Spill — AURA er satt på pause", L"Leikur — AURA í bið", L"Lojë — AURA në pauzë", L"بازی — AURA متوقف است", L"Trò chơi — AURA tạm dừng", L"Бозӣ — AURA таваққуф шудааст", L"Тоглоом — AURA түр зогссон", L"Уен — AURA туктатылган", L"Oʻyin — AURA pauzada", L"Cluiche — AURA ar sos", L"Logħba — AURA fil-pawża", L"Gêm — AURA wedi’i oedi"},
     {L"Language for this app", L"Мова для цієї програми", L"Język dla tej aplikacji", L"Sprache für diese App", L"Idioma para esta app", L"Langue pour cette app", L"Lingua per questa app", L"Idioma para esta app", L"Bu uygulama için dil", L"Taal voor deze app", L"Jazyk pro tuto aplikaci", L"Språk för den här appen", L"Kieli tälle ohjelmalle", L"Limba pentru această aplicație", L"Nyelv ehhez az alkalmazáshoz", L"Γλώσσα για αυτή την εφαρμογή", L"Език за тази програма", L"שפה ליישום זה", L"لغة هذا التطبيق", L"इस ऐप की भाषा", L"이 앱의 언어", L"Мова для гэтай праграмы", L"Осы қолданбаның тілі", L"Бул колдонмонун тили", L"ამ აპლიკაციის ენა", L"Այս հավելվածի լեզուն", L"Bu tətbiq üçün dil", L"Језик за ову апликацију", L"Јазик за оваа апликација", L"Jazyk pre túto aplikáciu", L"Jezik za ovu aplikaciju", L"Jezik za to aplikacijo", L"Kalba šiai programai", L"Valoda šai lietotnei", L"Selle rakenduse keel", L"Sprog for denne app", L"Språk for denne appen", L"Tungumál fyrir þetta forrit", L"Gjuha për këtë aplikacion", L"زبان این برنامه", L"Ngôn ngữ cho ứng dụng này", L"Забон барои ин барнома", L"Энэ аппын хэл", L"Бу кушымта өчен тел", L"Bu ilova uchun til", L"Teanga don aip seo", L"Lingwa għal din l-applikazzjoni", L"Iaith ar gyfer yr ap hwn"},
@@ -175,6 +181,9 @@ static const wchar_t* const UI_STR[][UI_N] = { // row: English first, then the o
     {L"Later", L"Пізніше", L"Później", L"Später", L"Más tarde", L"Plus tard", L"Più tardi", L"Mais tarde", L"Daha sonra", L"Later", L"Později", L"Senare", L"Myöhemmin", L"Mai târziu", L"Később", L"Αργότερα", L"По-късно", L"מאוחר יותר", L"لاحقًا", L"बाद में", L"나중에", L"Пазней", L"Кейінірек", L"Кийинчерээк", L"მოგვიანებით", L"Հետո", L"Sonra", L"Касније", L"Подоцна", L"Neskôr", L"Kasnije", L"Pozneje", L"Vėliau", L"Vēlāk", L"Hiljem", L"Senere", L"Senere", L"Síðar", L"Më vonë", L"بعداً", L"Để sau", L"Баъдтар", L"Дараа", L"Соңрак", L"Keyinroq", L"Níos déanaí", L"Aktar tard", L"Yn nes ymlaen"},
     {L"Couldn't update automatically. Open the website to download it?", L"Не вдалося оновити автоматично. Відкрити сайт, щоб завантажити?", L"Nie udało się zaktualizować automatycznie. Otworzyć stronę, aby pobrać?", L"Automatisches Update fehlgeschlagen. Website zum Herunterladen öffnen?", L"No se pudo actualizar automáticamente. ¿Abrir la web para descargarla?", L"Mise à jour automatique impossible. Ouvrir le site pour la télécharger ?", L"Impossibile aggiornare automaticamente. Vuoi aprire il sito per scaricare l’aggiornamento?", L"Não foi possível atualizar automaticamente. Abrir o site para baixar?", L"Otomatik güncellenemedi. İndirmek için web sitesi açılsın mı?", L"Automatisch bijwerken is mislukt. De website openen om te downloaden?", L"Automatická aktualizace se nezdařila. Otevřít web a stáhnout?", L"Kunde inte uppdatera automatiskt. Öppna webbplatsen för att ladda ner?", L"Automaattinen päivitys epäonnistui. Avataanko sivusto latausta varten?", L"Actualizarea automată a eșuat. Deschizi site-ul pentru descărcare?", L"Az automatikus frissítés nem sikerült. Megnyitod a weboldalt a letöltéshez?", L"Η αυτόματη ενημέρωση απέτυχε. Άνοιγμα του ιστότοπου για λήψη;", L"Автоматичното обновяване не успя. Да се отвори ли сайтът за изтегляне?", L"העדכון האוטומטי נכשל. לפתוח את האתר להורדה?", L"تعذّر التحديث تلقائيًا. هل تريد فتح الموقع للتنزيل؟", L"अपने-आप अपडेट नहीं हो सका। डाउनलोड के लिए वेबसाइट खोलें?", L"자동으로 업데이트하지 못했습니다. 다운로드하려면 웹사이트를 열까요?", L"Не ўдалося абнавіць аўтаматычна. Адкрыць сайт, каб спампаваць?", L"Автоматты түрде жаңарту мүмкін болмады. Жүктеп алу үшін сайтты ашу керек пе?", L"Автоматтык түрдө жаңыртуу мүмкүн болгон жок. Жүктөп алуу үчүн сайтты ачайынбы?", L"ავტომატურად განახლება ვერ მოხერხდა. გავხსნა საიტი ჩამოსატვირთად?", L"Չհաջողվեց թարմացնել ավտոմատ կերպով։ Բացե՞լ կայքը՝ ներբեռնելու համար։", L"Avtomatik yeniləmək alınmadı. Yükləmək üçün sayt açılsın?", L"Аутоматско ажурирање није успело. Отворити сајт за преузимање?", L"Автоматското ажурирање не успеа. Да го отворам сајтот за преземање?", L"Automatická aktualizácia sa nepodarila. Otvoriť web na stiahnutie?", L"Automatsko ažuriranje nije uspjelo. Otvoriti web-stranicu za preuzimanje?", L"Samodejna posodobitev ni uspela. Odprem spletno mesto za prenos?", L"Nepavyko atnaujinti automatiškai. Atidaryti svetainę atsisiuntimui?", L"Automātiski atjaunināt neizdevās. Atvērt vietni lejupielādei?", L"Automaatne uuendamine ebaõnnestus. Avada veebileht allalaadimiseks?", L"Kunne ikke opdatere automatisk. Åbn hjemmesiden for at hente den?", L"Kunne ikke oppdatere automatisk. Åpne nettstedet for å laste den ned?", L"Ekki tókst að uppfæra sjálfkrafa. Opna vefsíðuna til að sækja hana?", L"Nuk u përditësua automatikisht. Të hapet faqja e internetit për ta shkarkuar?", L"به‌روزرسانی خودکار انجام نشد. وب‌سایت برای دانلود باز شود؟", L"Không thể tự động cập nhật. Mở trang web để tải về?", L"Навсозии худкор муяссар нашуд. Сайтро барои боргирӣ кушоед?", L"Автоматаар шинэчилж чадсангүй. Татаж авахын тулд вэбсайтыг нээх үү?", L"Автоматик рәвештә яңартып булмады. Йөкләү өчен сайтны ачарга?", L"Avtomatik yangilab boʻlmadi. Yuklab olish uchun saytni ochaymi?", L"Níorbh fhéidir nuashonrú go huathoibríoch. An bhfuil fonn ort an suíomh gréasáin a oscailt chun é a íoslódáil?", L"Ma setax jiġi aġġornat awtomatikament. Niftaħ is-sit biex tniżżlu?", L"Methu diweddaru’n awtomatig. Agor y wefan i’w lawrlwytho?"},
     {L"AURA Switcher is running. Its icon is in the notification area; click ^ next to the clock to open the menu", L"AURA Switcher працює. Значок — в області сповіщень; натисніть ^ біля годинника, щоб відкрити меню", L"AURA Switcher działa. Ikona jest w obszarze powiadomień; kliknij ^ obok zegara, aby otworzyć menu", L"AURA Switcher läuft. Das Symbol ist im Infobereich; klicken Sie neben der Uhr auf ^, um das Menü zu öffnen", L"AURA Switcher está funcionando. Su icono está en el área de notificaciones; haz clic en ^ junto al reloj para abrir el menú", L"AURA Switcher fonctionne. Son icône est dans la zone de notification ; cliquez sur ^ près de l’horloge pour ouvrir le menu", L"AURA Switcher è in esecuzione. L’icona è nell’area di notifica; fai clic su ^ accanto all’orologio per aprire il menu", L"O AURA Switcher está a funcionar. O ícone está na área de notificação; clique em ^ junto ao relógio para abrir o menu", L"AURA Switcher çalışıyor. Simgesi bildirim alanında; menüyü açmak için saatin yanındaki ^ simgesine tıklayın", L"AURA Switcher draait. Het pictogram staat in het systeemvak; klik op ^ naast de klok om het menu te openen", L"AURA Switcher běží. Ikona je v oznamovací oblasti; menu otevřete kliknutím na ^ vedle hodin", L"AURA Switcher körs. Ikonen finns i aviseringsfältet; klicka på ^ bredvid klockan för att öppna menyn", L"AURA Switcher on käynnissä. Kuvake on ilmoitusalueella; avaa valikko napsauttamalla kellon vieressä olevaa ^-merkkiä", L"AURA Switcher rulează. Pictograma este în zona de notificare; faceți clic pe ^ de lângă ceas pentru a deschide meniul", L"Az AURA Switcher fut. Az ikonja az értesítési területen van; a menü megnyitásához kattintson az óra melletti ^ jelre", L"Το AURA Switcher εκτελείται. Το εικονίδιο βρίσκεται στην περιοχή ειδοποιήσεων· κάντε κλικ στο ^ δίπλα στο ρολόι για να ανοίξετε το μενού", L"AURA Switcher работи. Иконата е в областта за известия; щракнете върху ^ до часовника, за да отворите менюто", L"AURA Switcher פועל. הסמל נמצא באזור ההתראות; לחצו על ^ ליד השעון כדי לפתוח את התפריט", L"AURA Switcher يعمل. الأيقونة في منطقة الإشعارات؛ انقر على ^ بجانب الساعة لفتح القائمة", L"AURA Switcher चल रहा है। इसका आइकन नोटिफ़िकेशन एरिया में है; मेनू खोलने के लिए घड़ी के पास ^ पर क्लिक करें", L"AURA Switcher가 실행 중입니다. 아이콘은 알림 영역에 있습니다. 시계 옆의 ^를 눌러 메뉴를 여세요", L"AURA Switcher працуе. Значок — у вобласці апавяшчэнняў; націсніце ^ побач з гадзіннікам, каб адкрыць меню", L"AURA Switcher жұмыс істеп тұр. Белгішесі хабарландыру аймағында; мәзірді ашу үшін сағаттың жанындағы ^ түймесін басыңыз", L"AURA Switcher иштеп жатат. Сөлөкөтү билдирмелер аймагында; менюну ачуу үчүн сааттын жанындагы ^ баскычын басыңыз", L"AURA Switcher მუშაობს. ხატულა შეტყობინებების არეშია; მენიუს გასახსნელად დააწკაპუნეთ საათის გვერდით ^-ზე", L"AURA Switcher-ը աշխատում է։ Պատկերակը ծանուցումների տարածքում է․ մենյուն բացելու համար սեղմեք ժամացույցի կողքի ^-ը", L"AURA Switcher işləyir. Nişan bildiriş sahəsindədir; menyunu açmaq üçün saatın yanındakı ^ işarəsinə klikləyin", L"AURA Switcher ради. Икона је у пољу за обавештења; кликните на ^ поред сата да бисте отворили мени", L"AURA Switcher работи. Иконата е во областа за известувања; кликнете на ^ покрај часовникот за да го отворите менито", L"AURA Switcher beží. Ikona je v oblasti oznámení; ponuku otvoríte kliknutím na ^ vedľa hodín", L"AURA Switcher radi. Ikona je u području obavijesti; kliknite ^ pored sata da otvorite izbornik", L"AURA Switcher deluje. Ikona je v območju za obvestila; kliknite ^ ob uri, da odprete meni", L"AURA Switcher veikia. Piktograma yra pranešimų srityje; spustelėkite ^ šalia laikrodžio, kad atidarytumėte meniu", L"AURA Switcher darbojas. Ikona ir paziņojumu apgabalā; noklikšķiniet uz ^ blakus pulkstenim, lai atvērtu izvēlni", L"AURA Switcher töötab. Ikoon on teavitusalas; menüü avamiseks klõpsake kella kõrval ^", L"AURA Switcher kører. Ikonet er i meddelelsesområdet; klik på ^ ved siden af uret for at åbne menuen", L"AURA Switcher kjører. Ikonet er i varslingsfeltet; klikk på ^ ved siden av klokken for å åpne menyen", L"AURA Switcher er í gangi. Táknið er á tilkynningasvæðinu; smelltu á ^ við hliðina á klukkunni til að opna valmyndina", L"AURA Switcher po funksionon. Ikona është në zonën e njoftimeve; kliko ^ pranë orës për të hapur menynë", L"AURA Switcher در حال اجراست. نماد آن در ناحیه اعلان‌هاست؛ برای باز کردن منو روی ^ کنار ساعت کلیک کنید", L"AURA Switcher đang chạy. Biểu tượng nằm ở khu vực thông báo; bấm ^ cạnh đồng hồ để mở menu", L"AURA Switcher кор карда истодааст. Нишона дар минтақаи огоҳиҳост; барои кушодани меню ^-ро дар назди соат пахш кунед", L"AURA Switcher ажиллаж байна. Дүрс тэмдэг мэдэгдлийн хэсэгт байна; цэсийг нээхийн тулд цагийн хажууох ^-г дарна уу", L"AURA Switcher эшли. Билгечә белдерүләр өлкәсендә; менюны ачу өчен сәгать янындагы ^ төймәсенә басыгыз", L"AURA Switcher ishlayapti. Belgisi bildirishnomalar hududida; menyuni ochish uchun soat yonidagi ^ belgisini bosing", L"Tá AURA Switcher ag rith. Tá an deilbhín sa limistéar fógraí; cliceáil ^ cois an chloig chun an roghchlár a oscailt", L"AURA Switcher qed jaħdem. L-ikona tinsab fiż-żona tan-notifiki; ikklikkja fuq ^ ħdejn l-arloġġ biex tiftaħ il-menu", L"Mae AURA Switcher yn rhedeg. Mae’r eicon yn yr ardal hysbysu; cliciwch ^ wrth ymyl y cloc i agor y ddewislen"},
+    {L"Correction key", L"Клавіша виправлення", L"Klawisz poprawiania", L"Korrekturtaste", L"Tecla de corrección", L"Touche de correction", L"Tasto di correzione", L"Tecla de correção", L"Düzeltme tuşu", L"Correctietoets", L"Klávesa opravy", L"Korrigeringstangent", L"Korjausnäppäin", L"Tasta de corectare", L"Javítás gombja", L"Πλήκτρο διόρθωσης", L"Клавиш за поправка", L"מקש תיקון", L"مفتاح التصحيح", L"सुधार कुंजी", L"수정 키", L"Клавіша выпраўлення", L"Түзету пернесі", L"Оңдоо баскычы", L"შესწორების კლავიში", L"Ուղղման ստեղն", L"Düzəliş düyməsi", L"Тастер исправке", L"Копче за исправка", L"Kláves opravy", L"Tipka ispravka", L"Tipka popravka", L"Taisymo klavišas", L"Labošanas taustiņš", L"Parandusklahv", L"Rettetast", L"Rettetast", L"Leiðréttingartakki", L"Tasti i korrigjimit", L"کلید اصلاح", L"Phím sửa", L"Тугмаи ислоҳ", L"Засах товч", L"Төзәтү төймәсе", L"Tuzatish tugmasi", L"Eochair cheartúcháin", L"Ċavetta tal-korrezzjoni", L"Allwedd cywiro"},
+    {L"Off", L"Вимкнено", L"Wyłączone", L"Aus", L"Desactivado", L"Désactivé", L"Disattivato", L"Desativado", L"Kapalı", L"Uit", L"Vypnuto", L"Av", L"Pois", L"Dezactivat", L"Ki", L"Ανενεργό", L"Изключено", L"כבוי", L"متوقف", L"बंद", L"끔", L"Выключана", L"Өшірулі", L"Өчүк", L"გამორთული", L"Անջատված", L"Söndürülüb", L"Искључено", L"Исклучено", L"Vypnuté", L"Isključeno", L"Izklopljeno", L"Išjungta", L"Izslēgts", L"Väljas", L"Fra", L"Av", L"Slökkt", L"Joaktiv", L"خاموش", L"Tắt", L"Хомӯш", L"Унтраасан", L"Сүндерелгән", L"Oʻchiq", L"As", L"Mitfi", L"I ffwrdd"},
+    {L"Settings", L"Налаштування", L"Ustawienia", L"Einstellungen", L"Ajustes", L"Réglages", L"Impostazioni", L"Definições", L"Ayarlar", L"Instellingen", L"Nastavení", L"Inställningar", L"Asetukset", L"Setări", L"Beállítások", L"Ρυθμίσεις", L"Настройки", L"הגדרות", L"الإعدادات", L"सेटिंग्स", L"설정", L"Налады", L"Параметрлер", L"Жөндөөлөр", L"პარამეტრები", L"Կարգավորումներ", L"Ayarlar", L"Подешавања", L"Поставки", L"Nastavenia", L"Postavke", L"Nastavitve", L"Nustatymai", L"Iestatījumi", L"Seaded", L"Indstillinger", L"Innstillinger", L"Stillingar", L"Cilësimet", L"تنظیمات", L"Cài đặt", L"Танзимот", L"Тохиргоо", L"Көйләүләр", L"Sozlamalar", L"Socruithe", L"Settings", L"Gosodiadau"},
 };
 // END menu strings
 
@@ -380,10 +389,22 @@ static LRESULT CALLBACK kbHook(int code, WPARAM wp, LPARAM lp) {
     BYTE vk = BYTE(k->vkCode);
     ULONGLONG now = GetTickCount64();
 
-    if (vk == VK_LSHIFT || vk == VK_RSHIFT || vk == VK_SHIFT) {
-        bool mods = (GetAsyncKeyState(VK_CONTROL) | GetAsyncKeyState(VK_MENU) | GetAsyncKeyState(VK_LWIN) | GetAsyncKeyState(VK_RWIN)) & 0x8000;
+    int hk = hkVk;
+    bool isShiftKey = vk == VK_LSHIFT || vk == VK_RSHIFT || vk == VK_SHIFT;
+    bool isCtrlKey = (vk == VK_LCONTROL || vk == VK_RCONTROL || vk == VK_CONTROL) && k->scanCode != 0x21D;  // 0x21D: the Ctrl AltGr adds
+    bool isAltKey = vk == VK_LMENU || vk == VK_RMENU || vk == VK_MENU;
+    if (hk && (hk == VK_SHIFT ? isShiftKey : hk == VK_CONTROL ? isCtrlKey : isAltKey)) {
+        auto held = [](int v) { return (GetAsyncKeyState(v) & 0x8000) != 0; };
+        bool mods = held(VK_LWIN) || held(VK_RWIN) || (hk != VK_SHIFT && held(VK_SHIFT)) || (hk != VK_CONTROL && held(VK_CONTROL)) || (hk != VK_MENU && held(VK_MENU));
         if (down) {
-            if (!shiftHeld) { shiftHeld = true; shiftDownAt = now; sawOther = false; }
+            if (!shiftHeld) {
+                shiftHeld = true; shiftDownAt = now; sawOther = false;
+                if (hk == VK_MENU) {   // an unassigned key while Alt is down: a lone Alt tap must not open the program's menu bar
+                    INPUT in[2] = {}; in[0].type = in[1].type = INPUT_KEYBOARD;
+                    in[0].ki.wVk = in[1].ki.wVk = 0xE8; in[0].ki.dwExtraInfo = in[1].ki.dwExtraInfo = kMagic; in[1].ki.dwFlags = KEYEVENTF_KEYUP;
+                    SendInput(2, in, sizeof(INPUT));
+                }
+            }
             if (mods) lastShiftTap = 0;
         } else {
             shiftHeld = false;
@@ -391,12 +412,16 @@ static LRESULT CALLBACK kbHook(int code, WPARAM wp, LPARAM lp) {
             else if (lastShiftTap && now - lastShiftTap < 450) {
                 lastShiftTap = 0;
                 // the word being typed, or the previous one right after a single space; after two or more spaces
-                // double ⇧ only switches the layout. In the user's own word it converts what was typed since the edit
+                // the double tap only switches the layout. In the user's own word it converts what was typed since the edit
                 bool cur = !word.empty();
                 auto* s = new Snapshot{cur ? word : trailing == 1 ? lastWord : vector<Key>(), cur ? 0 : trailing, seq.load()};
                 PostMessageW(hwndMain, WM_DSHIFT, 0, (LPARAM)s);
             } else lastShiftTap = now;
         }
+        return CallNextHookEx(nullptr, code, wp, lp);
+    }
+    if (isShiftKey && hk != VK_SHIFT) {   // Shift is not the correction key: it only cancels a tap in progress, as before it never touched the word
+        if (down) { sawOther = true; lastShiftTap = 0; }
         return CallNextHookEx(nullptr, code, wp, lp);
     }
     if (!down) {
@@ -1415,10 +1440,24 @@ static void showMenu() {
     item(m, ID_ENABLED, L_(L"Enabled", L"Увімкнено"), S.enabled);
     item(m, ID_AUTO, L_(L"Auto-correction", L"Автовиправлення"), S.autoFix, S.enabled);
     item(m, ID_SOUND, L_(L"Sound", L"Звук"), S.sound, S.enabled);
+    // hint with the chosen key's symbol in place of the translated ⇧ (hidden when the key is off)
+    static const wchar_t* const hkSym[] = {L"⇧", L"⌃", L"⌥"};
+    static const wchar_t* const hkKeys[] = {L"shift", L"ctrl", L"alt", L"off"};
+    static const wchar_t* const hkNames[] = {L"⇧⇧ Shift", L"⌃⌃ Ctrl", L"⌥⌥ Alt"};
+    int hkI = 0; for (int i = 0; i < 4; i++) if (S.hotkey == hkKeys[i]) hkI = i;
+    if (hkI < 3) {
+        wstring h = L_(L"Double ⇧ — convert word/selection", L"Подвійний ⇧ — змінити мову слова/виділення");
+        for (size_t at; (at = h.find(L"⇧")) != wstring::npos;) h.replace(at, 1, hkSym[hkI]);
+        item(m, 0, h, false, false);
+    }
+    HMENU hm = CreatePopupMenu();
+    for (int i = 0; i < 4; i++) item(hm, UINT(ID_HK0 + i), i < 3 ? wstring(hkNames[i]) : wstring(L_(L"Off", L"Вимкнено")));
+    CheckMenuRadioItem(hm, ID_HK0, ID_HK0 + 3, ID_HK0 + hkI, MF_BYCOMMAND);
+    AppendMenuW(m, MF_POPUP, (UINT_PTR)hm, (wstring(L_(L"Correction key", L"Клавіша виправлення")) + L"\t" + (hkI < 3 ? hkNames[hkI] : L_(L"Off", L"Вимкнено"))).c_str());
     AppendMenuW(m, MF_SEPARATOR, 0, nullptr);
 
     if (!menuExe.empty()) {
-        item(m, 0, wstring(L_(L"App: ", L"Програма: ")) + menuExe, false, false);
+        item(m, 0, wstring(L_(L"Current app: ", L"Поточна програма: ")) + menuExe, false, false);
         item(m, ID_EXCLUDE, L_(L"Don't work in this app", L"Не працювати в цій програмі"), S.isExcluded(menuExe));
         HMENU lm = CreatePopupMenu();
         auto b = S.bindings.find(menuExe);
@@ -1430,16 +1469,16 @@ static void showMenu() {
         AppendMenuW(m, MF_SEPARATOR, 0, nullptr);
     }
 
+    HMENU sm = CreatePopupMenu();
     HMENU em = CreatePopupMenu(); menuExDel = S.excluded;
     if (menuExDel.empty()) item(em, 0, emptyHint(L_(L"Don't work in this app", L"Не працювати в цій програмі")), false, false);
     for (size_t i = 0; i < menuExDel.size(); i++) item(em, UINT(ID_EXDEL0 + i), L"✕ " + menuExDel[i]);
-    AppendMenuW(m, MF_POPUP, (UINT_PTR)em, L_(L"Exclusions", L"Винятки"));
 
     // a full-screen game hides the tray — let it be excluded after leaving it
-    HMENU rm = CreatePopupMenu();
-    if (recentExe.empty()) item(rm, 0, L_(L"Empty", L"Порожньо"), false, false);
-    for (size_t i = 0; i < recentExe.size(); i++) item(rm, UINT(ID_RECENT0 + i), recentExe[i], S.isExcluded(recentExe[i]));
-    AppendMenuW(m, MF_POPUP, (UINT_PTR)rm, L_(L"Don't work in (recent apps)", L"Не працювати в (останні програми)"));
+    AppendMenuW(em, MF_SEPARATOR, 0, nullptr);
+    if (recentExe.empty()) item(em, 0, L_(L"Empty", L"Порожньо"), false, false);
+    for (size_t i = 0; i < recentExe.size(); i++) item(em, UINT(ID_RECENT0 + i), recentExe[i], S.isExcluded(recentExe[i]));
+    AppendMenuW(sm, MF_POPUP, (UINT_PTR)em, L_(L"Exclusions", L"Винятки"));
 
     HMENU bm = CreatePopupMenu(); menuBdDel.clear();
     if (S.bindings.empty()) item(bm, 0, emptyHint(L_(L"Language for this app", L"Мова для цієї програми")), false, false);
@@ -1447,12 +1486,11 @@ static void showMenu() {
         item(bm, UINT(ID_BDDEL0 + menuBdDel.size()), L"✕ " + kv.first + L" → " + displayCode(kv.second));
         menuBdDel.push_back(kv.first);
     }
-    AppendMenuW(m, MF_POPUP, (UINT_PTR)bm, L_(L"Language bindings", L"Прив'язки мов"));
-    AppendMenuW(m, MF_SEPARATOR, 0, nullptr);
+    AppendMenuW(sm, MF_POPUP, (UINT_PTR)bm, L_(L"Language bindings", L"Прив'язки мов"));
 
     // Store version: login start is the package's startup task, switched in Windows Settings → Apps → Startup
-    item(m, ID_LOGIN, L_(L"Launch at login", L"Запускати під час входу"), packaged() || loginEnabled());
-    item(m, ID_WORDS, L_(L"My words…", L"Мої слова…"));
+    item(sm, ID_LOGIN, L_(L"Launch at login", L"Запускати під час входу"), packaged() || loginEnabled());
+    item(sm, ID_WORDS, L_(L"My words…", L"Мої слова…"));
     HMENU um = CreatePopupMenu();
     item(um, ID_UI_SYS, L_(L"System", L"Системна"), S.uiLang.empty());
     // a few likely languages on top (current, English, the languages of the user's layouts), the rest by region
@@ -1472,8 +1510,9 @@ static void showMenu() {
         if (n) AppendMenuW(allm, MF_POPUP, (UINT_PTR)rm, L_(regEn[r], regUk[r])); else DestroyMenu(rm);
     }
     AppendMenuW(um, MF_POPUP, (UINT_PTR)allm, L_(L"All languages", L"Усі мови"));
-    AppendMenuW(m, MF_POPUP, (UINT_PTR)um, L_(L"Menu language", L"Мова меню"));
-    item(m, 0, L_(L"Double ⇧ — convert word/selection", L"Подвійний ⇧ — змінити мову слова/виділення"), false, false);
+    AppendMenuW(sm, MF_POPUP, (UINT_PTR)um, L_(L"Menu language", L"Мова меню"));
+    AppendMenuW(m, MF_POPUP, (UINT_PTR)sm, L_(L"Settings", L"Налаштування"));
+    AppendMenuW(m, MF_SEPARATOR, 0, nullptr);
     if (!packaged() && updBusy) item(m, 0, L_(L"Updating…", L"Оновлення…"), false, false);
     else item(m, ID_UPDATE, !packaged() && updateDue() ? L_(L"⬆︎ An update may be available — check", L"⬆︎ Можливо, вийшло оновлення — перевірити")
                                         : L_(L"Check for updates…", L"Перевірити оновлення…"));
@@ -1511,6 +1550,7 @@ static void showMenu() {
         CloseHandle(CreateThread(nullptr, 0, updateCheckThread, nullptr, 0, nullptr));
     }
     else if (cmd == ID_DONATE) ShellExecuteW(nullptr, L"open", L"https://donatello.to/aura-switcher", nullptr, nullptr, SW_SHOWNORMAL);
+    else if (cmd >= ID_HK0 && cmd < ID_HK0 + 4) S.hotkey = hkKeys[cmd - ID_HK0];
     else if (cmd == ID_UI_SYS) S.uiLang = L"";
     else if (cmd >= ID_UI0 && cmd < ID_UI0 + UI_N) S.uiLang = UI_LANGS[cmd - ID_UI0];
     else if (cmd == ID_QUIT) { PostQuitMessage(0); return; }
