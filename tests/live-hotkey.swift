@@ -124,6 +124,8 @@ if want("3") {
 run("empty field", "switch +1", { dbl(K.sh.l, K.sh.m) }, check: shifted(0, 1))
 run("word «hello», no space", "word converted to next layout, layout +1", {
     type("hello"); spin(0.2); dbl(K.sh.l, K.sh.m) }, check: { let (g, o) = shifted(0, 1)(); let t = hostText(); return ("\(g), text «\(t)»", o && t == "руддщ") })
+run("word typed in the 2nd layout (keys of «hello»)", "converted back to «hello», layout → 1st", from: 1, {
+    type("hello"); spin(0.2); dbl(K.sh.l, K.sh.m) }, check: { let t = hostText(); return ("layout \(short(idx())), text «\(t)»", idx() == 0 && t == "hello") })
 run("word «hello» + one space", "previous word converted, layout +1", {
     type("hello "); spin(0.3); dbl(K.sh.l, K.sh.m) }, check: { let (g, o) = shifted(0, 1)(); let t = hostText(); return ("\(g), text «\(t)»", o && t == "руддщ ") })
 run("word «hello» + two spaces", "text unchanged, layout +1", {
