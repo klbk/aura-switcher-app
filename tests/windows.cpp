@@ -190,6 +190,17 @@ int wmain(int argc, wchar_t** argv) {
         }
         layouts = {layout(L"00000419"), layout(L"00000422"), layout(US)}; reliable.clear();
     }
+    // a selection converted word by word: the signs at the edges of each word stay as typed (same cases as tests/main.swift)
+    {
+        layouts = {layout(US), layout(L"00000422"), layout(L"00000419")}; reliable.clear(); forcedLayout = layouts[0].hkl;
+        struct T { const wchar_t* text; const wchar_t* want; };
+        for (auto c : {T{L"ghbdsn,", L"привіт,"}, T{L";ghbdsn", L";привіт"}, T{L"\"ghbdsn\"", L"\"привіт\""}, T{L"ghbdsn, rjvg", L"привіт, комп"},
+                       T{L"cj,frf, ghbdsn", L"собака, привіт"}, T{L"cj,frf", L"собака"}, T{L"[eksufy", L"хуліган"}}) {
+            wstring got = selectionText(c.text, 0, 1);
+            if (got != c.want) { mustFail++; printf("MUST FAIL: selection text %s -> %s, expected %s\n", utf8(c.text).c_str(), utf8(got).c_str(), utf8(c.want).c_str()); }
+        }
+        layouts = {layout(L"00000419"), layout(L"00000422"), layout(US)}; reliable.clear();
+    }
     // a Ukrainian name typed in the Russian layout, with no Ukrainian dictionary (Windows has none):
     // needs the Russian spell checker to say «вынницею» isn't Russian. Russian words stay.
     if (dictionaryWorks(layouts[0].locale)) {

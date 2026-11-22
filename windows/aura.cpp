@@ -827,14 +827,13 @@ static wstring textKeepingEdges(const vector<Key>& keys, const Layout& typed, co
 // Where a selection goes (same as Engine.selectionTarget in engine.swift): every word is typed back into keys in the source
 // layout and asked like a word typed without selection (autoFixEdges, with the source as the typed layout); the layout most
 // words vote for wins, a tie goes to the one nearer in the cycle; no vote at all — the next layout in the cycle.
-// For a single word the signs at its edges are reported so they stay as typed.
 static int selectionTarget(const wstring& text, int src, int& lead, int& tail) {
     lead = tail = 0;
     int n = int(layouts.size());
     int fallback = n ? (src + 1) % n : 0;
     if (n < 2 || src < 0 || src >= n) return fallback;
     vector<wstring> words; { wstring w; for (wchar_t c : text) { if (iswspace(c)) { if (!w.empty()) words.push_back(w); w.clear(); } else w += c; } if (!w.empty()) words.push_back(w); }
-    vector<int> votes(n, 0); int el = 0, et = 0;
+    vector<int> votes(n, 0);
     HKL saved = forcedLayout; forcedLayout = layouts[src].hkl;   // the selection was typed in the source layout
     for (auto& w : words) {
         if (w.size() < 2 || w.size() > 40) continue;
@@ -844,13 +843,54 @@ static int selectionTarget(const wstring& text, int src, int& lead, int& tail) {
         int l, t; int j = autoFixEdges(keys, l, t);
         if (j < 0 || j == src) continue;
         votes[j]++;
-        if (words.size() == 1) { el = l; et = t; }
     }
     forcedLayout = saved;
     int top = *std::max_element(votes.begin(), votes.end());
     if (top == 0) return fallback;
-    for (int i = 1; i < n; i++) { int j = (src + i) % n; if (votes[j] == top) { lead = el; tail = et; return j; } }
+    for (int i = 1; i < n; i++) { int j = (src + i) % n; if (votes[j] == top) return j; }
     return fallback;
+}
+
+// The signs at the edges of one word of a selection that stay as typed: keys that type a non-letter in the source layout,
+// when the word as a whole isn't a real word in the target but without them it is (same rule as for a word typed without
+// selection: «ghbdsn,» → «привіт,», while «[ekbufy» stays «хуліган»).
+static void tokenEdges(const wstring& token, int src, int dst, int& lead, int& tail) {
+    lead = tail = 0;
+    vector<Key> keys;
+    for (wchar_t c : token) { vector<Key> k; if (!layouts[src].keysFor(c, k) || k.size() != 1 || !layouts[dst].toChar.count(k[0])) return; keys.push_back(k[0]); }
+    if (keys.size() < 2) return;
+    auto real = [&](const wstring& t) { const wstring& loc = layouts[dst].locale; const LangModel* lm = model(loc); return dictionaryWorks(loc) ? isWord(t, loc) : (lm && lm->has(t)); };
+    if (real(layouts[dst].text(keys))) return;
+    int l, t; edgeCounts(keys, layouts[src], l, t);
+    if (l + t == 0) return;
+    vector<Key> core(keys.begin() + l, keys.end() - t);
+    HKL saved = forcedLayout; forcedLayout = layouts[src].hkl;
+    bool ok = real(layouts[dst].text(core)) || autoFixTarget(core) == dst;
+    forcedLayout = saved;
+    if (ok) { lead = l; tail = t; }
+}
+// the selection's text in layout `dst`: word by word with the signs at each word's edges as typed; runs of convertible
+// characters go through the keys (so accents compose)
+static wstring selectionText(const wstring& text, int src, int dst) {
+    auto convert = [&](const wstring& cs) {
+        wstring o; vector<Key> run;
+        for (wchar_t c : cs) {
+            vector<Key> k;
+            if (layouts[src].keysFor(c, k) && layouts[dst].maps(k)) { run.insert(run.end(), k.begin(), k.end()); continue; }
+            o += layouts[dst].text(run) + c; run.clear();
+        }
+        return o + layouts[dst].text(run);
+    };
+    wstring out, token;
+    auto flush = [&]() {
+        if (token.empty()) return;
+        int l, t; tokenEdges(token, src, dst, l, t);
+        out += token.substr(0, l) + convert(token.substr(l, token.size() - l - t)) + token.substr(token.size() - t);
+        token.clear();
+    };
+    for (wchar_t c : text) { if (iswspace(c)) { flush(); out += c; } else token += c; }
+    flush();
+    return out;
 }
 
 // MARK: - Actions (main thread)
@@ -949,16 +989,7 @@ static void convertSelection(wstring text) {
     bool again = text == lastSelOut && lastSelLang < int(layouts.size());
     int lead = 0, tail = 0;
     int dst = again ? int((src + 1) % layouts.size()) : selectionTarget(text, src, lead, tail);
-    // runs of convertible characters go through the keys (so accents compose), the rest stays
-    // (one word with signs at its edges: the signs stay as typed)
-    lead = std::min<int>(lead, int(text.size())); tail = std::min<int>(tail, int(text.size()) - lead);
-    wstring out = text.substr(0, lead); vector<Key> run;
-    for (size_t i = lead; i < text.size() - tail; i++) {
-        wchar_t c = text[i]; vector<Key> k;
-        if (layouts[src].keysFor(c, k) && layouts[dst].maps(k)) { run.insert(run.end(), k.begin(), k.end()); continue; }
-        out += layouts[dst].text(run) + c; run.clear();
-    }
-    out += layouts[dst].text(run) + text.substr(text.size() - tail);
+    wstring out = selectionText(text, src, dst);
     typeText(out);
     for (wchar_t c : out) if (!IS_LOW_SURROGATE(c)) sendKey(VK_LEFT, true);  // reselect: ⇧← moves by character, not wchar_t
     lastSelOut = out; lastSelLang = dst;
