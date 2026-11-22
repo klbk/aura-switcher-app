@@ -959,9 +959,13 @@ static void playSound(const vector<BYTE>& s) {
     if (S.sound) PlaySoundW((LPCWSTR)s.data(), nullptr, SND_MEMORY | SND_ASYNC | SND_NODEFAULT);
 }
 
+static bool focusIsPassword();
 static void onDoubleShift(Snapshot* s) {
     if (layouts.empty()) return;
     playSound(sndShift);
+    // a password field: its characters are never read, copied or changed — the double tap only switches the layout
+    // (to type the password in another one), as it does on Mac
+    if (focusIsPassword()) { cycleLayout(); return; }
     if (!s->keys.empty()) {
         // first press: the most likely layout (as auto-correction would pick it), then the next ones in turn
         // remember where the word went ourselves: right after a switch the window may still report the old layout.
@@ -1027,7 +1031,15 @@ static bool focusIsPassword() {
     if (!uia && FAILED(CoCreateInstance(clsid, nullptr, CLSCTX_INPROC_SERVER, iid, (void**)&uia))) { uia = nullptr; return false; }
     IUIAutomationElement* el = nullptr; BOOL pw = FALSE;
     if (SUCCEEDED(uia->GetFocusedElement(&el)) && el) { el->get_CurrentIsPassword(&pw); el->Release(); }
-    return pw;
+    if (pw) return true;
+    // UI Automation doesn't always know (a WinForms box with UseSystemPasswordChar, old Win32 dialogs): the edit control's own style does
+    HWND f = focusWindow();
+    wchar_t cls[80] = L""; if (f) GetClassNameW(f, cls, 80);
+    CharUpperBuffW(cls, (DWORD)wcslen(cls));
+    if (!f || !wcsstr(cls, L"EDIT")) return false;   // the style bit means something else in other window classes
+    DWORD_PTR r = 0;
+    if (GetWindowLongW(f, GWL_STYLE) & ES_PASSWORD) return true;
+    return SendMessageTimeoutW(f, EM_GETPASSWORDCHAR, 0, 0, SMTO_ABORTIFHUNG, 50, &r) && r != 0;
 }
 
 // Backspace/Delete emptied the whole field (Ctrl+A, Delete): no word to go back into, so the first word typed now
