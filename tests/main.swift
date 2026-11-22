@@ -170,6 +170,22 @@ for (meant, m, t, want) in [("привітб", uk, enL, "привіт,"), ("пр
     if got != want { mustFail += 1; print("MUST FAIL: signs \(meant) → \(got ?? "unchanged"), expected \(want ?? "unchanged")") }
 }
 
+// selection target: the layout where the keys give real words, not the next one in the cycle
+for (order, text, srcLang, wantLang) in [
+    ([US, "com.apple.keylayout.Ukrainian-PC", "com.apple.keylayout.RussianWin"], "ghbdsn", "en", "uk"),
+    (["com.apple.keylayout.RussianWin", "com.apple.keylayout.Ukrainian-PC", US], "ghbdsn", "en", "uk"),          // next in the cycle would be RU
+    ([US, "com.apple.keylayout.Ukrainian-PC", "com.apple.keylayout.RussianWin"], "ghbdsn xfc", "en", "uk"),     // 2 words
+    ([US, "com.apple.keylayout.Ukrainian-PC", "com.apple.keylayout.RussianWin"], "ghbdtn", "en", "ru"),         // «привет» → RU
+    ([US, "com.apple.keylayout.Ukrainian-PC", "com.apple.keylayout.RussianWin"], "привіт", "uk", "ru"),                   // a real word where it is: nobody votes, next in the cycle
+    ([US, "com.apple.keylayout.Ukrainian-PC", "com.apple.keylayout.RussianWin"], "qqwwzz", "en", "uk"),         // nothing found: next in the cycle
+] as [([String], String, String, String)] {
+    engine.layouts = order.map(layout); engine.reliable = [:]
+    guard let si = engine.layouts.firstIndex(where: { $0.lang == srcLang }) else { continue }
+    forcedLang = srcLang
+    let got = engine.layouts[engine.selectionTarget(text, src: si).dst].lang
+    if got != wantLang { mustFail += 1; print("MUST FAIL: selection «\(text)» (\(order.map { String($0.suffix(6)) })) → \(got), expected \(wantLang)") }
+}
+
 // an inline completion (a selected rest after the typed word) is dropped before the word is replaced; a plain caret is not
 for (len, letters, want) in [(Int?.some(27), 6, true), (Int?.some(0), 6, false), (nil, 6, false), (Int?.some(27), 0, false)] {
     if Engine.isInlineCompletion(selectedLength: len, typedLetters: letters) != want { mustFail += 1; print("MUST FAIL: isInlineCompletion(\(len.map(String.init) ?? "nil"), \(letters))") }
