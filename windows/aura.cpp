@@ -1517,10 +1517,9 @@ static void showMenu() {
     AppendMenuW(m, MF_SEPARATOR, 0, nullptr);
     if (!packaged() && updBusy) item(m, 0, L_(L"Updating…", L"Оновлення…"), false, false);
     else item(m, ID_UPDATE, !packaged() && updateDue() ? L_(L"⬆︎ An update may be available — check", L"⬆︎ Можливо, вийшло оновлення — перевірити")
-                                        : L_(L"Check for updates…", L"Перевірити оновлення…"));
+                                        : wstring(L_(L"Check for updates…", L"Перевірити оновлення…")) + L" (" APP_VERSION L" beta)");
     item(m, ID_REPORT, L_(L"Report a problem…", L"Повідомити про проблему…"));
     if (!packaged()) item(m, ID_DONATE, L_(L"Support AURA Switcher ☕", L"Підтримати AURA Switcher ☕"));  // Store: no outside payment links
-    item(m, 0, L"AURA Switcher " APP_VERSION L" beta · 🇺🇦", false, false);
     item(m, ID_QUIT, L_(L"Quit", L"Вихід"));
 
     POINT p; GetCursorPos(&p);

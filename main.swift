@@ -238,14 +238,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         let ui = NSMenuItem(title: L("uiLang"), action: nil, keyEquivalent: ""); ui.submenu = uiMenu; setMenu.addItem(ui)
         let si = NSMenuItem(title: L("settings"), action: nil, keyEquivalent: ""); si.submenu = setMenu; m.addItem(si)
         m.addItem(.separator())
-        add(m, updateDue() ? L("updateDue") : L("update")) {
+        let ver = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? ""
+        add(m, updateDue() ? L("updateDue") : L("update") + " (\(ver) beta)") {
             self.s.updateCheckedAt = Date().timeIntervalSince1970
             self.updateTitle()
             Updater.check()
         }
         add(m, L("report")) { self.reportProblem() }
         add(m, L("donate")) { NSWorkspace.shared.open(URL(string: "https://donatello.to/aura-switcher")!) }
-        add(m, "AURA Switcher \(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "") beta · 🇺🇦")
         add(m, L("quit")) { NSApp.terminate(nil) }
     }
 }
