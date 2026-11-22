@@ -159,9 +159,14 @@ def load():
     exec(re.search(r"^KEYS = \[.*?\]", mi, re.M | re.S).group(), keys_ns)
     blocks = re.search(r'^LANGS = """\n(.*?)"""', mi, re.M | re.S).group(1).strip().split("\n\n")
     menu = {}
+    new_ns = {}   # 0.11 strings live in NEW (menu_i18n.py): appended keys + the reworded "app"
+    exec(re.search(r"^NEW = \{.*?^\}", mi, re.M | re.S).group(), new_ns)
+    extra = ("hotkey", "off", "settings")
     for b in blocks:
         head, *lines = b.split("\n")
         code, name = head.split(" ", 1)
+        lines += [new_ns["NEW"][k][code] for k in extra]
+        lines[keys_ns["KEYS"].index("app")] = new_ns["NEW"]["app"][code]
         assert len(lines) == len(keys_ns["KEYS"]), code
         menu[code] = (name, dict(zip(keys_ns["KEYS"], lines)))
     src["MENU_KEYS"], src["MENU"] = keys_ns["KEYS"], menu
