@@ -1431,8 +1431,8 @@ static void toggleExcluded(const wstring& exe) {
     else S.excluded.push_back(exe);
 }
 
-// the menu hint has the translated ⇧ built in: show the chosen key's symbol instead (searching on from the end of each
-// replacement — with ⇧ itself as the symbol a plain find-and-replace loop would never end)
+// the menu hint has the translated ⇧ built in: show the chosen key's name instead (searching on from the end of each
+// replacement, so the loop always ends)
 static wstring hotkeyHint(wstring h, const wchar_t* sym) {
     for (size_t at = 0; (at = h.find(L"⇧", at)) != wstring::npos; at += wcslen(sym)) h.replace(at, 1, sym);
     return h;
@@ -1452,9 +1452,9 @@ static void showMenu() {
     // Store version: login start is the package's startup task, switched in Windows Settings → Apps → Startup
     tog(m, ID_LOGIN, L_(L"Launch at login", L"Запускати під час входу"), packaged() || loginEnabled());
     // one line: the hint with the chosen key's symbol in place of the translated ⇧; «Correction key: off» when it is off
-    static const wchar_t* const hkSym[] = {L"⇧", L"⌃", L"⌥"};
+    static const wchar_t* const hkSym[] = {L"Shift", L"Ctrl", L"Alt"};   // Windows shows key names, not symbols
     static const wchar_t* const hkKeys[] = {L"shift", L"ctrl", L"alt", L"off"};
-    static const wchar_t* const hkNames[] = {L"⇧⇧ Shift", L"⌃⌃ Ctrl", L"⌥⌥ Alt"};
+    static const wchar_t* const hkNames[] = {L"Shift", L"Ctrl", L"Alt"};
     int hkI = 0; for (int i = 0; i < 4; i++) if (S.hotkey == hkKeys[i]) hkI = i;
     wstring hkTitle;
     if (hkI < 3) {

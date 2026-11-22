@@ -142,11 +142,11 @@ int wmain(int argc, wchar_t** argv) {
     // code typed in the wrong layout is recognized by its English parts: needs the English spell checker
     bool enDict = dictionaryWorks(layouts[0].locale);
     int mustFail = 0;
-    // menu hint with the chosen key's symbol: ends, keeps the text, in every menu language (0.11 regression: an endless loop for ⇧)
+    // menu hint with the chosen key's symbol: ends, keeps the text, in every menu language (0.11 regression: an endless loop in the replacement); the ⇧ of the translation is gone
     for (auto& row : UI_STR) if (!wcscmp(row[0], L"Double ⇧ — convert word/selection")) for (int i = 0; i < UI_N; i++)
-        for (const wchar_t* sym : {L"⇧", L"⌃", L"⌥"}) {
+        for (const wchar_t* sym : {L"Shift", L"Ctrl", L"Alt"}) {
             wstring h = hotkeyHint(row[i], sym);
-            if (h.empty() || h.find(sym) == wstring::npos) { mustFail++; printf("MUST FAIL: menu hint %ls with %ls\n", UI_LANGS[i], sym); }
+            if (h.empty() || h.find(sym) == wstring::npos || h.find(L"⇧") != wstring::npos) { mustFail++; printf("MUST FAIL: menu hint %ls with %ls\n", UI_LANGS[i], sym); }
         }
     for (auto& m : must) {
         if (!enDict && wcspbrk(m.w, L".(")) { printf("skipped (no English spell checker): %s\n", utf8(m.w).c_str()); continue; }
