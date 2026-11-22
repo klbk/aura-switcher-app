@@ -96,9 +96,37 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         m.addItem(i)
     }
 
-    /// an on/off switch of the menu: ☑/☐ in the title, so the off state shows too (the native check mark is not used)
+    /// checkbox pictures for the on/off switches, drawn once; template images follow the light/dark theme and the highlight
+    static let boxOn = checkbox(on: true), boxOff = checkbox(on: false)
+    static func checkbox(on: Bool) -> NSImage {
+        let img = NSImage(size: NSSize(width: 14, height: 14), flipped: false) { _ in
+            let r = NSRect(x: 1.5, y: 1.5, width: 11, height: 11)
+            let box = NSBezierPath(roundedRect: r, xRadius: 3, yRadius: 3)
+            NSColor.black.setStroke(); NSColor.black.setFill()
+            if on {
+                box.fill()   // filled square, the tick is cut out of it
+                let tick = NSBezierPath()
+                tick.move(to: NSPoint(x: 4.0, y: 7.2)); tick.line(to: NSPoint(x: 6.2, y: 4.9)); tick.line(to: NSPoint(x: 10.2, y: 9.6))
+                tick.lineWidth = 1.5; tick.lineCapStyle = .round; tick.lineJoinStyle = .round
+                NSGraphicsContext.current?.compositingOperation = .clear
+                tick.stroke()
+            } else {
+                box.lineWidth = 1.2; box.stroke()
+            }
+            return true
+        }
+        img.isTemplate = true
+        return img
+    }
+
+    /// an on/off switch of the menu: a drawn checkbox picture (on or off), not the native check mark
     func toggle(_ m: NSMenu, _ title: String, _ on: Bool, enabled: Bool = true, _ action: @escaping () -> Void) {
-        add(m, (on ? "☑ " : "☐ ") + title, nil, enabled: enabled, action)
+        let i = ClosureItem(title: title, action: action)
+        // the pictures go to the state column (same alignment as the other items); an item image is not drawn in this menu
+        i.onStateImage = AppDelegate.boxOn; i.offStateImage = AppDelegate.boxOff
+        i.state = on ? .on : .off
+        i.isEnabled = enabled
+        m.addItem(i)
     }
 
     func appName(_ id: String) -> String {
