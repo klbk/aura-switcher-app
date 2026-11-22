@@ -840,9 +840,17 @@ static int selectionTarget(const wstring& text, int src, int& lead, int& tail) {
         vector<Key> keys; bool ok = true;
         for (wchar_t c : w) { vector<Key> k; if (!layouts[src].keysFor(c, k) || k.size() != 1) { ok = false; break; } keys.push_back(k[0]); }
         if (!ok || keys.size() < 2) continue;
+        // every layout where the word (without the signs at its edges) is a real word counts, not only the engine's single pick:
+        // «собака» is a word in UK and RU, «привіт» only in UK — together UK wins
         int l, t; int j = autoFixEdges(keys, l, t);
-        if (j < 0 || j == src) continue;
-        votes[j]++;
+        vector<Key> core(keys.begin() + l, keys.end() - t);
+        vector<bool> counted(n, false);
+        for (int i = 0; i < n; i++) {
+            if (i == src || !layouts[i].maps(core)) continue;
+            wstring tx = layouts[i].text(core); const wstring& loc = layouts[i].locale; const LangModel* lm = model(loc);
+            if (dictionaryWorks(loc) ? isWord(tx, loc) : (lm && lm->has(tx))) { votes[i]++; counted[i] = true; }
+        }
+        if (j >= 0 && j != src && !counted[j]) votes[j]++;   // slang the engine accepts but the dictionaries don't know
     }
     forcedLayout = saved;
     int top = *std::max_element(votes.begin(), votes.end());

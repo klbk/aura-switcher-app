@@ -181,7 +181,7 @@ int wmain(int argc, wchar_t** argv) {
         const wchar_t* RU = L"00000419"; const wchar_t* UK = L"00000422";
         struct Sel { vector<const wchar_t*> order; const wchar_t* text; const wchar_t* src; const wchar_t* want; };
         for (auto c : {Sel{{US, UK, RU}, L"ghbdsn", L"en", L"uk"}, Sel{{RU, UK, US}, L"ghbdsn", L"en", L"uk"}, Sel{{US, UK, RU}, L"ghbdsn xfc", L"en", L"uk"},
-                       Sel{{US, UK, RU}, L"ghbdtn", L"en", L"ru"}, Sel{{US, UK, RU}, L"привіт", L"uk", L"ru"}, Sel{{US, UK, RU}, L"qqwwzz", L"en", L"uk"}}) {
+                       Sel{{RU, UK, US}, L"cj,frf, ghbdsn", L"en", L"uk"}, Sel{{US, UK, RU}, L"ghbdtn", L"en", L"ru"}, Sel{{US, UK, RU}, L"привіт", L"uk", L"ru"}, Sel{{US, UK, RU}, L"qqwwzz", L"en", L"uk"}}) {
             layouts.clear(); for (auto id : c.order) layouts.push_back(layout(id)); reliable.clear();
             int si = -1; for (size_t i = 0; i < layouts.size(); i++) if (lang(layouts[i]) == c.src) si = int(i);
             if (si < 0) continue;
