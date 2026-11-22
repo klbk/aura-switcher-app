@@ -808,8 +808,10 @@ final class Engine {
         var f: CFTypeRef?
         guard AXUIElementCopyAttributeValue(AXUIElementCreateSystemWide(), kAXFocusedUIElementAttribute as CFString, &f) == .success,
               let f else { return false }
-        var sub: CFTypeRef?
+        var sub: CFTypeRef?, role: CFTypeRef?
         AXUIElementCopyAttributeValue(f as! AXUIElement, kAXSubroleAttribute as CFString, &sub)
+        AXUIElementCopyAttributeValue(f as! AXUIElement, kAXRoleAttribute as CFString, &role)
+        auraLog.notice("focus: role \(role as? String ?? "-", privacy: .public) subrole \(sub as? String ?? "-", privacy: .public) in \(self.frontBundle, privacy: .public)")
         return sub as? String == kAXSecureTextFieldSubrole as String
     }
 
