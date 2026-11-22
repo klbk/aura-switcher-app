@@ -176,6 +176,20 @@ int wmain(int argc, wchar_t** argv) {
         }
         layouts = {layout(L"00000419"), layout(L"00000422"), layout(US)}; reliable.clear();
     }
+    // selection target (same cases as tests/main.swift): the layout where the keys give real words, not the next one in the cycle
+    {
+        const wchar_t* RU = L"00000419"; const wchar_t* UK = L"00000422";
+        struct Sel { vector<const wchar_t*> order; const wchar_t* text; const wchar_t* src; const wchar_t* want; };
+        for (auto c : {Sel{{US, UK, RU}, L"ghbdsn", L"en", L"uk"}, Sel{{RU, UK, US}, L"ghbdsn", L"en", L"uk"}, Sel{{US, UK, RU}, L"ghbdsn xfc", L"en", L"uk"},
+                       Sel{{US, UK, RU}, L"ghbdtn", L"en", L"ru"}, Sel{{US, UK, RU}, L"привіт", L"uk", L"ru"}, Sel{{US, UK, RU}, L"qqwwzz", L"en", L"uk"}}) {
+            layouts.clear(); for (auto id : c.order) layouts.push_back(layout(id)); reliable.clear();
+            int si = -1; for (size_t i = 0; i < layouts.size(); i++) if (lang(layouts[i]) == c.src) si = int(i);
+            if (si < 0) continue;
+            int l, t; int d = selectionTarget(c.text, si, l, t);
+            if (lang(layouts[d]) != c.want) { mustFail++; printf("MUST FAIL: selection %s -> %s, expected %s\n", utf8(c.text).c_str(), utf8(lang(layouts[d])).c_str(), utf8(c.want).c_str()); }
+        }
+        layouts = {layout(L"00000419"), layout(L"00000422"), layout(US)}; reliable.clear();
+    }
     // a Ukrainian name typed in the Russian layout, with no Ukrainian dictionary (Windows has none):
     // needs the Russian spell checker to say «вынницею» isn't Russian. Russian words stay.
     if (dictionaryWorks(layouts[0].locale)) {
