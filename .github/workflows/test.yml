@@ -8,6 +8,8 @@ jobs:
     runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
+      - name: Generated menu strings match the generator
+        run: tests/check-generated.sh
       - name: Build
         run: ./build.sh --release
       - name: Auto-correction test
