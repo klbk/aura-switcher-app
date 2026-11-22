@@ -169,14 +169,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         }
         let hk = s.hotkey
         let hkSym = ["shift": "⇧", "ctrl": "⌃", "alt": "⌥"][hk]
-        if let hkSym { add(m, L("hint").replacingOccurrences(of: "⇧", with: hkSym)) }
         let hkNames = [("shift", "⇧⇧ Shift"), ("ctrl", "⌃⌃ Ctrl"), ("alt", "⌥⌥ Option")]
         let hkMenu = NSMenu()
+        add(hkMenu, L("hotkey"))   // title of the submenu (not clickable)
+        hkMenu.addItem(.separator())
         for (k, n) in hkNames { add(hkMenu, n, hk == k) { self.s.hotkey = k } }
         add(hkMenu, L("off"), hk == "off") { self.s.hotkey = "off" }
-        let hi = NSMenuItem(title: L("hotkey"), action: nil, keyEquivalent: ""); hi.submenu = hkMenu
-        let hv = hk == "off" ? L("off") : (hkNames.first { $0.0 == hk }?.1 ?? "")
-        if #available(macOS 14, *) { hi.badge = NSMenuItemBadge(string: hv) } else { hi.title += ": " + hv }
+        // one line: the hint with the chosen key's symbol in place of the translated ⇧; «Correction key: off» when it is off
+        let hkTitle = hkSym.map { L("hint").replacingOccurrences(of: "⇧", with: $0) } ?? L("hotkey") + ": " + L("off").lowercased()
+        let hi = NSMenuItem(title: hkTitle, action: nil, keyEquivalent: ""); hi.submenu = hkMenu
         m.addItem(hi)
         if engine.tap == nil { add(m, L("access"), enabled: true) {
             NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility")!) } }

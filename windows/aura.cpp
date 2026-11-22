@@ -1444,20 +1444,25 @@ static void showMenu() {
     tog(m, ID_SOUND, L_(L"Sound", L"Звук"), S.sound, S.enabled);
     // Store version: login start is the package's startup task, switched in Windows Settings → Apps → Startup
     tog(m, ID_LOGIN, L_(L"Launch at login", L"Запускати під час входу"), packaged() || loginEnabled());
-    // hint with the chosen key's symbol in place of the translated ⇧ (hidden when the key is off)
+    // one line: the hint with the chosen key's symbol in place of the translated ⇧; «Correction key: off» when it is off
     static const wchar_t* const hkSym[] = {L"⇧", L"⌃", L"⌥"};
     static const wchar_t* const hkKeys[] = {L"shift", L"ctrl", L"alt", L"off"};
     static const wchar_t* const hkNames[] = {L"⇧⇧ Shift", L"⌃⌃ Ctrl", L"⌥⌥ Alt"};
     int hkI = 0; for (int i = 0; i < 4; i++) if (S.hotkey == hkKeys[i]) hkI = i;
+    wstring hkTitle;
     if (hkI < 3) {
-        wstring h = L_(L"Double ⇧ — convert word/selection", L"Подвійний ⇧ — змінити мову слова/виділення");
-        for (size_t at; (at = h.find(L"⇧")) != wstring::npos;) h.replace(at, 1, hkSym[hkI]);
-        item(m, 0, h, false, false);
+        hkTitle = L_(L"Double ⇧ — convert word/selection", L"Подвійний ⇧ — змінити мову слова/виділення");
+        for (size_t at; (at = hkTitle.find(L"⇧")) != wstring::npos;) hkTitle.replace(at, 1, hkSym[hkI]);
+    } else {
+        wstring off = L_(L"Off", L"Вимкнено"); CharLowerBuffW(off.data(), (DWORD)off.size());
+        hkTitle = wstring(L_(L"Correction key", L"Клавіша виправлення")) + L": " + off;
     }
     HMENU hm = CreatePopupMenu();
+    item(hm, 0, L_(L"Correction key", L"Клавіша виправлення"), false, false);   // title of the submenu (not clickable)
+    AppendMenuW(hm, MF_SEPARATOR, 0, nullptr);
     for (int i = 0; i < 4; i++) item(hm, UINT(ID_HK0 + i), i < 3 ? wstring(hkNames[i]) : wstring(L_(L"Off", L"Вимкнено")));
     CheckMenuRadioItem(hm, ID_HK0, ID_HK0 + 3, ID_HK0 + hkI, MF_BYCOMMAND);
-    AppendMenuW(m, MF_POPUP, (UINT_PTR)hm, (wstring(L_(L"Correction key", L"Клавіша виправлення")) + L"\t" + (hkI < 3 ? hkNames[hkI] : L_(L"Off", L"Вимкнено"))).c_str());
+    AppendMenuW(m, MF_POPUP, (UINT_PTR)hm, hkTitle.c_str());
     AppendMenuW(m, MF_SEPARATOR, 0, nullptr);
 
     if (!menuExe.empty()) {
