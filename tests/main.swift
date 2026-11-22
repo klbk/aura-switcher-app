@@ -170,6 +170,11 @@ for (meant, m, t, want) in [("привітб", uk, enL, "привіт,"), ("пр
     if got != want { mustFail += 1; print("MUST FAIL: signs \(meant) → \(got ?? "unchanged"), expected \(want ?? "unchanged")") }
 }
 
+// an inline completion (a selected rest after the typed word) is dropped before the word is replaced; a plain caret is not
+for (len, letters, want) in [(Int?.some(27), 6, true), (Int?.some(0), 6, false), (nil, 6, false), (Int?.some(27), 0, false)] {
+    if Engine.isInlineCompletion(selectedLength: len, typedLetters: letters) != want { mustFail += 1; print("MUST FAIL: isInlineCompletion(\(len.map(String.init) ?? "nil"), \(letters))") }
+}
+
 // same keys give a frequent Russian word and a rare Ukrainian one («было» / «біло»): the frequent one wins
 engine.layouts = [layout(US), layout("com.apple.keylayout.Ukrainian-PC"), layout("com.apple.keylayout.RussianWin")]; engine.reliable = [:]
 for w in ["было", "была", "были"] {

@@ -990,7 +990,22 @@ final class Engine {
         }
     }
 
+    /// Chrome's search fields (Google, the address bar) complete the typed text inline: «ghbdsn» + the rest of a suggestion,
+    /// selected after the caret. That is a selection the user didn't make: the first Backspace would only delete it and
+    /// the word would keep its first letter («gпривіт»). Typed word + a selected range = a completion to drop first.
+    static func isInlineCompletion(selectedLength: Int?, typedLetters: Int) -> Bool { (selectedLength ?? 0) > 0 && typedLetters > 0 }
+    func selectedRangeLength() -> Int? {
+        var f: CFTypeRef?
+        guard AXUIElementCopyAttributeValue(AXUIElementCreateSystemWide(), kAXFocusedUIElementAttribute as CFString, &f) == .success,
+              let f else { return nil }
+        var r: CFTypeRef?, range = CFRange()
+        guard AXUIElementCopyAttributeValue(f as! AXUIElement, kAXSelectedTextRangeAttribute as CFString, &r) == .success, let r,
+              AXValueGetValue(r as! AXValue, .cfRange, &range) else { return nil }
+        return range.length
+    }
+
     func replace(count: Int, with s: String) {
+        if Engine.isInlineCompletion(selectedLength: selectedRangeLength(), typedLetters: count) { postKey(117) }  // Forward Delete drops the completion
         for _ in 0..<count { postKey(51) }
         typeText(s)
     }
