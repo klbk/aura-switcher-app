@@ -1431,6 +1431,13 @@ static void toggleExcluded(const wstring& exe) {
     else S.excluded.push_back(exe);
 }
 
+// the menu hint has the translated ⇧ built in: show the chosen key's symbol instead (searching on from the end of each
+// replacement — with ⇧ itself as the symbol a plain find-and-replace loop would never end)
+static wstring hotkeyHint(wstring h, const wchar_t* sym) {
+    for (size_t at = 0; (at = h.find(L"⇧", at)) != wstring::npos; at += wcslen(sym)) h.replace(at, 1, sym);
+    return h;
+}
+
 static void showMenu() {
     menuExe = fgExe();
     HMENU m = CreatePopupMenu();
@@ -1452,7 +1459,7 @@ static void showMenu() {
     wstring hkTitle;
     if (hkI < 3) {
         hkTitle = L_(L"Double ⇧ — convert word/selection", L"Подвійний ⇧ — змінити мову слова/виділення");
-        for (size_t at; (at = hkTitle.find(L"⇧")) != wstring::npos;) hkTitle.replace(at, 1, hkSym[hkI]);
+        hkTitle = hotkeyHint(hkTitle, hkSym[hkI]);
     } else {
         wstring off = L_(L"Off", L"Вимкнено"); CharLowerBuffW(off.data(), (DWORD)off.size());
         hkTitle = wstring(L_(L"Correction key", L"Клавіша виправлення")) + L": " + off;
