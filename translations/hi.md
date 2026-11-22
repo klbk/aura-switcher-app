@@ -88,7 +88,7 @@ iTitle = एक मिनट में तैयार
 s1h = डाउनलोड करें
 s1p = आर्काइव खोलें। Mac पर AURA को Applications में खींचें, Windows पर AURA.exe चलाएँ।
 s2h = अनुमति दें
-s2p = Mac पर: System Settings → Privacy & Security → Accessibility, Input Monitoring → AURA.
+s2p = Mac पर: सिस्टम सेटिंग्स (System Settings) → गोपनीयता और सुरक्षा (Privacy & Security) → एक्सेसिबिलिटी (Accessibility), इनपुट मॉनिटरिंग (Input Monitoring) → AURA।
 s3h = लिखिए
 s3p = भाषा कोड मेनू बार (Mac) या ट्रे (Windows) में दिखेगा। बाकी काम AURA करेगा।
 ctaH = आज ही AURA आज़माएँ
@@ -107,7 +107,7 @@ safe1p = पूरा कोड <a href="https://github.com/klbk/aura-switcher-a
 safe2h = कीबोर्ड एक्सेस क्यों चाहिए
 safe2p = टाइप किया शब्द देखने और उसे ठीक करने के लिए। टेक्स्ट न सहेजा जाता है, न कहीं भेजा जाता है; प्रोग्राम को इंटरनेट की ज़रूरत नहीं।
 safe3h = पहली बार खोलने पर चेतावनी आना सामान्य है
-safe3p = बीटा पर अभी Apple और Microsoft का सशुल्क हस्ताक्षर नहीं है। Mac: “Done” → System Settings → Privacy & Security → “Open Anyway”। Windows: “More info” → “Run anyway”।
+safe3p = बीटा संस्करण पर अभी Apple और Microsoft का सशुल्क डिजिटल हस्ताक्षर नहीं है। Mac: “हो गया” (Done) → सिस्टम सेटिंग्स (System Settings) → गोपनीयता और सुरक्षा (Privacy & Security) → “फिर भी खोलें” (Open Anyway)। Windows: “अधिक जानकारी” (More info) → “फिर भी चलाएँ” (Run anyway)।
 desc = कीबोर्ड लेआउट अपने आप बदलें: गलत लेआउट में टाइप किए गए शब्द स्पेस के बाद ठीक हो जाते हैं। Punto Switcher का मुफ़्त, ओपन-सोर्स विकल्प, macOS और Windows के लिए।
 altH = Punto Switcher का मुफ़्त विकल्प
 altP = Punto Switcher या Caramba Switcher का विकल्प ढूँढ रहे हैं? AURA Switcher गलत कीबोर्ड लेआउट में टाइप किया गया टेक्स्ट पहचानकर अपने आप ठीक कर देता है — मुफ़्त, ओपन सोर्स, बिना विज्ञापन, इंटरनेट पर कुछ नहीं भेजता। macOS और Windows के लिए।

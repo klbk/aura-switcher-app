@@ -249,7 +249,7 @@ const MORE = {
     pMac: "<li>Apple Silicon और Intel</li><li>मेनू बार में भाषा कोड: EN, HI…</li><li>macOS 13 और नए</li>",
     pWin: "<li>x64 और ARM64, बिना इंस्टॉलेशन</li><li>ट्रे में भाषा कोड</li><li>Mac जैसी ही कुंजियाँ</li>",
     iTitle: "एक मिनट में तैयार", s1h: "डाउनलोड करें", s1p: "आर्काइव खोलें। Mac पर AURA को Applications में खींचें, Windows पर AURA.exe चलाएँ।",
-    s2h: "अनुमति दें", s2p: "Mac पर: System Settings → Privacy & Security → Accessibility, Input Monitoring → AURA.",
+    s2h: "अनुमति दें", s2p: "Mac पर: सिस्टम सेटिंग्स (System Settings) → गोपनीयता और सुरक्षा (Privacy & Security) → एक्सेसिबिलिटी (Accessibility), इनपुट मॉनिटरिंग (Input Monitoring) → AURA।",
     s3h: "लिखिए", s3p: "भाषा कोड मेनू बार (Mac) या ट्रे (Windows) में दिखेगा। बाकी काम AURA करेगा।",
     ctaH: "आज ही AURA आज़माएँ", ctaP: "macOS और Windows के लिए मुफ़्त बीटा।", made: "यूक्रेन में बना", foot: "AURA — कीबोर्ड लेआउट नहीं, अपने टेक्स्ट के बारे में सोचिए।" },
 
