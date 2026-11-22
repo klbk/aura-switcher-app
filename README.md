@@ -19,7 +19,7 @@ Website — https://klbk.github.io/aura-switcher/ · Support ☕ — https://don
 ## Features
 
 - **Auto-correction.** Typed a word in the wrong layout and pressed Space — AURA erases the word, retypes it in the right layout and switches the layout.
-- **Double ⇧** (two quick Shift taps):
+- **Double ⇧** (two quick Shift taps, left or right; the key is configurable — menu → "Correction key": ⇧⇧ Shift (default), ⌃⌃ Ctrl, ⌥⌥ Option/Alt or off. Shift is the safest: double Ctrl is taken in JetBrains IDEs, and a lone Alt tap opens the menu bar of some programs):
   - text selected — converts it to the next layout (press again for the next one, in a cycle);
   - no selection — converts the last typed word;
   - nothing to convert — just switches the layout.
@@ -49,9 +49,11 @@ The icon shows the current language: `EN`, `УК`, `РУ`… — each language i
 
 - **Enabled** — master switch.
 - **Auto-correction** — on/off (double ⇧ always works).
+- **Correction key** — which key you double-tap: ⇧⇧ Shift (default), ⌃⌃ Ctrl, ⌥⌥ Option (Alt on Windows) or off.
 - **Sound** — a short beep: one tone on auto-correction, two on double ⇧. Same on Mac and Windows.
 - **Don't work in this app** — add the current app to exclusions.
 - **Language for this app** — bind a layout.
+- **Settings ▸** — the rarely used items: Exclusions (with recent apps), Language bindings, Launch at login, My words, Menu language.
 - **Exclusions / Language bindings** — lists; click an item to remove it.
 - **My words…** — words AURA treats as correct (slang like «хз», «ща», «скілі»): it never changes them, and fixes them when typed in the wrong layout (`crsks` → «скілі»). Comma-separated.
 - **Launch at login**.

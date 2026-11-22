@@ -7,6 +7,7 @@
 - Same features and menu as on Mac. The tray icon shows the language code: yellow letters on a rounded blue tile (grey — disabled), drawn at the exact tray size so it stays sharp.
   ![tray](tray-preview.png) Click the icon for the menu.
 - Double ⇧ works the same as on Mac. To stop the "Sticky Keys" prompt after a few double ⇧, AURA turns off only its shortcut (5× Shift) while running. Not saved: quitting AURA or rebooting restores it.
+- Correction key: menu → "Correction key" (default double ⇧, or Ctrl / Alt / off). Double Ctrl is taken in JetBrains IDEs; with Alt, AURA sends an unassigned key while Alt is held so a lone Alt tap doesn't open the program's menu bar (and Alt alone can no longer be used to reach it). Shift is the safest.
 - No permissions needed. Autostart via registry (`HKCU\…\Run`), settings in `HKCU\Software\AURA`.
 - Word checking uses the built-in Windows spell checker; works for languages installed in Windows (Settings → Time & language → Language).
 - Selected text is read only via Ctrl+C (clipboard is restored).

@@ -1,7 +1,8 @@
 HOW TO USE
 • Typed a word in the wrong layout — press Space, AURA Switcher fixes it.
-• Press Shift twice quickly — the last word or the selected text
-  is converted to another layout.
+• Press Shift twice quickly (either side) — the last word or the selected text
+  is converted to another layout. The key can be changed in the menu
+  ("Correction key": Ctrl, Option/Alt or off); Shift is the safest choice.
 • Enter is never held back: the word before Enter is not corrected (Space and
   double Shift work as usual).
 • Click the language code in the menu bar (EN, УК, РУ) for the menu: turn off,
