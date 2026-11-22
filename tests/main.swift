@@ -186,6 +186,18 @@ for (order, text, srcLang, wantLang) in [
     if got != wantLang { mustFail += 1; print("MUST FAIL: selection «\(text)» (\(order.map { String($0.suffix(6)) })) → \(got), expected \(wantLang)") }
 }
 
+// a selection converted word by word: the signs at the edges of each word stay as typed
+do {
+    engine.layouts = [layout(US), layout("com.apple.keylayout.Ukrainian-PC"), layout("com.apple.keylayout.RussianWin")]; engine.reliable = [:]
+    let e = engine.layouts[0], u = engine.layouts[1]
+    forcedLang = "en"
+    for (text, want) in [("ghbdsn,", "привіт,"), (";ghbdsn", ";привіт"), ("\"ghbdsn\"", "\"привіт\""), ("ghbdsn, rjvg", "привіт, комп"),
+                         ("cj,frf, ghbdsn", "собака, привіт"), ("cj,frf", "собака"), ("[eksufy", "хуліган")] {
+        let got = engine.selectionText(text, src: e, dst: u)
+        if got != want { mustFail += 1; print("MUST FAIL: selection text «\(text)» → «\(got)», expected «\(want)»") }
+    }
+}
+
 // an inline completion (a selected rest after the typed word) is dropped before the word is replaced; a plain caret is not
 for (len, letters, want) in [(Int?.some(27), 6, true), (Int?.some(0), 6, false), (nil, 6, false), (Int?.some(27), 0, false)] {
     if Engine.isInlineCompletion(selectedLength: len, typedLetters: letters) != want { mustFail += 1; print("MUST FAIL: isInlineCompletion(\(len.map(String.init) ?? "nil"), \(letters))") }

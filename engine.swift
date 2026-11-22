@@ -867,13 +867,12 @@ final class Engine {
 
     /// Where a selection goes: every word of it is typed back into keys in the source layout and asked like a word typed
     /// without selection (autoFixEdges); the layout that most words vote for wins (a tie goes to the one nearer in the
-    /// cycle). Words nobody knows don't vote; with no vote at all the next layout in the cycle. For a single word the
-    /// signs at its edges are reported (lead, tail) so they stay as typed.
+    /// cycle). Words nobody knows don't vote; with no vote at all the next layout in the cycle.
     func selectionTarget(_ text: String, src: Int) -> (dst: Int, lead: Int, tail: Int) {
         let fallback = (dst: (src + 1) % layouts.count, lead: 0, tail: 0)
         guard layouts.indices.contains(src), layouts.count > 1 else { return fallback }
         let srcL = layouts[src]
-        var votes: [Int: Int] = [:], edges: (Int, Int)? = nil
+        var votes: [Int: Int] = [:]
         let words = text.split(whereSeparator: \.isWhitespace)
         for w in words where w.count >= 2 && w.count <= 40 {
             var keys: [Key] = []
@@ -883,12 +882,54 @@ final class Engine {
             }
             guard keys.count >= 2, let r = autoFixEdges(keys), r.layout !== srcL, let i = layouts.firstIndex(where: { $0 === r.layout }) else { continue }
             votes[i, default: 0] += 1
-            if words.count == 1 { edges = (r.lead, r.tail) }
         }
         guard let top = votes.values.max() else { return fallback }
         // ties: the nearest after the source in the cycle
         let best = (1..<layouts.count).map { (src + $0) % layouts.count }.first { votes[$0] == top }!
-        return (best, edges?.0 ?? 0, edges?.1 ?? 0)
+        return (best, 0, 0)
+    }
+
+    /// the signs at the edges of one word of a selection that stay as typed: keys that type a non-letter in the source
+    /// layout, when the word as a whole isn't a real word in the target but without them it is (same rule as for a word
+    /// typed without selection: «ghbdsn,» → «привіт,», while «[ekbufy» stays «хуліган»)
+    func tokenEdges(_ token: [Character], src: Layout, dst: Layout) -> (Int, Int) {
+        var keys: [Key] = []
+        for c in token {
+            guard let ks = src.keys(for: c), ks.count == 1, dst.toChar[ks[0]] != nil else { return (0, 0) }
+            keys.append(Key(code: ks[0].code, shift: ks[0].shift, ch: c))
+        }
+        guard keys.count >= 2 else { return (0, 0) }
+        func real(_ t: String) -> Bool { dictionaryWorks(dst.lang) ? isWord(t, dst.lang) : model(dst.lang)?.has(t) == true }
+        if real(dst.text(keys)) { return (0, 0) }
+        let (l, t) = edgeCounts(keys, typed: src)
+        guard l + t > 0 else { return (0, 0) }
+        let core = Array(keys[l..<(keys.count - t)])
+        // the word without its signs is a real word in the target (or the engine would choose that layout for it)
+        guard real(dst.text(core)) || autoFix(core) === dst else { return (0, 0) }
+        return (l, t)
+    }
+
+    /// the selection's text in layout `dst`: word by word, the signs at the edges of each word that would be letters in the
+    /// target layout stay as typed («ghbdsn,» → «привіт,»); runs of convertible characters go through the keys (accents compose)
+    func selectionText(_ text: String, src srcL: Layout, dst: Layout) -> String {
+        func convert(_ cs: ArraySlice<Character>) -> String {
+            var o = "", run: [Key] = []
+            for c in cs {
+                if let ks = srcL.keys(for: c), ks.allSatisfy({ dst.toChar[$0] != nil }) { run += ks; continue }
+                o += dst.text(run) + String(c); run = []
+            }
+            return o + dst.text(run)
+        }
+        var out = "", token: [Character] = []
+        func flush() {
+            guard !token.isEmpty else { return }
+            let (l, t) = tokenEdges(token, src: srcL, dst: dst)
+            out += String(token[..<l]) + convert(token[l..<(token.count - t)]) + String(token[(token.count - t)...])
+            token = []
+        }
+        for c in text { if c.isWhitespace { flush(); out.append(c) } else { token.append(c) } }
+        flush()
+        return out
     }
 
     func convertSelection(_ text: String) {
@@ -906,16 +947,7 @@ final class Engine {
         let again = text == lastSelOut && lastSelLang < layouts.count
         let pick = again ? (dst: (srcIdx + 1) % layouts.count, lead: 0, tail: 0) : selectionTarget(text, src: srcIdx)
         let srcL = layouts[srcIdx], dstIdx = pick.dst, dst = layouts[dstIdx]
-        // runs of convertible characters go through the keys (so accents compose), the rest stays
-        var out = "", run: [Key] = []
-        // one word with signs at its edges: the signs stay as typed («"ghbdsn» → «"привіт»)
-        let chars = Array(text), lead = min(pick.lead, chars.count), tail = min(pick.tail, chars.count - lead)
-        out += String(chars[..<lead])
-        for c in chars[lead..<(chars.count - tail)] {
-            if let ks = srcL.keys(for: c), ks.allSatisfy({ dst.toChar[$0] != nil }) { run += ks; continue }
-            out += dst.text(run) + String(c); run = []
-        }
-        out += dst.text(run) + String(chars[(chars.count - tail)...])
+        let out = selectionText(text, src: srcL, dst: dst)
         typeText(out)
         for _ in 0..<out.count { postKey(123, flags: .maskShift) } // reselect (⇧← moves by character)
         lastSelOut = out; lastSelLang = dstIdx
