@@ -550,7 +550,9 @@ final class Engine {
         if keys == lastCycled { return }
         noFix = ""
         // «b yt»: both «и не» (ru) and «не» alone (uk) fit; the pair that makes both words a language wins
-        let found = pairFix(keys, before: before) ?? autoFix(keys)
+        var edges = (lead: 0, tail: 0)
+        var found = pairFix(keys, before: before)
+        if found == nil, let r = autoFixEdges(keys) { found = r.layout; edges = (r.lead, r.tail) }
         let ms = Int((ProcessInfo.processInfo.systemUptime - t0) * 1000)
         if ms > 100 { auraLog.notice("slow check: \(ms) ms") }
         if found == nil, noFix.hasPrefix("already a word"), keys.count >= 3, let l = typedLayout(keys), !isLatin(l.text(keys)) {
@@ -567,7 +569,7 @@ final class Engine {
         if lastWord != keys || !word.isEmpty || trailing != 1 {
             auraLog.notice("skip: kept typing during a \(ms) ms check"); return
         }
-        applyFix(fix, keys, before: before, trailing: 1)
+        applyFix(fix, keys, before: before, trailing: 1, edges: edges)
     }
 
     /// logs when the text before the caret is not what the keys say (and which layout it does match)
@@ -582,9 +584,9 @@ final class Engine {
     }
 
     /// puts the fixed word on screen: `trailing` = spaces typed after it (1 after a space, 0 before Return)
-    func applyFix(_ fix: Layout, _ keys: [Key], before: [Key], trailing: Int) {
-        let out = fix.text(keys)
+    func applyFix(_ fix: Layout, _ keys: [Key], before: [Key], trailing: Int, edges: (lead: Int, tail: Int) = (0, 0)) {
         let src = typedLayout(keys), typed = src?.text(keys)
+        let out = src.map { textKeepingEdges(keys, fix, typed: $0, lead: edges.lead, tail: edges.tail) } ?? fix.text(keys)
         let b = fix.text(before), bTyped = src?.text(before) ?? ""
         let fixBefore = before.count == 1 && b.count == 1 && b != bTyped
             && Engine.letterWords[fix.lang]?.contains(b.lowercased()) == true
@@ -720,6 +722,39 @@ final class Engine {
     var noFix = ""  // why autoFix found nothing (for the log)
     /// language of the last non-Latin word that was fixed or typed right (not set by the tests, which call autoFix alone)
     var recentLang: String? = nil, recentAt = 0.0
+    /// Punctuation next to a word: a key that types a sign in the layout the user typed in may be a letter in the
+    /// other one (`,` is «б», `.` is «ю», `[` is «х» in Ukrainian), so «ghbdsn,» as a whole is «привітб» — no word.
+    /// Rule: first the keys as typed; if nothing is found, the leading and trailing keys that type a non-letter
+    /// (up to 3 each, at least 2 keys stay) are set aside, the rest is checked alone, and the set-aside signs stay as typed.
+    /// Without punctuation the word would be fixed the same way, and a real comma after it stays a comma.
+    func edgeCounts(_ keys: [Key], typed: Layout) -> (lead: Int, tail: Int) {
+        func sign(_ k: Key) -> Bool { typed.toChar[k].map { !$0.isLetter } ?? false }
+        var lead = 0, tail = 0
+        while lead < 3, lead < keys.count, sign(keys[lead]) { lead += 1 }
+        while tail < 3, keys.count - lead - tail > 0, sign(keys[keys.count - 1 - tail]) { tail += 1 }
+        while keys.count - lead - tail < 2, lead + tail > 0 { if tail > 0 { tail -= 1 } else { lead -= 1 } }
+        return (lead, tail)
+    }
+
+    func autoFixEdges(_ keys: [Key]) -> (layout: Layout, lead: Int, tail: Int)? {
+        let whole = autoFix(keys)
+        guard let cur = typedLayout(keys) else { return whole.map { ($0, 0, 0) } }
+        // the keys as typed win when they spell a real word (`[ekbufy` = «хуліган»: the first key is a letter there);
+        // «привітб» is not one, so the word without its comma is tried
+        if let w = whole {
+            let t = w.text(keys)
+            if dictionaryWorks(w.lang) ? isWord(t, w.lang) : model(w.lang)?.has(t) == true { return (w, 0, 0) }
+        }
+        let (lead, tail) = edgeCounts(keys, typed: cur)
+        if lead + tail > 0, let f = autoFix(Array(keys[lead..<(keys.count - tail)])) { return (f, lead, tail) }
+        return whole.map { ($0, 0, 0) }
+    }
+
+    /// the word in layout `fix` with the signs at its edges left as typed
+    func textKeepingEdges(_ keys: [Key], _ fix: Layout, typed: Layout, lead: Int, tail: Int) -> String {
+        typed.text(Array(keys[..<lead])) + fix.text(Array(keys[lead..<(keys.count - tail)])) + typed.text(Array(keys[(keys.count - tail)...]))
+    }
+
     func autoFix(_ keys: [Key]) -> Layout? {
         guard keys.count >= 2, let cur = typedLayout(keys) else { noFix = keys.count >= 2 ? "layout not recognized" : ""; return nil }
         let typed = cur.text(keys)
@@ -798,12 +833,22 @@ final class Engine {
         let again = keys == lastCycled && lastCycledLang != nil
         // (not the layout the word is already in: right after auto-correction that would change nothing)
         let cur = currentLang()
-        guard let n = (again ? nil : autoFix(keys).flatMap { $0.lang == cur ? nil : $0 }) ?? next(after: again ? lastCycledLang : cur) else { return }
+        let found = again ? nil : autoFixEdges(keys).flatMap { $0.layout.lang == cur ? nil : $0 }
+        guard let n = found?.layout ?? next(after: again ? lastCycledLang : cur) else { return }
         lastCycled = keys; lastCycledLang = n.lang
         auraLog.notice("double ⇧: word → \(n.lang, privacy: .public)")
-        let shown = typedLayout(keys)?.text(keys).count ?? keys.count
+        let src = typedLayout(keys)
+        let shown = src?.text(keys).count ?? keys.count
+        var edges = (lead: found?.lead ?? 0, tail: found?.tail ?? 0)
+        // cycling blindly: a sign that is still a sign in the next layout stays as typed (a quote doesn't become another sign)
+        if found == nil, let src {
+            func sign(_ k: Key) -> Bool { src.toChar[k].map { !$0.isLetter } == true && n.toChar[k].map { !$0.isLetter } == true }
+            while edges.lead < keys.count - 1, sign(keys[edges.lead]) { edges.lead += 1 }
+            while edges.tail < keys.count - 1 - edges.lead, sign(keys[keys.count - 1 - edges.tail]) { edges.tail += 1 }
+        }
         select(n)  // before the text: see autoCorrect
-        replace(count: shown + trailing, with: n.text(keys) + String(repeating: " ", count: trailing))
+        let out = src.map { textKeepingEdges(keys, n, typed: $0, lead: edges.lead, tail: edges.tail) } ?? n.text(keys)
+        replace(count: shown + trailing, with: out + String(repeating: " ", count: trailing))
     }
 
     func convertSelection(_ text: String) {
