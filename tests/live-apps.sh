@@ -1,8 +1,12 @@
 #!/bin/zsh
-# Live check of the correction key (double ⇧) in real Mac apps: TextEdit, Safari, Chrome, VS Code — only new empty
-# documents / windows and a local test page, nothing is sent or saved. AURA must be running, layouts ABC, Ukrainian-PC, RussianWin.
-# Keys go to the front app only if it is the app under test (tests/live-apps.swift). Don't touch the Mac while it runs.
-#   tests/live-apps.sh [TextEdit] [Safari] [Chrome] [Code]      (default: all)
+# Live check of the correction key (double ⇧) in real Mac apps, built so that it NEVER touches a window of the user's:
+#  · TextEdit — one new document; its window id is remembered, read and closed by id only (and only while it is still untitled);
+#  · Chrome   — a separate copy with a temporary profile (--user-data-dir), found and stopped by its own pid; the user's Chrome is untouched;
+#  · VS Code  — the same: a separate copy with temporary user-data/extensions dirs, stopped by its own pid;
+#  · Safari   — has no separate profile, so it is NOT driven here: check it by hand (the test page is written to the printed path).
+# Only a new empty document / a local test page; nothing is sent or saved. Before and after, the windows of the apps are listed and compared.
+# AURA must be running, enabled, key Shift; layouts ABC, Ukrainian-PC, RussianWin. Keys go to the front app only if it is the test copy.
+#   tests/live-apps.sh [TextEdit] [Chrome] [Code]      (default: all three). Don't touch the Mac while it runs.
 cd "$(dirname "$0")/.."
 mkdir -p build; T=$(mktemp -d /tmp/aura-apps.XXXXXX)
 swiftc -O -swift-version 5 tests/live-apps.swift -o $T/post || exit 1
@@ -11,55 +15,67 @@ cat > $T/page.html <<'H'
 <input id=t autofocus><input id=p type=password>
 <script>function u(){document.title='T:'+t.value+'|P:'+p.value}t.oninput=p.oninput=u;t.focus()</script>
 H
+echo "(Safari: open file://$T/page.html by hand in a NEW window, click the first field, then type ghbdsn and press ⇧⇧; Tab for the password field)" >&2
 START=$(defaults read com.chernov.aura hotkey 2>/dev/null)
+aura_ok() { pgrep -x "AURA Switcher" >/dev/null && [[ "$(defaults read com.chernov.aura hotkey 2>/dev/null || echo shift)" == shift ]] && [[ "$(defaults read com.chernov.aura enabled 2>/dev/null || echo 1)" != 0 ]]; }
+windows() { # names of the windows of the user's apps, one line per window — before and after must be the same
+  for a in TextEdit "Google Chrome" Safari "Visual Studio Code" "Code"; do
+    pgrep -x "$a" >/dev/null || continue
+    osascript -e "tell application \"System Events\" to tell process \"$a\" to get name of every window" 2>/dev/null | tr ',' '\n' | sed "s/^ */$a: /"
+  done | sort; }
+windows > $T/before.txt
 echo "| app | case | expected | got | |"; echo "|---|---|---|---|---|"
-row() { # app case expected got — compared ignoring case and trailing spaces (TextEdit capitalizes the first letter)
-  a=${${3:l}%% #}; b=${${4:l}%% #}; [[ "$a" == "$b" ]] && ok="✅" || ok="⚠️"; echo "| $1 | $2 | $3 | $4 | $ok |"; }
+row() { a=${${3:l}%% #}; b=${${4:l}%% #}; [[ "$a" == "$b" ]] && ok="✅" || ok="⚠️"; echo "| $1 | $2 | $3 | $4 | $ok |"; }
 exp() { case $1 in TextEdit) echo "привіт$2";; Code) echo "(not readable)";; *) echo "T:привіт$2|P:";; esac; }
-post() { $T/post "$1" "$2" 2>&1 | tail -1; }
-typeset -A BUNDLE; BUNDLE=(TextEdit com.apple.TextEdit Safari com.apple.Safari Chrome com.google.Chrome Code com.microsoft.VSCode)
-text() { # app → current text
+frontpid() { osascript -e 'tell application "System Events" to get unix id of first process whose frontmost is true'; }
+TEWAS=0; pgrep -x TextEdit >/dev/null && TEWAS=1
+APPPID=""; WID=""; BID=""
+open_te() { WID=$(osascript -e 'tell application "TextEdit"' -e 'activate' -e 'make new document' -e 'return id of front window' -e 'end tell'); BID=com.apple.TextEdit; APPPID=$(pgrep -nx TextEdit); sleep 2; }
+open_chrome() { open -na "Google Chrome" --args --user-data-dir=$T/chrome --no-first-run --no-default-browser-check --new-window "file://$T/page.html"; sleep 5
+  APPPID=$(pgrep -f -- "--user-data-dir=$T/chrome" | sort -n | head -1); BID=com.google.Chrome; }
+open_code() { open -na "Visual Studio Code" --args --user-data-dir=$T/code --extensions-dir=$T/ext --new-window; sleep 6
+  APPPID=$(pgrep -f -- "--user-data-dir=$T/code" | sort -n | head -1); BID=com.microsoft.VSCode
+  [[ -n $APPPID ]] && osascript -e "tell application \"System Events\" to set frontmost of (first process whose unix id is $APPPID) to true" >/dev/null && sleep 1 \
+    && osascript -e 'tell application "System Events" to keystroke "n" using command down' >/dev/null; sleep 2; }
+text() { # current text of the test document / page (never reads anything else)
   case $1 in
-    TextEdit) osascript -e 'tell application "System Events" to key code 53'; sleep 0.5; osascript -e 'tell application "TextEdit" to get text of document 1' ;;
-    Safari) osascript -e 'tell application "Safari" to get name of current tab of front window' ;;
-    Chrome) osascript -e 'tell application "Google Chrome" to get title of active tab of front window' ;;
+    TextEdit) osascript -e 'tell application "System Events" to key code 53'; sleep 0.5
+              osascript -e "tell application \"TextEdit\" to get text of document of window id $WID" ;;
+    Chrome) osascript -e "tell application \"System Events\" to get name of front window of (first process whose unix id is $APPPID)" | sed 's/ - Google Chrome.*//;s/ — .*//' ;;
     *) echo "(not readable)" ;;
   esac; }
-openapp() {
+post() { $T/post $BID "$1" $APPPID 2>&1 | tail -1; }
+close_app() {
   case $1 in
-    TextEdit) osascript -e 'tell application "TextEdit"' -e 'activate' -e 'make new document' -e 'end tell' >/dev/null ;;
-    Safari) osascript -e 'tell application "Safari"' -e 'activate' -e "make new document with properties {URL:\"file://$T/page.html\"}" -e 'end tell' >/dev/null ;;
-    Chrome) osascript -e 'tell application "Google Chrome"' -e 'activate' -e 'make new window' -e "set URL of active tab of front window to \"file://$T/page.html\"" -e 'end tell' >/dev/null ;;
-    Code) open -a "Visual Studio Code" --args --new-window; sleep 4; osascript -e 'tell application "Visual Studio Code" to activate'; sleep 1
-          osascript -e 'tell application "System Events" to keystroke "n" using command down' ;;
-  esac; sleep 3; }
-closeapp() {
-  case $1 in
-    TextEdit) osascript -e 'tell application "TextEdit" to close document 1 saving no' -e 'tell application "TextEdit" to quit' >/dev/null 2>&1 ;;
-    Safari) osascript -e 'tell application "Safari" to close front document' >/dev/null 2>&1 ;;
-    Chrome) osascript -e 'tell application "Google Chrome" to close front window' >/dev/null 2>&1 ;;
-    Code) osascript -e 'tell application "Visual Studio Code" to activate' -e 'tell application "System Events" to keystroke "w" using command down' -e 'tell application "System Events" to keystroke "w" using {command down, shift down}' >/dev/null 2>&1 ;;
+    TextEdit) # only our window, only while it is untitled
+              n=$(osascript -e "tell application \"TextEdit\" to get name of window id $WID" 2>/dev/null)
+              if [[ "$n" == (Untitled*|Без*) ]]; then osascript -e "tell application \"TextEdit\" to close window id $WID saving no" >/dev/null 2>&1
+              else echo "(TextEdit: window $WID is not untitled any more — left open)" >&2; fi
+              [[ $TEWAS == 0 ]] && osascript -e 'tell application "TextEdit" to quit' >/dev/null 2>&1 ;;
+    Chrome|Code) [[ -n $APPPID ]] && pkill -f -- "--user-data-dir=$T/${1:l}" ;;   # the test copy only (its own profile dir in the command line)
   esac; }
-aura_ok() { pgrep -x "AURA Switcher" >/dev/null && [[ "$(defaults read com.chernov.aura hotkey 2>/dev/null || echo shift)" == shift ]] && [[ "$(defaults read com.chernov.aura enabled 2>/dev/null || echo 1)" != 0 ]]; }
-for app in ${@:-TextEdit Safari Chrome Code}; do
+for app in ${@:-TextEdit Chrome Code}; do
   aura_ok || { echo "| $app | — | — | SKIPPED: AURA is not running / not enabled / key is not Shift | ⚠️ |"; continue; }
-  b=$BUNDLE[$app]; openapp $app
-  [[ "$(osascript -e 'tell application "System Events" to get bundle identifier of first process whose frontmost is true')" == "$b" ]] || { echo "| $app | — | — | SKIPPED: not in front | ⚠️ |"; closeapp $app; continue; }
-  row $app "empty field, double ⇧" UK "$(post $b empty | sed 's/Ukrainian-PC/UK/')"
-  post $b word >/dev/null; row $app "«ghbdsn» + double ⇧, text" "$(exp $app)" "$(text $app)"
-  post $b clear >/dev/null
-  post $b space >/dev/null; row $app "«ghbdsn» + space (auto-correction), text" "$(exp $app " ")" "$(text $app)"
-  post $b clear >/dev/null
-  post $b select >/dev/null; row $app "«ghbdsn», select all, double ⇧, text" "$(exp $app)" "$(text $app)"
-  post $b clear >/dev/null
-  if [[ $app == Safari || $app == Chrome ]]; then
-    post $b tab >/dev/null; post $b word >/dev/null; row $app "password field: «ghbdsn» + double ⇧, value" "T:|P:ghbdsn" "$(text $app)"
-    row $app "password field: layout" "ABC→UK (switches)" "$($T/post $b clear | sed 's/Ukrainian-PC/ABC→UK (switches)/;s/^ABC$/unchanged/')"
-    osascript -e 'tell application "System Events" to key code 48 using shift down' >/dev/null; post $b clear >/dev/null
-    post $b addr >/dev/null; row $app "address bar: layout after double ⇧" "UK" "$(post $b empty | sed 's/Ukrainian-PC/UK/')"
+  case $app in TextEdit) open_te;; Chrome) open_chrome;; Code) open_code;; *) echo "| $app | — | — | not driven here (check by hand) | ⚠️ |"; continue;; esac
+  [[ -n $APPPID ]] || { echo "| $app | — | — | SKIPPED: test copy did not start | ⚠️ |"; continue; }
+  [[ "$(frontpid)" == "$APPPID" ]] || { echo "| $app | — | — | SKIPPED: the test copy is not in front | ⚠️ |"; close_app $app; continue; }
+  if [[ $app == Chrome ]]; then t0=$(text Chrome); [[ "$t0" == T:* ]] || { echo "| $app | — | — | SKIPPED: front window is not the test page ($t0) | ⚠️ |"; close_app $app; continue; }; fi
+  row $app "empty field, double ⇧" UK "$(post empty | sed 's/Ukrainian-PC/UK/')"
+  post word >/dev/null; row $app "«ghbdsn» + double ⇧, text" "$(exp $app)" "$(text $app)"
+  post clear >/dev/null
+  post space >/dev/null; row $app "«ghbdsn» + space (auto-correction), text" "$(exp $app " ")" "$(text $app)"
+  post clear >/dev/null
+  post select >/dev/null; row $app "«ghbdsn», select all, double ⇧, text" "$(exp $app)" "$(text $app)"
+  post clear >/dev/null
+  if [[ $app == Chrome ]]; then
+    post tab >/dev/null; post word >/dev/null; row $app "password field: «ghbdsn» + double ⇧, value" "T:|P:ghbdsn" "$(text $app)"
+    row $app "password field: layout" "UK (switches)" "$(post clear | sed 's/Ukrainian-PC/UK (switches)/')"
+    post addr >/dev/null; row $app "address bar: layout after double ⇧" "UK" "$(post empty | sed 's/Ukrainian-PC/UK/')"
   fi
-  closeapp $app; sleep 1
+  close_app $app; sleep 2
 done
 defaults write com.chernov.aura hotkey "${START:-shift}"
-osascript -e 'tell application "System Events" to tell (first process whose frontmost is true) to keystroke ""' >/dev/null 2>&1
+sleep 1; windows > $T/after.txt
+if diff -q $T/before.txt $T/after.txt >/dev/null; then echo "windows of the user's apps before/after: unchanged ✅"
+else echo "WINDOWS DIFFER ⚠️:"; diff $T/before.txt $T/after.txt; fi
 rm -rf $T
