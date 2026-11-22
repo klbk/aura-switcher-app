@@ -130,6 +130,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         add(m, L("enabled"), s.enabled) { self.s.enabled.toggle(); self.updateTitle() }
         add(m, L("auto"), s.auto, enabled: s.enabled) { self.s.auto.toggle() }
         add(m, L("sound"), s.sound, enabled: s.enabled) { self.s.sound.toggle(); if self.s.sound { Sounds.play(Sounds.auto) } }
+        let hk = s.hotkey
+        let hkSym = ["shift": "⇧", "ctrl": "⌃", "alt": "⌥"][hk]
+        if let hkSym { add(m, L("hint").replacingOccurrences(of: "⇧", with: hkSym)) }
+        let hkNames = [("shift", "⇧⇧ Shift"), ("ctrl", "⌃⌃ Ctrl"), ("alt", "⌥⌥ Option")]
+        let hkMenu = NSMenu()
+        for (k, n) in hkNames { add(hkMenu, n, hk == k) { self.s.hotkey = k } }
+        add(hkMenu, L("off"), hk == "off") { self.s.hotkey = "off" }
+        let hi = NSMenuItem(title: L("hotkey"), action: nil, keyEquivalent: ""); hi.submenu = hkMenu
+        let hv = hk == "off" ? L("off") : (hkNames.first { $0.0 == hk }?.1 ?? "")
+        if #available(macOS 14, *) { hi.badge = NSMenuItemBadge(string: hv) } else { hi.title += ": " + hv }
+        m.addItem(hi)
         if engine.tap == nil { add(m, L("access"), enabled: true) {
             NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility")!) } }
         m.addItem(.separator())
@@ -151,32 +162,31 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         m.addItem(li)
         m.addItem(.separator())
 
+        let setMenu = NSMenu()
         let exMenu = NSMenu()
         if s.excluded.isEmpty { add(exMenu, emptyHint("exclude")) }
         for e in s.excluded { add(exMenu, "✕ \(appName(e))") { self.s.excluded = self.s.excluded.filter { $0 != e } } }
-        let ei = NSMenuItem(title: L("exclusions"), action: nil, keyEquivalent: ""); ei.submenu = exMenu; m.addItem(ei)
 
-        let rMenu = NSMenu()
-        if engine.recent.isEmpty { add(rMenu, L("empty")) }
+        exMenu.addItem(.separator())
+        if engine.recent.isEmpty { add(exMenu, L("empty")) }
         for r in engine.recent {
             let on = s.excluded.contains(r)
-            add(rMenu, appName(r), on) { self.s.excluded = on ? self.s.excluded.filter { $0 != r } : self.s.excluded + [r] }
+            add(exMenu, appName(r), on) { self.s.excluded = on ? self.s.excluded.filter { $0 != r } : self.s.excluded + [r] }
         }
-        let ri = NSMenuItem(title: L("recent"), action: nil, keyEquivalent: ""); ri.submenu = rMenu; m.addItem(ri)
 
+        let ei = NSMenuItem(title: L("exclusions"), action: nil, keyEquivalent: ""); ei.submenu = exMenu; setMenu.addItem(ei)
         let bMenu = NSMenu()
         if s.bindings.isEmpty { add(bMenu, emptyHint("appLang")) }
         for (b, l) in s.bindings.sorted(by: { $0.key < $1.key }) {
             add(bMenu, "✕ \(appName(b)) → \(displayCode(l))") { self.s.bindings[b] = nil }
         }
-        let bi = NSMenuItem(title: L("bindings"), action: nil, keyEquivalent: ""); bi.submenu = bMenu; m.addItem(bi)
-        m.addItem(.separator())
 
+        let bi = NSMenuItem(title: L("bindings"), action: nil, keyEquivalent: ""); bi.submenu = bMenu; setMenu.addItem(bi)
         let login = SMAppService.mainApp.status == .enabled
-        add(m, L("login"), login) {
+        add(setMenu, L("login"), login) {
             if login { try? SMAppService.mainApp.unregister() } else { try? SMAppService.mainApp.register() }
         }
-        add(m, L("words")) { self.editWords() }
+        add(setMenu, L("words")) { self.editWords() }
         let uiMenu = NSMenu()
         add(uiMenu, L("system"), s.uiLang == nil) { self.s.uiLang = nil }
         let nameOf = Dictionary(uniqueKeysWithValues: zip(uiLangs, uiLangNames))
@@ -192,8 +202,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             let ri = NSMenuItem(title: L(key), action: nil, keyEquivalent: ""); ri.submenu = rm; allMenu.addItem(ri)
         }
         let ai = NSMenuItem(title: L("allLangs"), action: nil, keyEquivalent: ""); ai.submenu = allMenu; uiMenu.addItem(ai)
-        let ui = NSMenuItem(title: L("uiLang"), action: nil, keyEquivalent: ""); ui.submenu = uiMenu; m.addItem(ui)
-        add(m, L("hint"))
+        let ui = NSMenuItem(title: L("uiLang"), action: nil, keyEquivalent: ""); ui.submenu = uiMenu; setMenu.addItem(ui)
+        let si = NSMenuItem(title: L("settings"), action: nil, keyEquivalent: ""); si.submenu = setMenu; m.addItem(si)
+        m.addItem(.separator())
         add(m, updateDue() ? L("updateDue") : L("update")) {
             self.s.updateCheckedAt = Date().timeIntervalSince1970
             self.updateTitle()
