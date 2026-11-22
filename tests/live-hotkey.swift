@@ -134,7 +134,10 @@ run("selected word", "selection converted, layout +1", {
 if want("3b") {
 do { // password field
     reset(); host("secure"); spin(0.4); if !ownWindowFront() { stop("password window not front") }
-    dbl(K.sh.l, K.sh.m); spin(1.0); let (g, o) = shifted(0, 1)(); record(("password field", "switch +1 (nothing is typed or copied)", g, o)); host("plain")
+    dbl(K.sh.l, K.sh.m); spin(1.0); let (g, o) = shifted(0, 1)(); record(("password field, empty", "switch +1 (nothing is typed or copied)", g, o))
+    reset(); host("secure"); spin(0.4); if !ownWindowFront() { stop("password window not front") }
+    type("hello"); spin(0.3); dbl(K.sh.l, K.sh.m); spin(1.0); let (g2, o2) = shifted(0, 1)(); let t = hostText()
+    record(("password field, typed «hello»", "text stays «hello», layout +1", "\(g2), text «\(t)»", o2 && t == "hello")); host("plain")
 }
 do { // another window of the app, right after
     reset(); host("second"); spin(0.4); if !ownWindowFront() { stop("second window not front") }

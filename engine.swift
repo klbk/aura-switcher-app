@@ -803,8 +803,20 @@ final class Engine {
 
     // MARK: double shift
 
+    /// the focused element is a password field: nothing in it is read, copied or converted
+    func focusIsSecure() -> Bool {
+        var f: CFTypeRef?
+        guard AXUIElementCopyAttributeValue(AXUIElementCreateSystemWide(), kAXFocusedUIElementAttribute as CFString, &f) == .success,
+              let f else { return false }
+        var sub: CFTypeRef?
+        AXUIElementCopyAttributeValue(f as! AXUIElement, kAXSubroleAttribute as CFString, &sub)
+        return sub as? String == kAXSecureTextFieldSubrole as String
+    }
+
     func doubleShift() {
         Sounds.play(Sounds.shift)
+        // a password field: the typed keys are not converted and nothing is copied; the double tap only switches the layout
+        if focusIsSecure() { cycleLayout(); return }
         let sel = axSelectedText()
         if let sel, !sel.isEmpty { convertSelection(sel); return }
         // the word being typed, or the previous one right after a single space; after two or more spaces the text

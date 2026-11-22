@@ -46,7 +46,7 @@ Timer.scheduledTimer(withTimeInterval: 0.05, repeats: true) { _ in
         for l in c.split(separator: "\n") { command(String(l)) }
     }
     let keyWin = NSApp.keyWindow
-    let text = (keyWin === main && kind == "plain") ? tv.string : (keyWin === extra ? ((extra?.contentView?.subviews.first as? NSTextView)?.string ?? "") : "")
+    let text = (keyWin === main && kind == "secure") ? ((mainR as? NSSecureTextField)?.stringValue ?? "") : (keyWin === main && kind == "plain") ? tv.string : (keyWin === extra ? ((extra?.contentView?.subviews.first as? NSTextView)?.string ?? "") : "")
     let s = "active=\(NSApp.isActive ? 1 : 0) key=\(keyWin != nil ? 1 : 0) kind=\(kind) win=\(keyWin?.title ?? "-")\ntext=\(text.replacingOccurrences(of: "\n", with: "\\n"))\n"
     try? s.write(toFile: stateFile, atomically: true, encoding: .utf8)
 }
