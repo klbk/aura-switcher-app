@@ -161,6 +161,21 @@ int wmain(int argc, wchar_t** argv) {
         wstring got = run(L"привіт", layouts[1], layouts[2]);
         if (got != L"привіт\x01") { mustFail++; printf("MUST FAIL (RU,UK,EN order): привіт -> %s\n", got.empty() ? "unchanged" : utf8(got).c_str()); }
     }
+    // signs next to a word (same cases as tests/main.swift): «ghbdsn,» is fixed to «привіт,», the signs stay as typed
+    {
+        layouts = {layout(US), layout(L"00000422")}; reliable.clear();
+        const Layout& en = layouts[0]; const Layout& uk = layouts[1];
+        struct Edge { const wchar_t* meant; const Layout* m; const Layout* t; const wchar_t* want; };  // want: nullptr = left alone
+        for (auto e : {Edge{L"привітб", &uk, &en, L"привіт,"}, Edge{L"привітю", &uk, &en, L"привіт."}, Edge{L"Єпривіт", &uk, &en, L"\"привіт"},
+                       Edge{L"Єпривітб", &uk, &en, L"\"привіт,"}, Edge{L"hello,", &en, &en, nullptr}, Edge{L"привіт,", &uk, &uk, nullptr}}) {
+            vector<Key> k; if (!keysFor(e.meant, *e.m, k) || !e.t->maps(k)) { mustFail++; printf("MUST FAIL: no keys for %s\n", utf8(e.meant).c_str()); continue; }
+            forcedLayout = e.t->hkl;
+            int lead, tail; int j = autoFixEdges(k, lead, tail);
+            wstring got = j < 0 ? L"" : textKeepingEdges(k, *e.t, layouts[j], lead, tail);
+            if (got != (e.want ? e.want : L"")) { mustFail++; printf("MUST FAIL: signs %s -> %s\n", utf8(e.meant).c_str(), got.empty() ? "unchanged" : utf8(got).c_str()); }
+        }
+        layouts = {layout(L"00000419"), layout(L"00000422"), layout(US)}; reliable.clear();
+    }
     // a Ukrainian name typed in the Russian layout, with no Ukrainian dictionary (Windows has none):
     // needs the Russian spell checker to say «вынницею» isn't Russian. Russian words stay.
     if (dictionaryWorks(layouts[0].locale)) {

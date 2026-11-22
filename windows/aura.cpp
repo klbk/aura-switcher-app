@@ -789,6 +789,41 @@ static int autoFixTarget(const vector<Key>& keys) {
     return best;
 }
 
+// Punctuation next to a word: a key that types a sign in the layout the user typed in may be a letter in the other one
+// (`,` is «б», `.` is «ю», `[` is «х» in Ukrainian), so «ghbdsn,» as a whole is «привітб» — no word. Rule (same as
+// engine.swift): first the keys as typed; if that is not a real word, the leading and trailing keys that type a non-letter
+// (up to 3 each, at least 2 keys stay) are set aside, the rest is checked alone, and the set-aside signs stay as typed.
+static void edgeCounts(const vector<Key>& keys, const Layout& typed, int& lead, int& tail) {
+    auto sign = [&](const Key& k) { auto it = typed.toChar.find(k); return it != typed.toChar.end() && !IsCharAlphaW(it->second); };
+    lead = tail = 0;
+    while (lead < 3 && lead < int(keys.size()) && sign(keys[lead])) lead++;
+    while (tail < 3 && int(keys.size()) - lead - tail > 0 && sign(keys[keys.size() - 1 - tail])) tail++;
+    while (int(keys.size()) - lead - tail < 2 && lead + tail > 0) { if (tail > 0) tail--; else lead--; }
+}
+static int autoFixEdges(const vector<Key>& keys, int& lead, int& tail) {
+    lead = tail = 0;
+    int whole = autoFixTarget(keys);
+    if (layouts.empty()) return whole;
+    const Layout& cur = layouts[layoutIndex(fgLayout())];
+    // the keys as typed win when they spell a real word (`[ekbufy` = «хуліган»: the first key is a letter there)
+    if (whole >= 0) {
+        wstring t = layouts[whole].text(keys); const wstring& loc = layouts[whole].locale;
+        const LangModel* lm = model(loc);
+        if (dictionaryWorks(loc) ? isWord(t, loc) : (lm && lm->has(t))) return whole;
+    }
+    int l, t2; edgeCounts(keys, cur, l, t2);
+    if (l + t2 > 0) {
+        int core = autoFixTarget(vector<Key>(keys.begin() + l, keys.end() - t2));
+        if (core >= 0) { lead = l; tail = t2; return core; }
+    }
+    return whole;
+}
+// the word in layout `to` with the signs at its edges left as typed (in layout `typed`)
+static wstring textKeepingEdges(const vector<Key>& keys, const Layout& typed, const Layout& to, int lead, int tail) {
+    return typed.text(vector<Key>(keys.begin(), keys.begin() + lead)) + to.text(vector<Key>(keys.begin() + lead, keys.end() - tail))
+         + typed.text(vector<Key>(keys.end() - tail, keys.end()));
+}
+
 // MARK: - Actions (main thread)
 
 static wstring lastSelOut; static int lastSelLang = 0;
@@ -934,12 +969,24 @@ static void onDoubleShift(Snapshot* s) {
         static unsigned lastSeq = ~0u; static int lastIdx = -1;
         bool again = s->seq == lastSeq && lastIdx >= 0 && lastIdx < int(layouts.size());
         int curIdx = again ? lastIdx : layoutIndex(fgLayout());
-        int best = again ? -1 : autoFixTarget(s->keys);
+        // the signs at the word's edges stay as typed in the layout it was typed in (kept across «again»)
+        static int origIdx = -1, edgeLead = 0, edgeTail = 0;
+        int best = -1;
+        if (!again) { origIdx = layoutIndex(fgLayout()); edgeLead = edgeTail = 0; best = autoFixEdges(s->keys, edgeLead, edgeTail); }
         int nIdx = best >= 0 ? best : (curIdx + 1) % int(layouts.size());
         lastSeq = s->seq; lastIdx = nIdx;
         const Layout& cur = layouts[curIdx];
         const Layout& n = layouts[nIdx];
-        replaceIn(int(cur.text(s->keys).size()) + s->trailing, n.text(s->keys) + wstring(s->trailing, L' '), n);
+        const Layout& orig = layouts[origIdx >= 0 && origIdx < int(layouts.size()) ? origIdx : curIdx];
+        // cycling blindly: a sign that is still a sign in the next layout stays as typed too
+        if (!again && best < 0) {
+            auto sign = [&](const Key& k) { auto a = orig.toChar.find(k), b = n.toChar.find(k);
+                                           return a != orig.toChar.end() && b != n.toChar.end() && !IsCharAlphaW(a->second) && !IsCharAlphaW(b->second); };
+            while (edgeLead < int(s->keys.size()) - 1 && sign(s->keys[edgeLead])) edgeLead++;
+            while (edgeTail < int(s->keys.size()) - 1 - edgeLead && sign(s->keys[s->keys.size() - 1 - edgeTail])) edgeTail++;
+        }
+        int lead = std::min(edgeLead, int(s->keys.size())), tail = std::min(edgeTail, int(s->keys.size()) - lead);
+        replaceIn(int(cur.text(s->keys).size()) + s->trailing, textKeepingEdges(s->keys, orig, n, lead, tail) + wstring(s->trailing, L' '), n);
         return;
     }
     if (fgIsConsole()) { cycleLayout(); return; }  // Ctrl+C there would interrupt the running command
@@ -1025,10 +1072,10 @@ static bool focusIsEmpty() {
 }
 
 // puts the fixed word on screen: `trailing` = spaces typed after it (1 after a space, 0 before Return)
-static void applyFix(int j, Snapshot* s, int trailing) {
+static void applyFix(int j, Snapshot* s, int trailing, int lead = 0, int tail = 0) {
     if (focusIsPassword()) return;
-    wstring out = layouts[j].text(s->keys);
     const Layout& cur = layouts[layoutIndex(fgLayout())];
+    wstring out = textKeepingEdges(s->keys, cur, layouts[j], lead, tail);
     wstring b = layouts[j].text(s->before), bTyped = cur.text(s->before);
     bool fixBefore = s->before.size() == 1 && b != bTyped && isLetterWord(b, layouts[j].locale) && !isLetterWord(bTyped, cur.locale);
     // UK/RU word spelled the same in both layouts: text is already right, only switch the layout
@@ -1041,8 +1088,9 @@ static void applyFix(int j, Snapshot* s, int trailing) {
 }
 
 // autoFixTarget + remembering the language of the last non-Latin word (fixed, or typed right)
-static int autoFixRemember(const vector<Key>& keys, int pair) {
-    int j = pair >= 0 ? pair : autoFixTarget(keys);
+static int autoFixRemember(const vector<Key>& keys, int pair, int& lead, int& tail) {
+    lead = tail = 0;
+    int j = pair >= 0 ? pair : autoFixEdges(keys, lead, tail);
     if (j < 0 && lastWasWord && keys.size() >= 3) {
         const Layout& c = layouts[layoutIndex(fgLayout())];
         if (!isLatin(c.text(keys))) { recentLang = c.locale; recentAt = GetTickCount64(); }
@@ -1053,16 +1101,18 @@ static int autoFixRemember(const vector<Key>& keys, int pair) {
 static void onAuto(Snapshot* s) {
     if (!S.autoFix || S.bindings.count(fgExe())) return;
     // «b yt»: both «и не» (ru) and «не» alone (uk) fit; the pair that makes both words a language wins
-    int j = autoFixRemember(s->keys, pairFixTarget(s->keys, s->before));
+    int lead, tail;
+    int j = autoFixRemember(s->keys, pairFixTarget(s->keys, s->before), lead, tail);
     if (j < 0 || seq.load() != s->seq) return;  // user kept typing meanwhile — skip
-    applyFix(j, s, 1);
+    applyFix(j, s, 1, lead, tail);
 }
 
 // Return held by the hook after a word: fix the word if it needs it, then send Return on
 static void onEnter(Snapshot* s) {
     if (active && S.autoFix && !S.bindings.count(fgExe())) {
-        int j = autoFixRemember(s->keys, pairFixTarget(s->keys, s->before));
-        if (j >= 0) applyFix(j, s, 0);
+        int lead, tail;
+        int j = autoFixRemember(s->keys, pairFixTarget(s->keys, s->before), lead, tail);
+        if (j >= 0) applyFix(j, s, 0, lead, tail);
     }
     // Return goes on as the user pressed it: same scan code, numpad Enter stays numpad Enter
     INPUT in[2] = {};
