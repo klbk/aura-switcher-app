@@ -967,10 +967,20 @@ final class Engine {
         let srcL = layouts[srcIdx], dstIdx = pick.dst, dst = layouts[dstIdx]
         let out = selectionText(text, src: srcL, dst: dst)
         typeText(out)
-        for _ in 0..<out.count { postKey(123, flags: .maskShift) } // reselect (⇧← moves by character)
         lastSelOut = out; lastSelLang = dstIdx
         select(dst)
+        // browsers (Google's search field, the address bar) add a suggestion after the typed text, selected after the caret:
+        // ⇧← would then shrink that selection instead of reselecting the text. Give the page a moment, drop the completion, reselect.
+        let n = out.count
+        func reselect() {
+            if Engine.reselectDropsCompletion(selectedLength: selectedRangeLength(), outCount: n) { postKey(117) }  // Forward Delete
+            for _ in 0..<n { postKey(123, flags: .maskShift) } // reselect (⇧← moves by character)
+        }
+        if webEngine(frontBundle) { DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) { reselect() } } else { reselect() }
     }
+
+    /// after the converted text is typed, a selected range right behind the caret is a browser's completion, not ours
+    static func reselectDropsCompletion(selectedLength: Int?, outCount: Int) -> Bool { isInlineCompletion(selectedLength: selectedLength, typedLetters: outCount) }
 
     // MARK: selection
 

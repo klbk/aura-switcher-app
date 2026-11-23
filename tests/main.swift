@@ -204,6 +204,11 @@ for (len, letters, want) in [(Int?.some(27), 6, true), (Int?.some(0), 6, false),
     if Engine.isInlineCompletion(selectedLength: len, typedLetters: letters) != want { mustFail += 1; print("MUST FAIL: isInlineCompletion(\(len.map(String.init) ?? "nil"), \(letters))") }
 }
 
+// after a converted selection is typed, a selected range behind the caret is the browser's completion: dropped before ⇧← reselects
+for (len, n, want) in [(Int?.some(12), 6, true), (Int?.some(0), 6, false), (nil, 6, false), (Int?.some(12), 0, false)] {
+    if Engine.reselectDropsCompletion(selectedLength: len, outCount: n) != want { mustFail += 1; print("MUST FAIL: reselectDropsCompletion(\(len.map(String.init) ?? "nil"), \(n))") }
+}
+
 // same keys give a frequent Russian word and a rare Ukrainian one («было» / «біло»): the frequent one wins
 engine.layouts = [layout(US), layout("com.apple.keylayout.Ukrainian-PC"), layout("com.apple.keylayout.RussianWin")]; engine.reliable = [:]
 for w in ["было", "была", "были"] {
