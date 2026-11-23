@@ -15,6 +15,7 @@ HOW TO USE
 • Click the language code in the tray for the menu: turn off, sound, exclusions,
   language per app, my words, menu language.
 • Quit: menu → "Quit". Starts automatically at Windows login.
+• Updating by hand: quit the old AURA first (menu → "Quit"), then run the new one — a new copy started while the old one runs closes at once.
 
 • Like it? Support: https://donatello.to/aura-switcher ☕
 Open source: https://github.com/klbk/aura-switcher-app
