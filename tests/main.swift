@@ -227,6 +227,18 @@ engine.releaseIfEmptyNow()
 if !engine.handsOff { mustFail += 1; print("MUST FAIL: handsOff after backspace over a space") }
 engine.reset(); engine.fieldEmpty = { Engine.axFieldEmpty() }
 
+// extra Backspaces after a typed word was deleted: nothing older in the field → the next word is checked (AX silent)
+engine.reset(); engine.typedCount = 0; engine.typedUnknown = false; engine.fieldEmpty = { nil }
+for c in [CGKeyCode(5), 4, 11, 2, 1, 45] { press(c) }; for _ in 0..<9 { press(51) }; engine.releaseIfEmptyNow()
+if engine.handsOff { mustFail += 1; print("MUST FAIL: extra Backspaces on an emptied field keep handsOff") }
+engine.reset(); engine.typedCount = 0; engine.typedUnknown = false; engine.fieldEmpty = { false }
+press(51); engine.releaseIfEmptyNow()
+if !engine.handsOff { mustFail += 1; print("MUST FAIL: Backspace with text left (AX says so) must be handsOff") }
+engine.reset(); engine.typedCount = 0; engine.typedUnknown = false; engine.fieldEmpty = { nil }
+for c in [CGKeyCode(5), 4, 49, 5, 4, 11] { press(c) }; for _ in 0..<4 { press(51) }
+if !engine.handsOff { mustFail += 1; print("MUST FAIL: Backspace into an earlier word must be handsOff") }
+engine.reset(); engine.fieldEmpty = { Engine.axFieldEmpty() }
+
 // report and compare with the baseline
 let out = results.map { String(format: "%@\t%.1f%%\t%d/%d", $0.0, 100 * Double($0.1) / Double(max($0.2, 1)), $0.1, $0.2) }
 if CommandLine.arguments.contains("-v") { for l in out { print(l) } }

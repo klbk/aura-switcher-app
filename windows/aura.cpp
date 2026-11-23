@@ -371,6 +371,9 @@ struct Snapshot { vector<Key> keys; int trailing; unsigned seq; vector<Key> befo
 // the user went back into the text (Backspace over a space, arrows, a Ctrl/Alt/Win combo in the middle of a word):
 // until the next space AURA neither checks nor converts what is typed — it's the user's own word
 static bool handsOff = false;
+// characters seen typed since the last Return (minus Backspaces): 0 and nothing but typing → an extra Backspace deletes
+// nothing (no older text to go back into), so the next word is still checked
+static int typedCount = 0; static bool typedUnknown = false;
 static bool returnHeld = false;  // Return held for a moment to fix the word before it (see WM_ENTER); swallow its key-up
 static std::atomic<DWORD> returnScan{0}, returnFlags{0};  // the held Return's scan code and extended flag (numpad Enter)
 static void resetState() { word.clear(); lastWord.clear(); before.clear(); trailing = 0; handsOff = false; }
@@ -431,7 +434,7 @@ static LRESULT CALLBACK kbHook(int code, WPARAM wp, LPARAM lp) {
 
     sawOther = true; lastShiftTap = 0; seq++;
     bool ctrlAlt = (GetAsyncKeyState(VK_CONTROL) | GetAsyncKeyState(VK_MENU) | GetAsyncKeyState(VK_LWIN) | GetAsyncKeyState(VK_RWIN)) & 0x8000;
-    if (ctrlAlt) { bool mid = !word.empty(); resetState(); handsOff = mid; return CallNextHookEx(nullptr, code, wp, lp); }
+    if (ctrlAlt) { bool mid = !word.empty(); resetState(); handsOff = mid; typedUnknown = true; return CallNextHookEx(nullptr, code, wp, lp); }
 
     if (vk == VK_RETURN && !word.empty() && !handsOff && !returnHeld) {
         // Return right after a word («z elfkbk⏎» in a chat): checked only on a space, the message went out unfixed.
@@ -442,14 +445,19 @@ static LRESULT CALLBACK kbHook(int code, WPARAM wp, LPARAM lp) {
         resetState();
         return 1;
     }
+    if (vk == VK_SPACE || isLetterVk(vk)) typedCount++;
+    else if (vk != VK_BACK && !(vk >= VK_PRIOR && vk <= VK_DOWN) && vk != VK_DELETE) { typedCount = 0; typedUnknown = false; }  // Return, Tab…: the field starts over
     if (vk == VK_BACK) {
         // a typo while the word is being typed: AURA keeps watching it. Back over the space into a finished word
         // (or into older text): the word is the user's now
+        bool nothingBefore = word.empty() && trailing == 0 && typedCount == 0 && !typedUnknown;
+        if (typedCount > 0) typedCount--;
         if (!word.empty() && trailing == 0) word.pop_back();
+        else if (nothingBefore) resetState();  // Backspace on an emptied field: nothing to go back into
         else { resetState(); handsOff = true; PostMessageW(hwndMain, WM_EMPTYCHK, 0, (LPARAM)seq.load()); }
     } else if (vk == VK_LEFT || vk == VK_RIGHT || vk == VK_UP || vk == VK_DOWN || vk == VK_HOME || vk == VK_END
                || vk == VK_PRIOR || vk == VK_NEXT || vk == VK_DELETE) {
-        resetState(); handsOff = true;  // editing the text
+        resetState(); handsOff = true; typedUnknown = true;  // editing the text
         if (vk == VK_DELETE) PostMessageW(hwndMain, WM_EMPTYCHK, 0, (LPARAM)seq.load());
     } else if (handsOff) {
         // the user's own word: not checked, but its keys are kept — double ⇧ is an explicit command and converts it

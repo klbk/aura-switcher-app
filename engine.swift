@@ -338,6 +338,9 @@ final class Engine {
     /// the user went back into the text (Backspace over a space, arrows) or switched the layout in the middle of a
     /// word: until the next space AURA neither checks nor converts what is typed — it's the user's own word
     var handsOff = false
+    /// characters AURA has seen typed since the last Return (minus Backspaces); when it is 0 and nothing but typing
+    /// happened (typedUnknown false), an extra Backspace deletes nothing — the field has no older text to go back into
+    var typedCount = 0, typedUnknown = false, backspaceOnEmpty = false
     /// Backspace/Delete emptied the whole field (Cmd+A, Delete): there is no word to go back into, so the first
     /// word typed now is checked as usual. The field is read a moment later (the app has to handle the key first);
     /// if the app doesn't say (nil) or the user already typed on, handsOff stays.
@@ -347,6 +350,7 @@ final class Engine {
     }
     func releaseIfEmptyNow() {
         if handsOff, word.isEmpty, lastWord.isEmpty, fieldEmpty() == true { handsOff = false }
+        else if backspaceOnEmpty { backspaceOnEmpty = false; if word.isEmpty, lastWord.isEmpty, fieldEmpty() == false { handsOff = true } }
     }
     static func axFieldEmpty() -> Bool? {
         var f: CFTypeRef?
@@ -472,14 +476,18 @@ final class Engine {
     func handleKey(_ e: CGEvent) {
         let code = UInt16(e.getIntegerValueField(.keyboardEventKeycode))
         let f = e.flags
-        if !f.intersection([.maskCommand, .maskControl, .maskAlternate]).isEmpty { reset(); return }
+        if !f.intersection([.maskCommand, .maskControl, .maskAlternate]).isEmpty { reset(); typedUnknown = true; return }
         switch code {
         case 51: // backspace
             // a typo while the word is being typed: AURA keeps watching it. Back over the space into a finished word
             // (or into older text): the word is the user's now — not checked until the next space (double ⇧ still converts it)
+            let nothingBefore = word.isEmpty && trailing == 0 && typedCount == 0 && !typedUnknown
+            if typedCount > 0 { typedCount -= 1 }
             if !word.isEmpty, trailing == 0 { word.removeLast() }
+            else if nothingBefore { reset(); backspaceOnEmpty = true; releaseIfFieldEmpty() }  // nothing typed before: probably nothing to go back into (the field is read to be sure)
             else { reset(); handsOff = true; releaseIfFieldEmpty() }
         case 49: // space (already delivered to the app)
+            typedCount += 1
             if handsOff { reset(); return }  // the end of the user's own word: leave it as it is
             if !word.isEmpty {
                 lastWord = word; word = []; trailing = 1
@@ -489,10 +497,11 @@ final class Engine {
                 }
             } else if !lastWord.isEmpty { trailing += 1 }
         case 123...126, 115, 116, 117, 119, 121: // arrows, Home, Page Up, Forward Delete, End, Page Down: editing the text
-            reset(); handsOff = true
+            reset(); handsOff = true; typedUnknown = true
             if code == 117 { releaseIfFieldEmpty() }
         default:
             // the user's own word: not checked, but its keys are kept — double ⇧ is an explicit command and converts it
+            if codes.contains(code) { typedCount += 1 } else { typedCount = 0; typedUnknown = false }  // Return, Tab…: the field starts over
             if handsOff { if codes.contains(code) { word.append(key(e, code)) } else { reset() }; return }  // Return, Tab…: over
             if codes.contains(code) {
                 if word.isEmpty { before = lastWord.count == 1 && trailing == 1 ? lastWord : []; lastCycled = []; lastCycledLang = nil
