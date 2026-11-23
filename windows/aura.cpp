@@ -1009,10 +1009,16 @@ static void convertSelection(wstring text) {
     int lead = 0, tail = 0;
     int dst = again ? int((src + 1) % layouts.size()) : selectionTarget(text, src, lead, tail);
     wstring out = selectionText(text, src, dst);
-    typeText(out);
-    for (wchar_t c : out) if (!IS_LOW_SURROGATE(c)) sendKey(VK_LEFT, true);  // reselect: ⇧← moves by character, not wchar_t
-    lastSelOut = out; lastSelLang = dst;
+    // Like a replaced word: switch to the target layout first and type its real keys at a person's pace. A solid run of
+    // VK_PACKET characters after a comma lost the space and repeated letters in the Win11 Notepad
+    // («ghbdsn, rjvg» → «привіт,ппппп»); a single word survived it.
     selectLayout(layouts[dst]);
+    bool switched = false;
+    for (int i = 0; i < 40 && !(switched = GetKeyboardLayout(GetWindowThreadProcessId(focusWindow(), nullptr)) == layouts[dst].hkl); i++) pauseMs(5);
+    if (switched) typeKeysIn(out, layouts[dst].hkl); else typeText(out);
+    pauseMs(25);
+    for (wchar_t c : out) if (!IS_LOW_SURROGATE(c)) { sendKey(VK_LEFT, true); pauseMs(2); }  // reselect: ⇧← moves by character, not wchar_t
+    lastSelOut = out; lastSelLang = dst;
 }
 
 // MARK: - Sounds (synthesized, identical on Mac and Windows)
