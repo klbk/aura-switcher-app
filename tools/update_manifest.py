@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Writes site/update.json for «Check for updates» in the apps: version, download links, SHA-256 of the Windows exes.
-Run after both builds, before publishing the release: python3 tools/update_manifest.py 0.10.0
+Run after both builds, before publishing the release: python3 tools/update_manifest.py 0.11
 Release assets (tag v<version>-beta): AURA-Switcher-mac.zip, AURA-Switcher-windows-x64.exe / -arm64.exe (+ the zips).
 Also writes site/update.sig: ECDSA P-256 signature of update.json's exact bytes (raw r||s, hex), made with the
 private key ~/.config/aura/update-key.pem (backup with the signing certificate). The Windows app trusts the

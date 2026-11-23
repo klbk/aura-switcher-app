@@ -1,13 +1,15 @@
 // The latest release, for the update page (/update/). Edit on every release: version + what's new.
 // Notes: Ukrainian and English; other languages show the English notes.
 const LATEST = {
-  version: "0.10.2",
+  version: "0.11",
   notes: {
-    uk: ["Windows, версія з Microsoft Store: пункт меню «Перевірити оновлення…» тепер відкриває сторінку AURA в Store (там кнопка «Оновити»). Store сам оновлює програму, але інколи із затримкою.",
-         "Для решти — без змін: Mac і Windows (exe) працюють, як у 0.10.1.",
+    uk: ["Клавішу виправлення можна змінити: подвійний Shift, Ctrl або Alt (або вимкнути). Меню стало компактнішим — налаштування в підменю.",
+         "Виділений текст переводиться за словником: у ту розкладку, де слова справжні; знаки по краях слів зберігаються. Працює і в полі пошуку Google.",
+         "Виправлення: зайві Backspace після видалення слова більше не ламають наступне слово; пароль-поля не чіпаються (Mac і Windows).",
          "Якщо у вас 0.9 або новіша — «Перевірити оновлення» → «Оновити»."],
-    en: ["Windows, Microsoft Store version: the «Check for updates…» menu item now opens the AURA page in the Store (with the Update button). The Store updates the app itself, sometimes with a delay.",
-         "Nothing else changed: Mac and Windows (exe) work as in 0.10.1.",
+    en: ["The correction key is configurable: double Shift, Ctrl or Alt (or off). The menu is more compact — settings are in a submenu.",
+         "A selection is converted using the dictionary: into the layout where the words are real; signs at the edges of words stay as typed. Works in the Google search field too.",
+         "Fixes: extra Backspaces after a deleted word no longer break the next word; password fields are left alone (Mac and Windows).",
          "On 0.9 or newer: «Check for updates» → «Update»."],
   },
 };
