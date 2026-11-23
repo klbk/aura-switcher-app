@@ -546,8 +546,8 @@ final class Engine {
         return nil
     }
 
-    /// Return right after a word («z elfkbk⏎» in a chat): the word is checked only on a space, so the message went out
-    /// unfixed. Return is held, the word fixed (if it needs it), then Return is sent on — a few milliseconds.
+    /// Checks the word just finished with a space and fixes it if it needs it. Listen-only tap: Return cannot be held,
+    /// so a word followed straight by Return is not fixed (the user adds a space or double ⇧).
     func autoCorrect(_ keys: [Key], before: [Key] = [], spaceAt: Double = 0) {
         let t0 = ProcessInfo.processInfo.systemUptime
         // user kept typing meanwhile — skip
