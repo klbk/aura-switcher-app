@@ -881,7 +881,7 @@ final class Engine {
         let fallback = (dst: (src + 1) % layouts.count, lead: 0, tail: 0)
         guard layouts.indices.contains(src), layouts.count > 1 else { return fallback }
         let srcL = layouts[src]
-        var votes: [Int: Int] = [:]
+        var votes: [Int: Int] = [:], picks: [Int: Int] = [:]
         for w in text.split(whereSeparator: \.isWhitespace) where w.count >= 2 && w.count <= 40 {
             var keys: [Key] = []
             for c in w {
@@ -899,11 +899,17 @@ final class Engine {
                 if dictionaryWorks(l.lang) ? isWord(t, l.lang) : model(l.lang)?.has(t) == true { votes[i, default: 0] += 1; counted.insert(i) }
             }
             // slang the engine accepts but the dictionaries don't know
-            if let r, r.layout !== srcL, let i = layouts.firstIndex(where: { $0 === r.layout }), !counted.contains(i) { votes[i, default: 0] += 1 }
+            if let r, r.layout !== srcL, let i = layouts.firstIndex(where: { $0 === r.layout }) {
+                picks[i, default: 0] += 1
+                if !counted.contains(i) { votes[i, default: 0] += 1 }
+            }
         }
         guard let top = votes.values.max() else { return fallback }
-        // ties: the nearest after the source in the cycle
-        let best = (1..<layouts.count).map { (src + $0) % layouts.count }.first { votes[$0] == top }!
+        // ties: the layout the engine itself picks for most words (matters where a language has no dictionary and its model
+        // accepts a word of a sister language), then the nearest after the source in the cycle
+        let tied = (1..<layouts.count).map { (src + $0) % layouts.count }.filter { votes[$0] == top }
+        let topPick = tied.map { picks[$0] ?? 0 }.max()!
+        let best = tied.first { (picks[$0] ?? 0) == topPick }!
         return (best, 0, 0)
     }
 

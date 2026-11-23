@@ -841,7 +841,7 @@ static int selectionTarget(const wstring& text, int src, int& lead, int& tail) {
     int fallback = n ? (src + 1) % n : 0;
     if (n < 2 || src < 0 || src >= n) return fallback;
     vector<wstring> words; { wstring w; for (wchar_t c : text) { if (iswspace(c)) { if (!w.empty()) words.push_back(w); w.clear(); } else w += c; } if (!w.empty()) words.push_back(w); }
-    vector<int> votes(n, 0);
+    vector<int> votes(n, 0), picks(n, 0);
     HKL saved = forcedLayout; forcedLayout = layouts[src].hkl;   // the selection was typed in the source layout
     for (auto& w : words) {
         if (w.size() < 2 || w.size() > 40) continue;
@@ -858,12 +858,15 @@ static int selectionTarget(const wstring& text, int src, int& lead, int& tail) {
             wstring tx = layouts[i].text(core); const wstring& loc = layouts[i].locale; const LangModel* lm = model(loc);
             if (dictionaryWorks(loc) ? isWord(tx, loc) : (lm && lm->has(tx))) { votes[i]++; counted[i] = true; }
         }
-        if (j >= 0 && j != src && !counted[j]) votes[j]++;   // slang the engine accepts but the dictionaries don't know
+        if (j >= 0 && j != src) { picks[j]++; if (!counted[j]) votes[j]++; }   // slang the engine accepts but the dictionaries don't know
     }
     forcedLayout = saved;
     int top = *std::max_element(votes.begin(), votes.end());
     if (top == 0) return fallback;
-    for (int i = 1; i < n; i++) { int j = (src + i) % n; if (votes[j] == top) return j; }
+    // ties: the layout the engine itself picks for most words (a language without a dictionary whose model accepts a word of a
+    // sister language), then the nearest after the source in the cycle
+    int topPick = -1; for (int i = 1; i < n; i++) { int j = (src + i) % n; if (votes[j] == top) topPick = std::max(topPick, picks[j]); }
+    for (int i = 1; i < n; i++) { int j = (src + i) % n; if (votes[j] == top && picks[j] == topPick) return j; }
     return fallback;
 }
 
