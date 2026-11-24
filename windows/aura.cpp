@@ -993,10 +993,10 @@ static IUIAutomation* uiaClient() {
 
 // cmd / PowerShell (conhost), Windows Terminal, Git Bash (mintty): Ctrl+C without a selection is an interrupt.
 // The terminal inside VS Code (and other xterm.js apps: Cursor, Hyper, Tabby) is a web page in an editor window:
-// its input is a hidden textarea with the class «xterm-helper-textarea», which Chromium reports as the UIA class name
-static bool fgIsConsole() {
-    wchar_t cls[64] = L""; GetClassNameW(GetForegroundWindow(), cls, 64);
-    if (!wcscmp(cls, L"ConsoleWindowClass") || !wcscmp(cls, L"CASCADIA_HOSTING_WINDOW_CLASS") || !wcscmp(cls, L"mintty")) return true;
+// its input is a hidden textarea with the class «xterm-helper-textarea», which Chromium reports as the UIA class name.
+// Chromium builds its UIA tree only after a client first asks: the first question to a new window sees just the
+// window, so in a Chromium window not asked before AURA asks once more a moment later (checked live: cold VS Code)
+static bool focusedIsXterm() {
     IUIAutomation* uia = uiaClient(); IUIAutomationElement* el = nullptr; bool xterm = false;
     if (uia && SUCCEEDED(uia->GetFocusedElement(&el)) && el) {
         BSTR c = nullptr;
@@ -1004,6 +1004,16 @@ static bool fgIsConsole() {
         el->Release();
     }
     return xterm;
+}
+static bool fgIsConsole() {
+    HWND fg = GetForegroundWindow();
+    wchar_t cls[64] = L""; GetClassNameW(fg, cls, 64);
+    if (!wcscmp(cls, L"ConsoleWindowClass") || !wcscmp(cls, L"CASCADIA_HOSTING_WINDOW_CLASS") || !wcscmp(cls, L"mintty")) return true;
+    if (focusedIsXterm()) return true;
+    static HWND primed = nullptr;
+    if (fg == primed || wcsncmp(cls, L"Chrome_WidgetWin", 16)) return false;
+    primed = fg; Sleep(250);
+    return focusedIsXterm();
 }
 static void cycleLayout() { if (!layouts.empty()) selectLayout(layouts[(layoutIndex(fgLayout()) + 1) % layouts.size()]); }
 
