@@ -167,7 +167,9 @@ int wmain(int argc, wchar_t** argv) {
         const Layout& en = layouts[0]; const Layout& uk = layouts[1];
         struct Edge { const wchar_t* meant; const Layout* m; const Layout* t; const wchar_t* want; };  // want: nullptr = left alone
         for (auto e : {Edge{L"привітб", &uk, &en, L"привіт,"}, Edge{L"привітю", &uk, &en, L"привіт."}, Edge{L"Єпривіт", &uk, &en, L"\"привіт"},
-                       Edge{L"Єпривітб", &uk, &en, L"\"привіт,"}, Edge{L"hello,", &en, &en, nullptr}, Edge{L"привіт,", &uk, &uk, nullptr}}) {
+                       Edge{L"Єпривітб", &uk, &en, L"\"привіт,"}, Edge{L"hello,", &en, &en, nullptr}, Edge{L"привіт,", &uk, &uk, nullptr},
+                       // a sign that is a sign in both layouts goes with the word: «/compact» typed in Ukrainian is «.сщьзфсе»
+                       Edge{L"/compact", &en, &uk, L"/compact"}, Edge{L"/help", &en, &uk, L"/help"}}) {
             vector<Key> k; if (!keysFor(e.meant, *e.m, k) || !e.t->maps(k)) { mustFail++; printf("MUST FAIL: no keys for %s\n", utf8(e.meant).c_str()); continue; }
             forcedLayout = e.t->hkl;
             int lead, tail; int j = autoFixEdges(k, lead, tail);

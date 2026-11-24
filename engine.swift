@@ -759,9 +759,14 @@ final class Engine {
         return whole.map { ($0, 0, 0) }
     }
 
-    /// the word in layout `fix` with the signs at its edges left as typed
+    /// the word in layout `fix` with the signs at its edges left as typed — only where the key would be a letter in
+    /// `fix` («ghbdsn,» → «привіт,», the comma key is «б»); a sign that is a sign there too goes to `fix`
+    /// («.сщьзфсе» → «/compact»: «.» and «/» are one key)
     func textKeepingEdges(_ keys: [Key], _ fix: Layout, typed: Layout, lead: Int, tail: Int) -> String {
-        typed.text(Array(keys[..<lead])) + fix.text(Array(keys[lead..<(keys.count - tail)])) + typed.text(Array(keys[(keys.count - tail)...]))
+        func edge(_ ks: ArraySlice<Key>) -> String {
+            ks.map { k in fix.toChar[k].map { !$0.isLetter } == true ? fix.text([k]) : typed.text([k]) }.joined()
+        }
+        return edge(keys[..<lead]) + fix.text(Array(keys[lead..<(keys.count - tail)])) + edge(keys[(keys.count - tail)...])
     }
 
     func autoFix(_ keys: [Key]) -> Layout? {

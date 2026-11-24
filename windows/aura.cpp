@@ -826,10 +826,20 @@ static int autoFixEdges(const vector<Key>& keys, int& lead, int& tail) {
     }
     return whole;
 }
-// the word in layout `to` with the signs at its edges left as typed (in layout `typed`)
+// the word in layout `to` with the signs at its edges left as typed (in layout `typed`) — only where the key would be a
+// letter in `to` («ghbdsn,» → «привіт,», the comma key is «б»); a sign that is a sign there too goes to `to`
+// («.сщьзфсе» → «/compact»: «.» and «/» are one key)
 static wstring textKeepingEdges(const vector<Key>& keys, const Layout& typed, const Layout& to, int lead, int tail) {
-    return typed.text(vector<Key>(keys.begin(), keys.begin() + lead)) + to.text(vector<Key>(keys.begin() + lead, keys.end() - tail))
-         + typed.text(vector<Key>(keys.end() - tail, keys.end()));
+    auto edge = [&](vector<Key>::const_iterator a, vector<Key>::const_iterator b) {
+        wstring o;
+        for (auto it = a; it != b; ++it) {
+            auto c = to.toChar.find(*it);
+            o += c != to.toChar.end() && !IsCharAlphaW(c->second) ? to.text({*it}) : typed.text({*it});
+        }
+        return o;
+    };
+    return edge(keys.begin(), keys.begin() + lead) + to.text(vector<Key>(keys.begin() + lead, keys.end() - tail))
+         + edge(keys.end() - tail, keys.end());
 }
 
 // Where a selection goes (same as Engine.selectionTarget in engine.swift): every word is typed back into keys in the source
