@@ -309,6 +309,22 @@ const EXTRA = {
 };
 const EXTRA_KEYS = ["phoneBtn", "phoneCopied", "safeH", "safe1h", "safe1p", "safe2h", "safe2p", "safe3h", "safe3p"];
 for (const k in T) { const e = EXTRA[k] || EXTRA.en; EXTRA_KEYS.forEach((key, i) => { if (T[k][key] === undefined) T[k][key] = e[i]; }); }  // a language may bring its own (i18n-more.js)
+// FAQ (questions people ask in comments): uk and en; other languages show the English text
+const PRIVACY = '<a href="https://klbk.github.io/aura-switcher/privacy/">';
+const FAQ_KEYS = ["faqH", "faq1h", "faq1p", "faq2h", "faq2p", "faq3h", "faq3p", "faq4h", "faq4p"];
+const FAQ = {
+  uk: ["Часті питання",
+       "Чи чіпає AURA паролі?", "Ні. У полі пароля AURA нічого не виправляє й не перетворює, подвійний ⇧ там лише перемикає розкладку. На Mac так само з запитом пароля без відлуння в терміналі (sudo, ssh).",
+       "Чи працює вона в терміналі й редакторах коду?", "Так, AURA працює всюди, і в терміналі теж: там пишуть і звичайний текст будь-якою мовою. Команди й назви на кшталт <code>ls</code>, <code>git</code> чи <code>userName</code> вона не чіпає. Якщо в якійсь програмі заважає — меню → «Не працювати в цій програмі». На Windows у терміналі (і в терміналі VS Code) подвійний ⇧ без набраного слова лише перемикає розкладку й не перериває команду.",
+       "Чи надсилає AURA мій текст кудись?", `Ні. Набраний текст не зберігається, не пишеться в журнали й нікуди не надсилається. В інтернет AURA виходить лише тоді, коли ви натискаєте «Перевірити оновлення…». Код відкритий на ${GH}, тож це може перевірити кожен. Докладно — ${PRIVACY}політика конфіденційності</a>.`,
+       "А якщо я навмисно пишу латиницею?", "AURA виправляє слово, лише коли в поточній розкладці це не слово, а в іншій — слово. Тож <code>userName</code>, <code>git</code> чи <code>ls</code> лишаються як є. Іноді коротке латинське слово збігається зі словом іншою мовою (<code>rjl</code> → «код»): подвійний ⇧ одразу поверне його назад, а меню → «Мої слова…» назавжди вбереже від виправлення."],
+  en: ["FAQ",
+       "Does AURA touch passwords?", "No. In a password field AURA fixes and converts nothing; double ⇧ there only switches the layout. On Mac the same goes for a password prompt that doesn't echo in a terminal (sudo, ssh).",
+       "Does it work in terminals and code editors?", "Yes, AURA works everywhere, terminals included: people type plain text there too, in any language. Commands and names like <code>ls</code>, <code>git</code> or <code>userName</code> are left alone. If it gets in the way in some app, Menu → “Don't work in this app”. On Windows, in a terminal (the VS Code one too) double ⇧ with no word typed only switches the layout and doesn't interrupt the command.",
+       "Does AURA send my text anywhere?", `No. Typed text is never stored, logged or sent anywhere. AURA goes online only when you click “Check for updates…”. The code is open on ${GH}, so anyone can check. Details: the ${PRIVACY}privacy policy</a>.`,
+       "What if I type Latin on purpose?", "AURA fixes a word only when it isn't a word in the current layout but is one in another. So <code>userName</code>, <code>git</code> or <code>ls</code> stay as typed. Sometimes a short Latin word matches a word in another language (<code>rjl</code> → “код”): double ⇧ turns it straight back, and Menu → “My words…” keeps it from being fixed for good."],
+};
+for (const k in T) { const e = FAQ[k] || FAQ.en; FAQ_KEYS.forEach((key, i) => { if (T[k][key] === undefined) T[k][key] = e[i]; }); }
 // The app's menu, shown on the page (strings from engine.swift uiStrings)
 const MENU_KEYS = ["menabled", "mauto", "msound", "mapp", "mexclude", "mappLang", "mexclusions", "mbindings"];
 const MENU = {
