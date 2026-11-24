@@ -61,7 +61,7 @@ settings = Stillingar
 ```
 name = Íslenska
 title = AURA Switcher — ókeypis valkostur við Punto Switcher fyrir Mac og Windows
-badge = Beta 0.11.1 · ókeypis · engin skráning
+badge = Beta 0.11.2 · ókeypis · engin skráning
 h1 = Skrifaðu bara.<br><span class="hl">AURA</span> lagar skipulagið
 lead = Skrifaðir þú «ghbdsn» í stað «привіт»? AURA tekur eftir því og leiðréttir um leið og þú slærð á bilstöngina. Fyrir macOS og Windows.
 dlMac = Sækja fyrir Mac

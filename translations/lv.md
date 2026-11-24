@@ -61,7 +61,7 @@ settings = Iestatījumi
 ```
 name = Latviešu
 title = AURA Switcher — bezmaksas Punto Switcher alternatīva Mac un Windows
-badge = Beta 0.11.1 · bez maksas · bez reģistrācijas
+badge = Beta 0.11.2 · bez maksas · bez reģistrācijas
 h1 = Vienkārši rakstiet.<br>Izkārtojumu salabo <span class="hl">AURA</span>
 lead = Uzrakstījāt «ghbdsn» «привіт» vietā? AURA to pamana un salabo uzreiz pēc atstarpes. Domāts macOS un Windows.
 dlMac = Lejupielādēt Mac versiju

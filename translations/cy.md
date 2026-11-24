@@ -61,7 +61,7 @@ settings = Gosodiadau
 ```
 name = Cymraeg
 title = AURA Switcher — dewis arall am ddim yn lle Punto Switcher ar gyfer Mac a Windows
-badge = Beta 0.11.1 · am ddim · dim cofrestru
+badge = Beta 0.11.2 · am ddim · dim cofrestru
 h1 = Teipiwch yn unig.<br>Mae <span class="hl">AURA</span> yn trwsio’r cynllun
 lead = Wedi teipio «ghbdsn» yn lle «привіт»? Mae AURA yn sylwi ac yn ei gywiro’n syth ar ôl y bylchwr. Ar gyfer macOS a Windows.
 dlMac = Lawrlwytho ar gyfer Mac

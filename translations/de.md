@@ -61,7 +61,7 @@ settings = Einstellungen
 ```
 name = Deutsch
 title = AURA Switcher — kostenlose Punto-Switcher-Alternative für Mac & Windows
-badge = Beta 0.11.1 · kostenlos · ohne Anmeldung
+badge = Beta 0.11.2 · kostenlos · ohne Anmeldung
 h1 = Einfach tippen.<br><span class="hl">AURA</span> korrigiert das Layout
 lead = „ghbdsn“ statt „привіт“ getippt? AURA bemerkt es und korrigiert es direkt nach der Leertaste. Für macOS und Windows.
 dlMac = Für Mac laden

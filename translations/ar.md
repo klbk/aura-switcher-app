@@ -61,7 +61,7 @@ settings = الإعدادات
 ```
 name = العربية
 title = AURA Switcher — بديل مجاني لـ Punto Switcher على Mac وWindows
-badge = بيتا 0.11.1 · مجانًا · بدون تسجيل
+badge = بيتا 0.11.2 · مجانًا · بدون تسجيل
 h1 = اكتب فقط.<br><span class="hl">AURA</span> تصحّح التخطيط
 lead = كتبت «lvpfh» بدلًا من «مرحبا»؟ تلاحظ AURA ذلك وتصحّحه فور الضغط على المسافة. لنظامي macOS وWindows.
 dlMac = تنزيل لـ Mac

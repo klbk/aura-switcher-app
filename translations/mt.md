@@ -61,7 +61,7 @@ settings = Settings
 ```
 name = Malti
 title = AURA Switcher — alternattiva b’xejn għal Punto Switcher għal Mac u Windows
-badge = Beta 0.11.1 · b’xejn · mingħajr reġistrazzjoni
+badge = Beta 0.11.2 · b’xejn · mingħajr reġistrazzjoni
 h1 = Ikteb biss.<br><span class="hl">AURA</span> tikkoreġi t-tqassim
 lead = Ktibt «ghbdsn» minflok «привіт»? AURA tinduna u tikkoreġih eżatt wara l-ispazju. Għal macOS u Windows.
 dlMac = Niżżel għal Mac

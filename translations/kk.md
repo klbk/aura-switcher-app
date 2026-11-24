@@ -61,7 +61,7 @@ settings = Параметрлер
 ```
 name = Қазақша
 title = AURA Switcher — Mac және Windows үшін Punto Switcher-дің тегін баламасы
-badge = Бета 0.11.1 · тегін · тіркелусіз
+badge = Бета 0.11.2 · тегін · тіркелусіз
 h1 = Жай ғана теріңіз.<br>Орналасуды <span class="hl">AURA</span> түзетеді
 lead = «привіт» орнына «ghbdsn» теріп қойдыңыз ба? AURA байқап, бос орыннан кейін-ақ түзетеді. macOS және Windows үшін.
 dlMac = Mac үшін жүктеу

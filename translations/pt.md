@@ -61,7 +61,7 @@ settings = Definições
 ```
 name = Português
 title = AURA Switcher — alternativa gratuita ao Punto Switcher para Mac e Windows
-badge = Beta 0.11.1 · grátis · sem registo
+badge = Beta 0.11.2 · grátis · sem registo
 h1 = Basta escrever.<br><span class="hl">AURA</span> corrige o layout
 lead = Escreveu «ghbdsn» em vez de «привіт»? A AURA nota e corrige logo após o espaço. Para macOS e Windows.
 dlMac = Transferir para Mac

@@ -61,7 +61,7 @@ settings = 설정
 ```
 name = 한국어
 title = AURA Switcher — Mac·Windows용 무료 Punto Switcher 대안
-badge = 베타 0.11.1 · 무료 · 가입 불필요
+badge = 베타 0.11.2 · 무료 · 가입 불필요
 h1 = 그냥 입력하세요.<br>자판은 <span class="hl">AURA</span>가 고칩니다
 lead = «안녕» 대신 «dkssud»라고 쳤나요? AURA가 알아차리고 스페이스 바로 뒤에 고쳐 줍니다. macOS와 Windows용.
 dlMac = Mac용 다운로드

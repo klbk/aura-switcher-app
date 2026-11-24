@@ -61,7 +61,7 @@ settings = Seaded
 ```
 name = Eesti
 title = AURA Switcher — tasuta Punto Switcheri alternatiiv Macile ja Windowsile
-badge = Beeta 0.11.1 · tasuta · ilma registreerimiseta
+badge = Beeta 0.11.2 · tasuta · ilma registreerimiseta
 h1 = Kirjuta lihtsalt.<br>Paigutuse parandab <span class="hl">AURA</span>
 lead = Tippisid «ghbdsn» asemel «привіт»? AURA märkab seda ja parandab kohe pärast tühikut. macOS-ile ja Windowsile.
 dlMac = Laadi alla Macile

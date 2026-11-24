@@ -61,7 +61,7 @@ settings = Ρυθμίσεις
 ```
 name = Ελληνικά
 title = AURA Switcher — δωρεάν εναλλακτική του Punto Switcher για Mac και Windows
-badge = Beta 0.11.1 · δωρεάν · χωρίς εγγραφή
+badge = Beta 0.11.2 · δωρεάν · χωρίς εγγραφή
 h1 = Απλώς γράψτε.<br>Το <span class="hl">AURA</span> διορθώνει τη διάταξη
 lead = Γράψατε «kalhmera» αντί για «καλημέρα»; Το AURA το καταλαβαίνει και το διορθώνει αμέσως μετά το κενό. Για macOS και Windows.
 dlMac = Λήψη για Mac

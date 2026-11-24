@@ -61,7 +61,7 @@ settings = Socruithe
 ```
 name = Gaeilge
 title = AURA Switcher — malairt shaor in aisce ar Punto Switcher do Mac agus Windows
-badge = Béite 0.11.1 · saor in aisce · gan chlárú
+badge = Béite 0.11.2 · saor in aisce · gan chlárú
 h1 = Clóscríobh go simplí.<br>Ceartóidh <span class="hl">AURA</span> an leagan amach
 lead = Ar chlóscríobh tú «ghbdsn» in ionad «привіт»? Tugann AURA faoi deara é agus ceartaíonn sé láithreach tar éis an spáis. Do macOS agus Windows.
 dlMac = Íoslódáil do Mac

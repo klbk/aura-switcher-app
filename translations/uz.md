@@ -61,7 +61,7 @@ settings = Sozlamalar
 ```
 name = Oʻzbek
 title = AURA Switcher — Mac va Windows uchun Punto Switcher’ning bepul muqobili
-badge = Beta 0.11.1 · bepul · roʻyxatdan oʻtmasdan
+badge = Beta 0.11.2 · bepul · roʻyxatdan oʻtmasdan
 h1 = Shunchaki yozing.<br><span class="hl">AURA</span> terilishni tuzatadi
 lead = «привіт» oʻrniga «ghbdsn» yozdingizmi? AURA buni payqaydi va probeldan keyin darrov tuzatadi. macOS va Windows uchun.
 dlMac = Mac uchun yuklab olish

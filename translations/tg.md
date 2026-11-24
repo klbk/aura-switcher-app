@@ -61,7 +61,7 @@ settings = Танзимот
 ```
 name = Тоҷикӣ
 title = AURA Switcher — ҷойгузини ройгони Punto Switcher барои Mac ва Windows
-badge = Бета 0.11.1 · ройгон · бе сабти ном
+badge = Бета 0.11.2 · ройгон · бе сабти ном
 h1 = Танҳо нависед.<br><span class="hl">AURA</span> тарҳбандиро ислоҳ мекунад
 lead = Ба ҷои «привіт» «ghbdsn» навиштед? AURA инро мебинад ва фавран пас аз фосила ислоҳ мекунад. Барои macOS ва Windows.
 dlMac = Боргирӣ барои Mac

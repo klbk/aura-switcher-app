@@ -61,7 +61,7 @@ settings = Поставки
 ```
 name = Македонски
 title = AURA Switcher — бесплатна алтернатива на Punto Switcher за Mac и Windows
-badge = Бета 0.11.1 · бесплатно · без регистрација
+badge = Бета 0.11.2 · бесплатно · без регистрација
 h1 = Само пишувајте.<br><span class="hl">AURA</span> го поправа распоредот
 lead = Напишавте «ghbdsn» наместо «привіт»? AURA го забележува и го поправа веднаш по празното место. За macOS и Windows.
 dlMac = Преземи за Mac

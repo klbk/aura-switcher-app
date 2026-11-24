@@ -61,7 +61,7 @@ settings = Подешавања
 ```
 name = Српски
 title = AURA Switcher — бесплатна алтернатива за Punto Switcher на Mac-у и Windows-у
-badge = Бета 0.11.1 · бесплатно · без регистрације
+badge = Бета 0.11.2 · бесплатно · без регистрације
 h1 = Само куцајте.<br><span class="hl">AURA</span> исправља распоред
 lead = Откуцали сте «ghbdsn» уместо «привіт»? AURA то примети и исправи одмах после размака. За macOS и Windows.
 dlMac = Преузми за Mac

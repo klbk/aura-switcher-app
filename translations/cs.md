@@ -61,7 +61,7 @@ settings = Nastavení
 ```
 name = Čeština
 title = AURA Switcher — bezplatná alternativa k Punto Switcher pro Mac a Windows
-badge = Beta 0.11.1 · zdarma · bez registrace
+badge = Beta 0.11.2 · zdarma · bez registrace
 h1 = Prostě pište.<br><span class="hl">AURA</span> opraví rozložení
 lead = Napsali jste «ghbdsn» místo «привіт»? AURA si toho všimne a opraví to hned po mezerníku. Pro macOS a Windows.
 dlMac = Stáhnout pro Mac

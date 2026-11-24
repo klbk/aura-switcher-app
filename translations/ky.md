@@ -61,7 +61,7 @@ settings = Жөндөөлөр
 ```
 name = Кыргызча
 title = AURA Switcher — Mac жана Windows үчүн Punto Switcher’дин акысыз альтернативасы
-badge = Бета 0.11.1 · акысыз · катталбай
+badge = Бета 0.11.2 · акысыз · катталбай
 h1 = Жөн гана терип жатыңыз.<br>Жайгашууну <span class="hl">AURA</span> оңдойт
 lead = «привіт» ордуна «ghbdsn» терип койдуңузбу? AURA байкап, боштуктан кийин эле оңдойт. macOS жана Windows үчүн.
 dlMac = Mac үчүн жүктөө

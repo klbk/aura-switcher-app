@@ -61,7 +61,7 @@ settings = Instellingen
 ```
 name = Nederlands
 title = AURA Switcher — gratis alternatief voor Punto Switcher (Mac & Windows)
-badge = Bèta 0.11.1 · gratis · zonder account
+badge = Bèta 0.11.2 · gratis · zonder account
 h1 = Gewoon typen.<br><span class="hl">AURA</span> herstelt de indeling
 lead = «ghbdsn» getypt in plaats van «привіт»? AURA merkt het en herstelt het direct na de spatie. Voor macOS en Windows.
 dlMac = Download voor Mac

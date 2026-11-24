@@ -61,7 +61,7 @@ settings = Көйләүләр
 ```
 name = Татарча
 title = AURA Switcher — Mac һәм Windows өчен Punto Switcher'ның бушлай алмашы
-badge = Бета 0.11.1 · бушлай · теркәлүсез
+badge = Бета 0.11.2 · бушлай · теркәлүсез
 h1 = Гади генә языгыз.<br><span class="hl">AURA</span> рәвешне төзәтә
 lead = «привіт» урынына «ghbdsn» яздыгызмы? AURA моны абайлый һәм бушлыктан соң ук төзәтә. macOS һәм Windows өчен.
 dlMac = Mac өчен йөкләү

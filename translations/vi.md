@@ -61,7 +61,7 @@ settings = Cài đặt
 ```
 name = Tiếng Việt
 title = AURA Switcher — ứng dụng thay thế Punto Switcher miễn phí cho Mac và Windows
-badge = Beta 0.11.1 · miễn phí · không cần đăng ký
+badge = Beta 0.11.2 · miễn phí · không cần đăng ký
 h1 = Cứ gõ đi.<br><span class="hl">AURA</span> sửa bố cục
 lead = Gõ «ghbdsn» thay vì «привіт»? AURA nhận ra và sửa ngay sau khi bạn nhấn phím cách. Cho macOS và Windows.
 dlMac = Tải cho Mac

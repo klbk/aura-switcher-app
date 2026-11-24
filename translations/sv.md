@@ -61,7 +61,7 @@ settings = Inställningar
 ```
 name = Svenska
 title = AURA Switcher — gratis alternativ till Punto Switcher för Mac och Windows
-badge = Beta 0.11.1 · gratis · utan konto
+badge = Beta 0.11.2 · gratis · utan konto
 h1 = Skriv bara.<br><span class="hl">AURA</span> rättar layouten
 lead = Skrev du «ghbdsn» i stället för «привіт»? AURA märker det och rättar direkt efter mellanslag. För macOS och Windows.
 dlMac = Ladda ner för Mac

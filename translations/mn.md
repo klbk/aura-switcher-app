@@ -61,7 +61,7 @@ settings = Тохиргоо
 ```
 name = Монгол
 title = AURA Switcher — Mac болон Windows-д зориулсан Punto Switcher-ийн үнэгүй орлуулагч
-badge = Бета 0.11.1 · үнэгүй · бүртгэлгүй
+badge = Бета 0.11.2 · үнэгүй · бүртгэлгүй
 h1 = Зүгээр л бичээрэй.<br><span class="hl">AURA</span> байрлалыг засна
 lead = «привіт» гэхийн оронд «ghbdsn» гэж бичсэн үү? AURA үүнийг анзаарч, зай авмагц засна. macOS болон Windows-д зориулсан.
 dlMac = Mac-д татах

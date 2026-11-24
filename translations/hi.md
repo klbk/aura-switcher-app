@@ -61,7 +61,7 @@ settings = सेटिंग्स
 ```
 name = हिन्दी
 title = AURA Switcher — Mac और Windows के लिए मुफ़्त Punto Switcher विकल्प
-badge = बीटा 0.11.1 · मुफ़्त · बिना रजिस्ट्रेशन
+badge = बीटा 0.11.2 · मुफ़्त · बिना रजिस्ट्रेशन
 h1 = बस लिखिए।<br>लेआउट <span class="hl">AURA</span> ठीक करेगा
 lead = «привіт» की जगह «ghbdsn» लिख दिया? AURA इसे पहचानकर स्पेस दबाते ही ठीक कर देता है। macOS और Windows के लिए।
 dlMac = Mac के लिए डाउनलोड करें

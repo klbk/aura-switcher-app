@@ -61,7 +61,7 @@ settings = Beállítások
 ```
 name = Magyar
 title = AURA Switcher — ingyenes Punto Switcher alternatíva Macre és Windowsra
-badge = Béta 0.11.1 · ingyenes · regisztráció nélkül
+badge = Béta 0.11.2 · ingyenes · regisztráció nélkül
 h1 = Csak gépelj.<br>A kiosztást az <span class="hl">AURA</span> javítja
 lead = «привіт» helyett «ghbdsn»-t gépeltél? Az AURA észreveszi és a szóköz után azonnal kijavítja. macOS-re és Windowsra.
 dlMac = Letöltés Macre

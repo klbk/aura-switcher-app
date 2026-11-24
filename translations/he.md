@@ -61,7 +61,7 @@ settings = הגדרות
 ```
 name = עברית
 title = AURA Switcher — חלופה חינמית ל-Punto Switcher עבור Mac ו-Windows
-badge = בטא 0.11.1 · חינם · ללא הרשמה
+badge = בטא 0.11.2 · חינם · ללא הרשמה
 h1 = פשוט כתבו.<br><span class="hl">AURA</span> מתקנת את הפריסה
 lead = הקלדתם «akuo» במקום «שלום»? AURA מזהה ומתקנת מיד אחרי הרווח. ל‑macOS ול‑Windows.
 dlMac = הורדה ל‑Mac

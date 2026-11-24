@@ -61,7 +61,7 @@ settings = Indstillinger
 ```
 name = Dansk
 title = AURA Switcher — gratis alternativ til Punto Switcher til Mac og Windows
-badge = Beta 0.11.1 · gratis · uden tilmelding
+badge = Beta 0.11.2 · gratis · uden tilmelding
 h1 = Bare skriv.<br><span class="hl">AURA</span> retter layoutet
 lead = Skrev du «ghbdsn» i stedet for «привіт»? AURA opdager det og retter det lige efter mellemrum. Til macOS og Windows.
 dlMac = Hent til Mac

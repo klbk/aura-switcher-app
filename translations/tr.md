@@ -61,7 +61,7 @@ settings = Ayarlar
 ```
 name = Türkçe
 title = AURA Switcher — Mac ve Windows için ücretsiz Punto Switcher alternatifi
-badge = Beta 0.11.1 · ücretsiz · kayıt gerekmez
+badge = Beta 0.11.2 · ücretsiz · kayıt gerekmez
 h1 = Sadece yazın.<br>Düzeni <span class="hl">AURA</span> düzeltir
 lead = «привіт» yerine «ghbdsn» mi yazdınız? AURA fark eder ve boşluktan hemen sonra düzeltir. macOS ve Windows için.
 dlMac = Mac için indir
