@@ -7,7 +7,7 @@ cd "$(dirname "$0")"
 NAME="AURA Switcher"
 FILE=AURA-Switcher            # file names without spaces
 BUNDLE_ID=com.chernov.aura    # unchanged: keeps users' settings
-VERSION=${VERSION:-0.11.1}
+VERSION=${VERSION:-0.11.2}
 APP="build/$NAME.app"
 rm -rf build && mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 for ARCH in arm64 x86_64; do
