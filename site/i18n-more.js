@@ -1,7 +1,7 @@
 // Additional site languages — every language AURA auto-corrects. Loaded before shared.js.
 // MORE_WORDS: demo examples [typed, fixed, typed-in layout, switched-to layout]. Missing → English examples.
 const MORE = {
-  it: { name: "Italiano", title: "AURA Switcher — il layout della tastiera si corregge da solo", badge: "Beta 0.11 · gratis · senza registrazione",
+  it: { name: "Italiano", title: "AURA Switcher — il layout della tastiera si corregge da solo", badge: "Beta 0.11.1 · gratis · senza registrazione",
     h1: "Scrivi e basta.<br><span class=\"hl\">AURA</span> corregge il layout", lead: "Hai scritto «ghbdsn» invece di «привіт»? AURA se ne accorge e lo corregge appena premi lo spazio. Per macOS e Windows.",
     dlMac: "Scarica per Mac", dlWin: "Per Windows", demoWrong: "Layout sbagliato…", demoFixed: "Corretto dopo lo spazio",
     fTitle: "Tutto ciò che serve. Niente di superfluo",
@@ -19,7 +19,7 @@ const MORE = {
     s3h: "Scrivi", s3p: "Il codice lingua appare nella barra dei menu (Mac) o nell’area di notifica (Windows). AURA fa il resto.",
     ctaH: "Prova AURA oggi", ctaP: "Beta gratuita per macOS e Windows.", made: "Fatto in Ucraina", foot: "AURA — tu pensa al testo, non al layout della tastiera." },
 
-  pt: { name: "Português", title: "AURA Switcher — o layout do teclado corrige-se sozinho", badge: "Beta 0.11 · grátis · sem registo",
+  pt: { name: "Português", title: "AURA Switcher — o layout do teclado corrige-se sozinho", badge: "Beta 0.11.1 · grátis · sem registo",
     h1: "Basta escrever.<br><span class=\"hl\">AURA</span> corrige o layout", lead: "Escreveu «ghbdsn» em vez de «привіт»? A AURA nota e corrige logo após o espaço. Para macOS e Windows.",
     dlMac: "Transferir para Mac", dlWin: "Para Windows", demoWrong: "Layout errado…", demoFixed: "Corrigido após o espaço",
     fTitle: "Tudo o que precisa. Nada a mais",
@@ -37,7 +37,7 @@ const MORE = {
     s3h: "Escreva", s3p: "O código do idioma aparece na barra de menus (Mac) ou na área de notificação (Windows). A AURA faz o resto.",
     ctaH: "Experimente a AURA hoje", ctaP: "Beta gratuita para macOS e Windows.", made: "Feito na Ucrânia", foot: "AURA — pense no texto, não no layout do teclado." },
 
-  tr: { name: "Türkçe", title: "AURA Switcher — klavye düzeni kendini düzeltir", badge: "Beta 0.11 · ücretsiz · kayıt gerekmez",
+  tr: { name: "Türkçe", title: "AURA Switcher — klavye düzeni kendini düzeltir", badge: "Beta 0.11.1 · ücretsiz · kayıt gerekmez",
     h1: "Sadece yazın.<br>Düzeni <span class=\"hl\">AURA</span> düzeltir", lead: "«привіт» yerine «ghbdsn» mi yazdınız? AURA fark eder ve boşluktan hemen sonra düzeltir. macOS ve Windows için.",
     dlMac: "Mac için indir", dlWin: "Windows için", demoWrong: "Yanlış düzen…", demoFixed: "Boşluktan sonra düzeltildi",
     fTitle: "Gereken her şey. Fazlası yok",
@@ -55,7 +55,7 @@ const MORE = {
     s3h: "Yazın", s3p: "Dil kodu menü çubuğunda (Mac) veya bildirim alanında (Windows) görünür. Gerisini AURA yapar.",
     ctaH: "AURA’yı bugün deneyin", ctaP: "macOS ve Windows için ücretsiz beta.", made: "Ukrayna’da yapıldı", foot: "AURA — klavye düzenini değil, metninizi düşünün." },
 
-  nl: { name: "Nederlands", title: "AURA Switcher — je toetsenbordindeling herstelt zichzelf", badge: "Bèta 0.11 · gratis · zonder account",
+  nl: { name: "Nederlands", title: "AURA Switcher — je toetsenbordindeling herstelt zichzelf", badge: "Bèta 0.11.1 · gratis · zonder account",
     h1: "Gewoon typen.<br><span class=\"hl\">AURA</span> herstelt de indeling", lead: "«ghbdsn» getypt in plaats van «привіт»? AURA merkt het en herstelt het direct na de spatie. Voor macOS en Windows.",
     dlMac: "Download voor Mac", dlWin: "Voor Windows", demoWrong: "Verkeerde indeling…", demoFixed: "Hersteld na de spatie",
     fTitle: "Alles wat je nodig hebt. Niets overbodigs",
@@ -73,7 +73,7 @@ const MORE = {
     s3h: "Typ", s3p: "De taalcode verschijnt in de menubalk (Mac) of het systeemvak (Windows). AURA doet de rest.",
     ctaH: "Probeer AURA vandaag", ctaP: "Gratis bèta voor macOS en Windows.", made: "Gemaakt in Oekraïne", foot: "AURA — denk aan je tekst, niet aan je toetsenbordindeling." },
 
-  cs: { name: "Čeština", title: "AURA Switcher — rozložení klávesnice se opraví samo", badge: "Beta 0.11 · zdarma · bez registrace",
+  cs: { name: "Čeština", title: "AURA Switcher — rozložení klávesnice se opraví samo", badge: "Beta 0.11.1 · zdarma · bez registrace",
     h1: "Prostě pište.<br><span class=\"hl\">AURA</span> opraví rozložení", lead: "Napsali jste «ghbdsn» místo «привіт»? AURA si toho všimne a opraví to hned po mezerníku. Pro macOS a Windows.",
     dlMac: "Stáhnout pro Mac", dlWin: "Pro Windows", demoWrong: "Špatné rozložení…", demoFixed: "Opraveno po mezerníku",
     fTitle: "Vše, co potřebujete. Nic navíc",
@@ -91,7 +91,7 @@ const MORE = {
     s3h: "Pište", s3p: "Kód jazyka se objeví v řádku nabídek (Mac) nebo v oznamovací oblasti (Windows). Zbytek zařídí AURA.",
     ctaH: "Vyzkoušejte AURA ještě dnes", ctaP: "Bezplatná beta pro macOS a Windows.", made: "Vyrobeno na Ukrajině", foot: "AURA — myslete na text, ne na rozložení klávesnice." },
 
-  sv: { name: "Svenska", title: "AURA Switcher — tangentbordslayouten rättar sig själv", badge: "Beta 0.11 · gratis · utan konto",
+  sv: { name: "Svenska", title: "AURA Switcher — tangentbordslayouten rättar sig själv", badge: "Beta 0.11.1 · gratis · utan konto",
     h1: "Skriv bara.<br><span class=\"hl\">AURA</span> rättar layouten", lead: "Skrev du «ghbdsn» i stället för «привіт»? AURA märker det och rättar direkt efter mellanslag. För macOS och Windows.",
     dlMac: "Ladda ner för Mac", dlWin: "För Windows", demoWrong: "Fel layout…", demoFixed: "Rättat efter mellanslag",
     fTitle: "Allt du behöver. Inget onödigt",
@@ -109,7 +109,7 @@ const MORE = {
     s3h: "Skriv", s3p: "Språkkoden visas i menyraden (Mac) eller meddelandefältet (Windows). AURA gör resten.",
     ctaH: "Prova AURA i dag", ctaP: "Gratis beta för macOS och Windows.", made: "Tillverkad i Ukraina", foot: "AURA — tänk på texten, inte på tangentbordslayouten." },
 
-  fi: { name: "Suomi", title: "AURA Switcher — näppäimistöasettelu korjaa itsensä", badge: "Beta 0.11 · ilmainen · ei rekisteröitymistä",
+  fi: { name: "Suomi", title: "AURA Switcher — näppäimistöasettelu korjaa itsensä", badge: "Beta 0.11.1 · ilmainen · ei rekisteröitymistä",
     h1: "Kirjoita vain.<br><span class=\"hl\">AURA</span> korjaa asettelun", lead: "Kirjoititko «ghbdsn» eikä «привіт»? AURA huomaa sen ja korjaa heti välilyönnin jälkeen. macOS:lle ja Windowsille.",
     dlMac: "Lataa Macille", dlWin: "Windowsille", demoWrong: "Väärä asettelu…", demoFixed: "Korjattu välilyönnin jälkeen",
     fTitle: "Kaikki tarvittava. Ei mitään turhaa",
@@ -127,7 +127,7 @@ const MORE = {
     s3h: "Kirjoita", s3p: "Kielikoodi näkyy valikkorivillä (Mac) tai ilmaisinalueella (Windows). AURA hoitaa loput.",
     ctaH: "Kokeile AURAa tänään", ctaP: "Ilmainen beta macOS:lle ja Windowsille.", made: "Valmistettu Ukrainassa", foot: "AURA — ajattele tekstiä, älä näppäimistöasettelua." },
 
-  ro: { name: "Română", title: "AURA Switcher — aranjamentul tastaturii se corectează singur", badge: "Beta 0.11 · gratuit · fără înregistrare",
+  ro: { name: "Română", title: "AURA Switcher — aranjamentul tastaturii se corectează singur", badge: "Beta 0.11.1 · gratuit · fără înregistrare",
     h1: "Doar scrie.<br><span class=\"hl\">AURA</span> corectează aranjamentul", lead: "Ai scris «ghbdsn» în loc de «привіт»? AURA observă și corectează imediat după spațiu. Pentru macOS și Windows.",
     dlMac: "Descarcă pentru Mac", dlWin: "Pentru Windows", demoWrong: "Aranjament greșit…", demoFixed: "Corectat după spațiu",
     fTitle: "Tot ce îți trebuie. Nimic în plus",
@@ -145,7 +145,7 @@ const MORE = {
     s3h: "Scrie", s3p: "Codul limbii apare în bara de meniu (Mac) sau în zona de notificare (Windows). AURA face restul.",
     ctaH: "Încearcă AURA azi", ctaP: "Beta gratuită pentru macOS și Windows.", made: "Făcut în Ucraina", foot: "AURA — gândește-te la text, nu la aranjamentul tastaturii." },
 
-  hu: { name: "Magyar", title: "AURA Switcher — a billentyűzetkiosztás magától javul", badge: "Béta 0.11 · ingyenes · regisztráció nélkül",
+  hu: { name: "Magyar", title: "AURA Switcher — a billentyűzetkiosztás magától javul", badge: "Béta 0.11.1 · ingyenes · regisztráció nélkül",
     h1: "Csak gépelj.<br>A kiosztást az <span class=\"hl\">AURA</span> javítja", lead: "«привіт» helyett «ghbdsn»-t gépeltél? Az AURA észreveszi és a szóköz után azonnal kijavítja. macOS-re és Windowsra.",
     dlMac: "Letöltés Macre", dlWin: "Windowsra", demoWrong: "Rossz kiosztás…", demoFixed: "Javítva a szóköz után",
     fTitle: "Minden, ami kell. Semmi felesleges",
@@ -163,7 +163,7 @@ const MORE = {
     s3h: "Gépelj", s3p: "A nyelvkód megjelenik a menüsoron (Mac) vagy az értesítési területen (Windows). A többit az AURA intézi.",
     ctaH: "Próbáld ki az AURA-t még ma", ctaP: "Ingyenes béta macOS-re és Windowsra.", made: "Ukrajnában készült", foot: "AURA — a szövegre gondolj, ne a billentyűzetkiosztásra." },
 
-  el: { name: "Ελληνικά", title: "AURA Switcher — η διάταξη πληκτρολογίου διορθώνεται μόνη της", badge: "Beta 0.11 · δωρεάν · χωρίς εγγραφή",
+  el: { name: "Ελληνικά", title: "AURA Switcher — η διάταξη πληκτρολογίου διορθώνεται μόνη της", badge: "Beta 0.11.1 · δωρεάν · χωρίς εγγραφή",
     h1: "Απλώς γράψτε.<br>Το <span class=\"hl\">AURA</span> διορθώνει τη διάταξη", lead: "Γράψατε «kalhmera» αντί για «καλημέρα»; Το AURA το καταλαβαίνει και το διορθώνει αμέσως μετά το κενό. Για macOS και Windows.",
     dlMac: "Λήψη για Mac", dlWin: "Για Windows", demoWrong: "Λάθος διάταξη…", demoFixed: "Διορθώθηκε μετά το κενό",
     fTitle: "Ό,τι χρειάζεστε. Τίποτα περιττό",
@@ -181,7 +181,7 @@ const MORE = {
     s3h: "Γράψτε", s3p: "Ο κωδικός γλώσσας εμφανίζεται στη γραμμή μενού (Mac) ή στην περιοχή ειδοποιήσεων (Windows). Τα υπόλοιπα τα κάνει το AURA.",
     ctaH: "Δοκιμάστε το AURA σήμερα", ctaP: "Δωρεάν beta για macOS και Windows.", made: "Φτιαγμένο στην Ουκρανία", foot: "AURA — σκεφτείτε το κείμενο, όχι τη διάταξη." },
 
-  bg: { name: "Български", title: "AURA Switcher — подредбата на клавиатурата се поправя сама", badge: "Бета 0.11 · безплатно · без регистрация",
+  bg: { name: "Български", title: "AURA Switcher — подредбата на клавиатурата се поправя сама", badge: "Бета 0.11.1 · безплатно · без регистрация",
     h1: "Просто пишете.<br><span class=\"hl\">AURA</span> поправя подредбата", lead: "Написахте «ghbdsn» вместо «привіт»? AURA го забелязва и поправя веднага след интервала. За macOS и Windows.",
     dlMac: "Изтегли за Mac", dlWin: "За Windows", demoWrong: "Грешна подредба…", demoFixed: "Поправено след интервала",
     fTitle: "Всичко нужно. Нищо излишно",
@@ -199,7 +199,7 @@ const MORE = {
     s3h: "Пишете", s3p: "Кодът на езика се появява в лентата с менюта (Mac) или в областта за известия (Windows). AURA прави останалото.",
     ctaH: "Опитайте AURA днес", ctaP: "Безплатна бета за macOS и Windows.", made: "Създадено в Украйна", foot: "AURA — мислете за текста, не за подредбата." },
 
-  he: { name: "עברית", dir: "rtl", title: "AURA Switcher — פריסת המקלדת מתקנת את עצמה", badge: "בטא 0.11 · חינם · ללא הרשמה",
+  he: { name: "עברית", dir: "rtl", title: "AURA Switcher — פריסת המקלדת מתקנת את עצמה", badge: "בטא 0.11.1 · חינם · ללא הרשמה",
     h1: "פשוט כתבו.<br><span class=\"hl\">AURA</span> מתקנת את הפריסה", lead: "הקלדתם «akuo» במקום «שלום»? AURA מזהה ומתקנת מיד אחרי הרווח. ל‑macOS ול‑Windows.",
     dlMac: "הורדה ל‑Mac", dlWin: "ל‑Windows", demoWrong: "פריסה שגויה…", demoFixed: "תוקן אחרי הרווח",
     fTitle: "כל מה שצריך. בלי מיותר",
@@ -217,7 +217,7 @@ const MORE = {
     s3h: "כתבו", s3p: "קוד השפה מופיע בשורת התפריטים (Mac) או במגש (Windows). AURA עושה את השאר.",
     ctaH: "נסו את AURA היום", ctaP: "בטא חינמית ל‑macOS ול‑Windows.", made: "נוצר באוקראינה", foot: "AURA — חשבו על הטקסט, לא על פריסת המקלדת." },
 
-  ar: { name: "العربية", dir: "rtl", title: "AURA Switcher — تخطيط لوحة المفاتيح يُصحَّح تلقائيًا", badge: "بيتا 0.11 · مجانًا · بدون تسجيل",
+  ar: { name: "العربية", dir: "rtl", title: "AURA Switcher — تخطيط لوحة المفاتيح يُصحَّح تلقائيًا", badge: "بيتا 0.11.1 · مجانًا · بدون تسجيل",
     h1: "اكتب فقط.<br><span class=\"hl\">AURA</span> تصحّح التخطيط", lead: "كتبت «lvpfh» بدلًا من «مرحبا»؟ تلاحظ AURA ذلك وتصحّحه فور الضغط على المسافة. لنظامي macOS وWindows.",
     dlMac: "تنزيل لـ Mac", dlWin: "لـ Windows", demoWrong: "تخطيط خاطئ…", demoFixed: "تم التصحيح بعد المسافة",
     fTitle: "كل ما تحتاجه. لا شيء زائد",
@@ -235,7 +235,7 @@ const MORE = {
     s3h: "اكتب", s3p: "يظهر رمز اللغة في شريط القوائم (Mac) أو منطقة الإعلامات (Windows). وتتولى AURA الباقي.",
     ctaH: "جرّب AURA اليوم", ctaP: "نسخة بيتا مجانية لـ macOS وWindows.", made: "صُنع في أوكرانيا", foot: "AURA — فكّر في نصك، لا في تخطيط لوحة المفاتيح." },
 
-  hi: { name: "हिन्दी", title: "AURA Switcher — कीबोर्ड लेआउट अपने आप ठीक होता है", badge: "बीटा 0.11 · मुफ़्त · बिना रजिस्ट्रेशन",
+  hi: { name: "हिन्दी", title: "AURA Switcher — कीबोर्ड लेआउट अपने आप ठीक होता है", badge: "बीटा 0.11.1 · मुफ़्त · बिना रजिस्ट्रेशन",
     h1: "बस लिखिए।<br>लेआउट <span class=\"hl\">AURA</span> ठीक करेगा", lead: "«привіт» की जगह «ghbdsn» लिख दिया? AURA इसे पहचानकर स्पेस दबाते ही ठीक कर देता है। macOS और Windows के लिए।",
     dlMac: "Mac के लिए डाउनलोड करें", dlWin: "Windows के लिए", demoWrong: "गलत लेआउट…", demoFixed: "स्पेस के बाद ठीक हुआ",
     fTitle: "जो चाहिए, वही सब। कुछ फ़ालतू नहीं",
@@ -253,7 +253,7 @@ const MORE = {
     s3h: "लिखिए", s3p: "भाषा कोड मेनू बार (Mac) या ट्रे (Windows) में दिखेगा। बाकी काम AURA करेगा।",
     ctaH: "आज ही AURA आज़माएँ", ctaP: "macOS और Windows के लिए मुफ़्त बीटा।", made: "यूक्रेन में बना", foot: "AURA — कीबोर्ड लेआउट नहीं, अपने टेक्स्ट के बारे में सोचिए।" },
 
-  ko: { name: "한국어", title: "AURA Switcher — 키보드 자판이 저절로 고쳐집니다", badge: "베타 0.11 · 무료 · 가입 불필요",
+  ko: { name: "한국어", title: "AURA Switcher — 키보드 자판이 저절로 고쳐집니다", badge: "베타 0.11.1 · 무료 · 가입 불필요",
     h1: "그냥 입력하세요.<br>자판은 <span class=\"hl\">AURA</span>가 고칩니다", lead: "«안녕» 대신 «dkssud»라고 쳤나요? AURA가 알아차리고 스페이스 바로 뒤에 고쳐 줍니다. macOS와 Windows용.",
     dlMac: "Mac용 다운로드", dlWin: "Windows용", demoWrong: "잘못된 자판…", demoFixed: "스페이스 뒤에 수정됨",
     fTitle: "필요한 모든 것. 군더더기 없이",
@@ -271,7 +271,7 @@ const MORE = {
     s3h: "입력", s3p: "언어 코드가 메뉴 막대(Mac)나 트레이(Windows)에 나타납니다. 나머지는 AURA가 합니다.",
     ctaH: "지금 AURA를 사용해 보세요", ctaP: "macOS와 Windows용 무료 베타.", made: "우크라이나에서 만듦", foot: "AURA — 자판이 아닌 글에 집중하세요." },
   zh: { name: "简体中文", title: "AURA Switcher — 键盘布局自动纠正",
-    badge: "Beta 0.11 · 免费 · 免注册",
+    badge: "Beta 0.11.1 · 免费 · 免注册",
     h1: "只管打字。<br><span class=\"hl\">AURA</span> 帮你纠正键盘布局",
     lead: "输入 “ghbdsn” 而不是 “привіт”? AURA 会察觉并在按下空格后立即纠错。支持 macOS 与 Windows。",
     dlMac: "下载 Mac 版",
@@ -306,7 +306,7 @@ const MORE = {
     made: "乌克兰制造",
     foot: "AURA — 专注输入内容，无需顾虑键盘布局。" },
 
-  be: { name: "Беларуская", title: "AURA Switcher — раскладка клавіятуры выпраўляецца сама", badge: "Бэта 0.11 · бясплатна · без рэгістрацыі",
+  be: { name: "Беларуская", title: "AURA Switcher — раскладка клавіятуры выпраўляецца сама", badge: "Бэта 0.11.1 · бясплатна · без рэгістрацыі",
     h1: "Проста друкуйце.<br><span class=\"hl\">AURA</span> выпраўляе раскладку", lead: "Набралі «ghbdsn» замест «привіт»? AURA заўважыць і выправіць адразу пасля прабела. Для macOS і Windows.",
     dlMac: "Спампаваць для Mac", dlWin: "Для Windows", demoWrong: "Не тая раскладка…", demoFixed: "Выпраўлена пасля прабела",
     fTitle: "Усё патрэбнае. Нічога лішняга",
@@ -330,7 +330,7 @@ const MORE = {
     safe3h: "Папярэджанне пры першым запуску — гэта нармальна", safe3p: "Бэта пакуль без платнага подпісу Apple і Microsoft. Mac: «Гатова» → Сістэмныя налады → Прыватнасць і бяспека → «Усё роўна адкрыць». Windows: «Падрабязней» → «Усё роўна выканаць».",
     menabled: "Уключана", mauto: "Аўтавыпраўленне", msound: "Гук", mapp: "Праграма: ", mexclude: "Не працаваць у гэтай праграме", mappLang: "Мова для гэтай праграмы", mexclusions: "Выключэнні", mbindings: "Прывязкі моў" },
 
-  kk: { name: "Қазақша", title: "AURA Switcher — пернетақта орналасуы өзі түзетіледі", badge: "Бета 0.11 · тегін · тіркелусіз",
+  kk: { name: "Қазақша", title: "AURA Switcher — пернетақта орналасуы өзі түзетіледі", badge: "Бета 0.11.1 · тегін · тіркелусіз",
     h1: "Жай ғана теріңіз.<br>Орналасуды <span class=\"hl\">AURA</span> түзетеді", lead: "«привіт» орнына «ghbdsn» теріп қойдыңыз ба? AURA байқап, бос орыннан кейін-ақ түзетеді. macOS және Windows үшін.",
     dlMac: "Mac үшін жүктеу", dlWin: "Windows үшін", demoWrong: "Орналасуы қате…", demoFixed: "Бос орыннан кейін түзетілді",
     fTitle: "Қажеттінің бәрі. Артық ештеңе жоқ",
@@ -354,7 +354,7 @@ const MORE = {
     safe3h: "Алғаш іске қосқанда ескерту шығуы — қалыпты жағдай", safe3p: "Бетаның Apple және Microsoft ақылы қолтаңбасы әзірге жоқ. Mac: «Дайын» → Жүйе параметрлері → Құпиялылық және қауіпсіздік → «Бәрібір ашу». Windows: «Қосымша ақпарат» → «Бәрібір іске қосу».",
     menabled: "Қосулы", mauto: "Автотүзету", msound: "Дыбыс", mapp: "Қолданба: ", mexclude: "Бұл қолданбада жұмыс істемеу", mappLang: "Осы қолданбаның тілі", mexclusions: "Ерекшеліктер", mbindings: "Тіл байланыстары" },
 
-  ky: { name: "Кыргызча", title: "AURA Switcher — клавиатуранын жайгашуусу өзү оңдолот", badge: "Бета 0.11 · акысыз · катталбай",
+  ky: { name: "Кыргызча", title: "AURA Switcher — клавиатуранын жайгашуусу өзү оңдолот", badge: "Бета 0.11.1 · акысыз · катталбай",
     h1: "Жөн гана терип жатыңыз.<br>Жайгашууну <span class=\"hl\">AURA</span> оңдойт", lead: "«привіт» ордуна «ghbdsn» терип койдуңузбу? AURA байкап, боштуктан кийин эле оңдойт. macOS жана Windows үчүн.",
     dlMac: "Mac үчүн жүктөө", dlWin: "Windows үчүн", demoWrong: "Жайгашуусу туура эмес…", demoFixed: "Боштуктан кийин оңдолду",
     fTitle: "Керектүүнүн баары. Ашыкча эч нерсе жок",
@@ -378,7 +378,7 @@ const MORE = {
     safe3h: "Биринчи жолу ачканда эскертүү чыгышы — кадимки көрүнүш", safe3p: "Бетанын Apple жана Microsoft акы төлөнүүчү кол тамгасы азырынча жок. Mac: «Бүттү» → Тутум жөндөөлөрү → Купуялык жана коопсуздук → «Баары бир ачуу». Windows: «Кеңири маалымат» → «Баары бир иштетүү».",
     menabled: "Күйгүзүлгөн", mauto: "Авто оңдоо", msound: "Үн", mapp: "Колдонмо: ", mexclude: "Бул колдонмодо иштебөө", mappLang: "Бул колдонмонун тили", mexclusions: "Өзгөчөлүктөр", mbindings: "Тил байланыштары" },
 
-  ka: { name: "ქართული", title: "AURA Switcher — კლავიატურის განლაგება თავისით სწორდება", badge: "ბეტა 0.11 · უფასო · რეგისტრაციის გარეშე",
+  ka: { name: "ქართული", title: "AURA Switcher — კლავიატურის განლაგება თავისით სწორდება", badge: "ბეტა 0.11.1 · უფასო · რეგისტრაციის გარეშე",
     h1: "უბრალოდ აკრიფეთ.<br>განლაგებას <span class=\"hl\">AURA</span> ასწორებს", lead: "აკრიფეთ «ghbdsn» «привіт»-ის ნაცვლად? AURA შეამჩნევს და გამოტოვების შემდეგ დაუყოვნებლივ გაასწორებს. macOS-ისა და Windows-ისთვის.",
     dlMac: "ჩამოტვირთვა Mac-ისთვის", dlWin: "Windows-ისთვის", demoWrong: "არასწორი განლაგება…", demoFixed: "გასწორდა გამოტოვების შემდეგ",
     fTitle: "ყველაფერი საჭირო. არაფერი ზედმეტი",
@@ -402,7 +402,7 @@ const MORE = {
     safe3h: "გაფრთხილება პირველ გაშვებაზე ნორმალურია", safe3p: "ბეტას ჯერ არ აქვს Apple-ისა და Microsoft-ის ფასიანი ხელმოწერა. Mac: „Done“ → სისტემის პარამეტრები → კონფიდენციალურობა და უსაფრთხოება → „მაინც გახსნა“. Windows: „მეტი ინფორმაცია“ → „მაინც გაშვება“.",
     menabled: "ჩართულია", mauto: "ავტოშესწორება", msound: "ხმა", mapp: "აპლიკაცია: ", mexclude: "ამ აპლიკაციაში არ იმუშაოს", mappLang: "ამ აპლიკაციის ენა", mexclusions: "გამონაკლისები", mbindings: "ენების მიბმა" },
 
-  hy: { name: "Հայերեն", title: "AURA Switcher — ստեղնաշարի դասավորությունն ինքն է ուղղվում", badge: "Բետա 0.11 · անվճար · առանց գրանցման",
+  hy: { name: "Հայերեն", title: "AURA Switcher — ստեղնաշարի դասավորությունն ինքն է ուղղվում", badge: "Բետա 0.11.1 · անվճար · առանց գրանցման",
     h1: "Պարզապես տպեք։<br>Դասավորությունը կուղղի <span class=\"hl\">AURA</span>-ն", lead: "«привіт»-ի փոխարեն «ghbdsn» տպե՞լ եք։ AURA-ն կնկատի և բացատից անմիջապես հետո կուղղի։ macOS-ի և Windows-ի համար։",
     dlMac: "Ներբեռնել Mac-ի համար", dlWin: "Windows-ի համար", demoWrong: "Սխալ դասավորություն…", demoFixed: "Ուղղվեց բացատից հետո",
     fTitle: "Ամեն անհրաժեշտը։ Ոչ մի ավելորդ բան",
@@ -426,7 +426,7 @@ const MORE = {
     safe3h: "Առաջին գործարկման ժամանակ նախազգուշացումը նորմալ է", safe3p: "Բետան դեռ չունի Apple-ի և Microsoft-ի վճարովի ստորագրություն։ Mac՝ «Done» → Համակարգի կարգավորումներ → Գաղտնիություն և անվտանգություն → «Open Anyway»։ Windows՝ «More info» → «Run anyway»։",
     menabled: "Միացված է", mauto: "Ինքնաուղղում", msound: "Ձայն", mapp: "Հավելված՝ ", mexclude: "Չաշխատել այս հավելվածում", mappLang: "Այս հավելվածի լեզուն", mexclusions: "Բացառություններ", mbindings: "Լեզուների կապակցումներ" },
 
-  az: { name: "Azərbaycan", title: "AURA Switcher — klaviatura düzülüşü özü düzəlir", badge: "Beta 0.11 · pulsuz · qeydiyyatsız",
+  az: { name: "Azərbaycan", title: "AURA Switcher — klaviatura düzülüşü özü düzəlir", badge: "Beta 0.11.1 · pulsuz · qeydiyyatsız",
     h1: "Sadəcə yığın.<br>Düzülüşü <span class=\"hl\">AURA</span> düzəldir", lead: "«привіт» əvəzinə «ghbdsn» yığdınız? AURA bunu görüb boşluqdan dərhal sonra düzəldir. macOS və Windows üçün.",
     dlMac: "Mac üçün yüklə", dlWin: "Windows üçün", demoWrong: "Yanlış düzülüş…", demoFixed: "Boşluqdan sonra düzəldildi",
     fTitle: "Lazım olan hər şey. Artıq heç nə yox",
@@ -450,7 +450,7 @@ const MORE = {
     safe3h: "İlk açılışda xəbərdarlıq normaldır", safe3p: "Betada hələ Apple və Microsoft-un ödənişli imzası yoxdur. Mac: «Done» → Sistem Parametrləri → Məxfilik və Təhlükəsizlik → «Yenə də aç». Windows: «Ətraflı məlumat» → «Yenə də işə sal».",
     menabled: "Aktivdir", mauto: "Avtomatik düzəliş", msound: "Səs", mapp: "Tətbiq: ", mexclude: "Bu tətbiqdə işləmə", mappLang: "Bu tətbiq üçün dil", mexclusions: "İstisnalar", mbindings: "Dil bağlamaları" },
 
-  sr: { name: "Српски", title: "AURA Switcher — распоред тастатуре се исправља сам", badge: "Бета 0.11 · бесплатно · без регистрације",
+  sr: { name: "Српски", title: "AURA Switcher — распоред тастатуре се исправља сам", badge: "Бета 0.11.1 · бесплатно · без регистрације",
     h1: "Само куцајте.<br><span class=\"hl\">AURA</span> исправља распоред", lead: "Откуцали сте «ghbdsn» уместо «привіт»? AURA то примети и исправи одмах после размака. За macOS и Windows.",
     dlMac: "Преузми за Mac", dlWin: "За Windows", demoWrong: "Погрешан распоред…", demoFixed: "Исправљено после размака",
     fTitle: "Све што вам треба. Ништа сувишно",
@@ -474,7 +474,7 @@ const MORE = {
     safe3h: "Упозорење при првом покретању је нормално", safe3p: "Бета још нема плаћени потпис компанија Apple и Microsoft. Mac: „Done“ → Системска подешавања → Приватност и безбедност → „Open Anyway“. Windows: „More info“ → „Run anyway“.",
     menabled: "Укључено", mauto: "Аутокорекција", msound: "Звук", mapp: "Апликација: ", mexclude: "Не радити у овој апликацији", mappLang: "Језик за ову апликацију", mexclusions: "Изузеци", mbindings: "Повезивање језика" },
 
-  mk: { name: "Македонски", title: "AURA Switcher — распоредот на тастатурата се поправа сам", badge: "Бета 0.11 · бесплатно · без регистрација",
+  mk: { name: "Македонски", title: "AURA Switcher — распоредот на тастатурата се поправа сам", badge: "Бета 0.11.1 · бесплатно · без регистрација",
     h1: "Само пишувајте.<br><span class=\"hl\">AURA</span> го поправа распоредот", lead: "Напишавте «ghbdsn» наместо «привіт»? AURA го забележува и го поправа веднаш по празното место. За macOS и Windows.",
     dlMac: "Преземи за Mac", dlWin: "За Windows", demoWrong: "Погрешен распоред…", demoFixed: "Поправено по празното место",
     fTitle: "Сè што ви треба. Ништо излишно",
@@ -498,7 +498,7 @@ const MORE = {
     safe3h: "Предупредување при првото стартување е нормално", safe3p: "Бетата сè уште нема платен потпис од Apple и Microsoft. Mac: „Done“ → Системски поставки → Приватност и безбедност → „Open Anyway“. Windows: „More info“ → „Run anyway“.",
     menabled: "Вклучено", mauto: "Автокорекција", msound: "Звук", mapp: "Апликација: ", mexclude: "Не работи во оваа апликација", mappLang: "Јазик за оваа апликација", mexclusions: "Исклучоци", mbindings: "Врзувања на јазици" },
 
-  sk: { name: "Slovenčina", title: "AURA Switcher — rozloženie klávesnice sa opraví samo", badge: "Beta 0.11 · zadarmo · bez registrácie",
+  sk: { name: "Slovenčina", title: "AURA Switcher — rozloženie klávesnice sa opraví samo", badge: "Beta 0.11.1 · zadarmo · bez registrácie",
     h1: "Len píšte.<br>Rozloženie opraví <span class=\"hl\">AURA</span>", lead: "Napísali ste «ghbdsn» namiesto «привіт»? AURA si to všimne a opraví to hneď po medzerníku. Pre macOS a Windows.",
     dlMac: "Stiahnuť pre Mac", dlWin: "Pre Windows", demoWrong: "Nesprávne rozloženie…", demoFixed: "Opravené po medzerníku",
     fTitle: "Všetko, čo potrebujete. Nič navyše",
@@ -522,7 +522,7 @@ const MORE = {
     safe3h: "Upozornenie pri prvom spustení je normálne", safe3p: "Beta zatiaľ nemá platený podpis Apple a Microsoft. Mac: „Hotovo“ → Nastavenia systému → Súkromie a zabezpečenie → „Predsa otvoriť“. Windows: „Ďalšie informácie“ → „Predsa spustiť“.",
     menabled: "Zapnuté", mauto: "Automatické opravy", msound: "Zvuk", mapp: "Aplikácia: ", mexclude: "V tejto aplikácii nepracovať", mappLang: "Jazyk pre túto aplikáciu", mexclusions: "Výnimky", mbindings: "Priradenia jazykov" },
 
-  hr: { name: "Hrvatski", title: "AURA Switcher — raspored tipkovnice ispravlja se sam", badge: "Beta 0.11 · besplatno · bez registracije",
+  hr: { name: "Hrvatski", title: "AURA Switcher — raspored tipkovnice ispravlja se sam", badge: "Beta 0.11.1 · besplatno · bez registracije",
     h1: "Samo tipkajte.<br><span class=\"hl\">AURA</span> ispravlja raspored", lead: "Utipkali ste «ghbdsn» umjesto «привіт»? AURA to primijeti i ispravi odmah nakon razmaka. Za macOS i Windows.",
     dlMac: "Preuzmi za Mac", dlWin: "Za Windows", demoWrong: "Pogrešan raspored…", demoFixed: "Ispravljeno nakon razmaka",
     fTitle: "Sve što trebate. Ništa suvišno",
@@ -546,7 +546,7 @@ const MORE = {
     safe3h: "Upozorenje pri prvom pokretanju je normalno", safe3p: "Beta još nema plaćeni potpis tvrtki Apple i Microsoft. Mac: „Gotovo“ → Postavke sustava → Privatnost i sigurnost → „Svejedno otvori“. Windows: „Više informacija“ → „Svejedno pokreni“.",
     menabled: "Uključeno", mauto: "Automatski ispravak", msound: "Zvuk", mapp: "Aplikacija: ", mexclude: "Ne radi u ovoj aplikaciji", mappLang: "Jezik za ovu aplikaciju", mexclusions: "Iznimke", mbindings: "Povezivanja jezika" },
 
-  sl: { name: "Slovenščina", title: "AURA Switcher — razporeditev tipkovnice se popravi sama", badge: "Beta 0.11 · brezplačno · brez registracije",
+  sl: { name: "Slovenščina", title: "AURA Switcher — razporeditev tipkovnice se popravi sama", badge: "Beta 0.11.1 · brezplačno · brez registracije",
     h1: "Samo tipkajte.<br><span class=\"hl\">AURA</span> popravi razporeditev", lead: "Ste natipkali «ghbdsn» namesto «привіт»? AURA to opazi in popravi takoj po preslednici. Za macOS in Windows.",
     dlMac: "Prenesi za Mac", dlWin: "Za Windows", demoWrong: "Napačna razporeditev…", demoFixed: "Popravljeno po preslednici",
     fTitle: "Vse, kar potrebujete. Nič odveč",
@@ -570,7 +570,7 @@ const MORE = {
     safe3h: "Opozorilo ob prvem zagonu je običajno", safe3p: "Beta še nima plačljivega podpisa podjetij Apple in Microsoft. Mac: „Končano“ → Sistemske nastavitve → Zasebnost in varnost → „Vseeno odpri“. Windows: „Več informacij“ → „Vseeno zaženi“.",
     menabled: "Vklopljeno", mauto: "Samodejni popravki", msound: "Zvok", mapp: "Aplikacija: ", mexclude: "V tej aplikaciji ne delaj", mappLang: "Jezik za to aplikacijo", mexclusions: "Izjeme", mbindings: "Povezave jezikov" },
 
-  lt: { name: "Lietuvių", title: "AURA Switcher — klaviatūros išdėstymas pataisomas pats", badge: "Beta 0.11 · nemokama · be registracijos",
+  lt: { name: "Lietuvių", title: "AURA Switcher — klaviatūros išdėstymas pataisomas pats", badge: "Beta 0.11.1 · nemokama · be registracijos",
     h1: "Tiesiog rašykite.<br>Išdėstymą pataiso <span class=\"hl\">AURA</span>", lead: "Surinkote «ghbdsn» vietoj «привіт»? AURA tai pastebi ir pataiso iškart po tarpo. Skirta macOS ir Windows.",
     dlMac: "Atsisiųsti „Mac“", dlWin: "Skirta „Windows“", demoWrong: "Netinkamas išdėstymas…", demoFixed: "Pataisyta po tarpo",
     fTitle: "Viskas, ko reikia. Nieko nereikalingo",
@@ -594,7 +594,7 @@ const MORE = {
     safe3h: "Įspėjimas pirmą kartą paleidus — normalus dalykas", safe3p: "Beta dar neturi mokamo „Apple“ ir „Microsoft“ parašo. Mac: „Done“ → Sistemos nustatymai → Privatumas ir sauga → „Vis tiek atidaryti“. Windows: „Daugiau informacijos“ → „Vis tiek vykdyti“.",
     menabled: "Įjungta", mauto: "Automatinis taisymas", msound: "Garsas", mapp: "Programa: ", mexclude: "Šioje programoje nedirbti", mappLang: "Kalba šiai programai", mexclusions: "Išimtys", mbindings: "Kalbų priskyrimai" },
 
-  lv: { name: "Latviešu", title: "AURA Switcher — tastatūras izkārtojums salabojas pats", badge: "Beta 0.11 · bez maksas · bez reģistrācijas",
+  lv: { name: "Latviešu", title: "AURA Switcher — tastatūras izkārtojums salabojas pats", badge: "Beta 0.11.1 · bez maksas · bez reģistrācijas",
     h1: "Vienkārši rakstiet.<br>Izkārtojumu salabo <span class=\"hl\">AURA</span>", lead: "Uzrakstījāt «ghbdsn» «привіт» vietā? AURA to pamana un salabo uzreiz pēc atstarpes. Domāts macOS un Windows.",
     dlMac: "Lejupielādēt Mac versiju", dlWin: "Windows versija", demoWrong: "Nepareizs izkārtojums…", demoFixed: "Salabots pēc atstarpes",
     fTitle: "Viss vajadzīgais. Nekā lieka",
@@ -618,7 +618,7 @@ const MORE = {
     safe3h: "Brīdinājums pirmajā palaišanas reizē ir normāls", safe3p: "Betai vēl nav Apple un Microsoft maksas paraksta. Mac: „Done“ → Sistēmas iestatījumi → Privātums un drošība → „Tomēr atvērt“. Windows: „Vairāk informācijas“ → „Tomēr palaist“.",
     menabled: "Ieslēgts", mauto: "Automātiskā labošana", msound: "Skaņa", mapp: "Lietotne: ", mexclude: "Šajā lietotnē nedarboties", mappLang: "Valoda šai lietotnei", mexclusions: "Izņēmumi", mbindings: "Valodu piesaistes" },
 
-  et: { name: "Eesti", title: "AURA Switcher — klaviatuuripaigutus parandab end ise", badge: "Beeta 0.11 · tasuta · ilma registreerimiseta",
+  et: { name: "Eesti", title: "AURA Switcher — klaviatuuripaigutus parandab end ise", badge: "Beeta 0.11.1 · tasuta · ilma registreerimiseta",
     h1: "Kirjuta lihtsalt.<br>Paigutuse parandab <span class=\"hl\">AURA</span>", lead: "Tippisid «ghbdsn» asemel «привіт»? AURA märkab seda ja parandab kohe pärast tühikut. macOS-ile ja Windowsile.",
     dlMac: "Laadi alla Macile", dlWin: "Windowsile", demoWrong: "Vale paigutus…", demoFixed: "Parandatud pärast tühikut",
     fTitle: "Kõik, mida vaja. Midagi üleliigset pole",
@@ -642,7 +642,7 @@ const MORE = {
     safe3h: "Hoiatus esimesel käivitamisel on normaalne", safe3p: "Beetal pole veel Apple’i ega Microsofti tasulist allkirja. Mac: „Done“ → Süsteemiseaded → Privaatsus ja turvalisus → „Ava ikkagi“. Windows: „Rohkem teavet“ → „Käivita ikkagi“.",
     menabled: "Sees", mauto: "Automaatne parandus", msound: "Heli", mapp: "Rakendus: ", mexclude: "Selles rakenduses mitte töötada", mappLang: "Selle rakenduse keel", mexclusions: "Erandid", mbindings: "Keeleseosed" },
 
-  da: { name: "Dansk", title: "AURA Switcher — dit tastaturlayout retter sig selv", badge: "Beta 0.11 · gratis · uden tilmelding",
+  da: { name: "Dansk", title: "AURA Switcher — dit tastaturlayout retter sig selv", badge: "Beta 0.11.1 · gratis · uden tilmelding",
     h1: "Bare skriv.<br><span class=\"hl\">AURA</span> retter layoutet", lead: "Skrev du «ghbdsn» i stedet for «привіт»? AURA opdager det og retter det lige efter mellemrum. Til macOS og Windows.",
     dlMac: "Hent til Mac", dlWin: "Til Windows", demoWrong: "Forkert layout…", demoFixed: "Rettet efter mellemrum",
     fTitle: "Alt, hvad du har brug for. Intet overflødigt",
@@ -666,7 +666,7 @@ const MORE = {
     safe3h: "En advarsel ved første start er normal", safe3p: "Betaen har endnu ikke den betalte signatur fra Apple eller Microsoft. Mac: «Færdig» → Systemindstillinger → Anonymitet og sikkerhed → «Åbn alligevel». Windows: «Flere oplysninger» → «Kør alligevel».",
     menabled: "Aktiveret", mauto: "Automatisk rettelse", msound: "Lyd", mapp: "App: ", mexclude: "Virk ikke i denne app", mappLang: "Sprog for denne app", mexclusions: "Undtagelser", mbindings: "Sprogtilknytninger" },
 
-  nb: { name: "Norsk bokmål", title: "AURA Switcher — tastaturoppsettet retter seg selv", badge: "Beta 0.11 · gratis · uten registrering",
+  nb: { name: "Norsk bokmål", title: "AURA Switcher — tastaturoppsettet retter seg selv", badge: "Beta 0.11.1 · gratis · uten registrering",
     h1: "Bare skriv.<br><span class=\"hl\">AURA</span> retter oppsettet", lead: "Skrev du «ghbdsn» i stedet for «привіт»? AURA oppdager det og retter det rett etter mellomrom. For macOS og Windows.",
     dlMac: "Last ned for Mac", dlWin: "For Windows", demoWrong: "Feil oppsett…", demoFixed: "Rettet etter mellomrom",
     fTitle: "Alt du trenger. Ingenting overflødig",
@@ -690,7 +690,7 @@ const MORE = {
     safe3h: "En advarsel ved første oppstart er normal", safe3p: "Betaen har ennå ikke den betalte signaturen fra Apple eller Microsoft. Mac: «Ferdig» → Systeminnstillinger → Personvern og sikkerhet → «Åpne likevel». Windows: «Mer informasjon» → «Kjør likevel».",
     menabled: "På", mauto: "Autokorrigering", msound: "Lyd", mapp: "App: ", mexclude: "Ikke aktiv i denne appen", mappLang: "Språk for denne appen", mexclusions: "Unntak", mbindings: "Språkkoblinger" },
 
-  is: { name: "Íslenska", title: "AURA Switcher — lyklaborðsskipulagið leiðréttir sig sjálft", badge: "Beta 0.11 · ókeypis · engin skráning",
+  is: { name: "Íslenska", title: "AURA Switcher — lyklaborðsskipulagið leiðréttir sig sjálft", badge: "Beta 0.11.1 · ókeypis · engin skráning",
     h1: "Skrifaðu bara.<br><span class=\"hl\">AURA</span> lagar skipulagið", lead: "Skrifaðir þú «ghbdsn» í stað «привіт»? AURA tekur eftir því og leiðréttir um leið og þú slærð á bilstöngina. Fyrir macOS og Windows.",
     dlMac: "Sækja fyrir Mac", dlWin: "Fyrir Windows", demoWrong: "Rangt skipulag…", demoFixed: "Leiðrétt eftir bil",
     fTitle: "Allt sem þú þarft. Ekkert aukalega",
@@ -714,7 +714,7 @@ const MORE = {
     safe3h: "Viðvörun við fyrstu ræsingu er eðlileg", safe3p: "Betan er ekki enn með greiddu undirskrift frá Apple eða Microsoft. Mac: «Lokið» → Kerfisstillingar → Persónuvernd og öryggi → «Opna samt». Windows: «Frekari upplýsingar» → «Keyra samt».",
     menabled: "Kveikt", mauto: "Sjálfvirk leiðrétting", msound: "Hljóð", mapp: "Forrit: ", mexclude: "Ekki virkt í þessu forriti", mappLang: "Tungumál fyrir þetta forrit", mexclusions: "Undantekningar", mbindings: "Tungumálatengingar" },
 
-  sq: { name: "Shqip", title: "AURA Switcher — paraqitja e tastierës korrigjohet vetë", badge: "Beta 0.11 · falas · pa regjistrim",
+  sq: { name: "Shqip", title: "AURA Switcher — paraqitja e tastierës korrigjohet vetë", badge: "Beta 0.11.1 · falas · pa regjistrim",
     h1: "Thjesht shkruaj.<br><span class=\"hl\">AURA</span> e rregullon paraqitjen", lead: "Shkrove «ghbdsn» në vend të «привіт»? AURA e vëren dhe e korrigjon menjëherë pas hapësirës. Për macOS dhe Windows.",
     dlMac: "Shkarko për Mac", dlWin: "Për Windows", demoWrong: "Paraqitje e gabuar…", demoFixed: "Korrigjuar pas hapësirës",
     fTitle: "Gjithçka që të nevojitet. Asgjë e tepërt",
@@ -738,7 +738,7 @@ const MORE = {
     safe3h: "Paralajmërimi në nisjen e parë është normal", safe3p: "Beta ende nuk ka nënshkrimin me pagesë të Apple ose Microsoft. Mac: «U krye» → Cilësimet e sistemit → Privatësia dhe siguria → «Hape gjithsesi». Windows: «Më shumë informacion» → «Ekzekuto gjithsesi».",
     menabled: "Aktivizuar", mauto: "Korrigjim automatik", msound: "Zëri", mapp: "Aplikacioni: ", mexclude: "Mos vepro në këtë aplikacion", mappLang: "Gjuha për këtë aplikacion", mexclusions: "Përjashtime", mbindings: "Lidhjet e gjuhëve" },
 
-  fa: { name: "فارسی", dir: "rtl", title: "AURA Switcher — چیدمان صفحه‌کلید خودش درست می‌شود", badge: "بتا 0.11 · رایگان · بدون ثبت‌نام",
+  fa: { name: "فارسی", dir: "rtl", title: "AURA Switcher — چیدمان صفحه‌کلید خودش درست می‌شود", badge: "بتا 0.11.1 · رایگان · بدون ثبت‌نام",
     h1: "فقط تایپ کنید.<br><span class=\"hl\">AURA</span> چیدمان را درست می‌کند", lead: "به‌جای «привіт» نوشتید «ghbdsn»؟ AURA متوجه می‌شود و درست بعد از فاصله اصلاحش می‌کند. برای macOS و Windows.",
     dlMac: "دانلود برای Mac", dlWin: "برای Windows", demoWrong: "چیدمان اشتباه…", demoFixed: "بعد از فاصله اصلاح شد",
     fTitle: "هر آنچه لازم دارید. نه بیشتر",
@@ -762,7 +762,7 @@ const MORE = {
     safe3h: "هشدار در اولین اجرا طبیعی است", safe3p: "نسخهٔ بتا هنوز امضای پولی Apple یا Microsoft را ندارد. Mac: «تمام» ← تنظیمات سیستم ← حریم خصوصی و امنیت ← «به‌هرحال باز کن». Windows: «اطلاعات بیشتر» ← «به‌هرحال اجرا کن».",
     menabled: "روشن", mauto: "تصحیح خودکار", msound: "صدا", mapp: "برنامه: ", mexclude: "در این برنامه کار نکن", mappLang: "زبان این برنامه", mexclusions: "استثناها", mbindings: "اتصال زبان‌ها" },
 
-  vi: { name: "Tiếng Việt", title: "AURA Switcher — bố cục bàn phím tự sửa", badge: "Beta 0.11 · miễn phí · không cần đăng ký",
+  vi: { name: "Tiếng Việt", title: "AURA Switcher — bố cục bàn phím tự sửa", badge: "Beta 0.11.1 · miễn phí · không cần đăng ký",
     h1: "Cứ gõ đi.<br><span class=\"hl\">AURA</span> sửa bố cục", lead: "Gõ «ghbdsn» thay vì «привіт»? AURA nhận ra và sửa ngay sau khi bạn nhấn phím cách. Cho macOS và Windows.",
     dlMac: "Tải cho Mac", dlWin: "Cho Windows", demoWrong: "Sai bố cục…", demoFixed: "Đã sửa sau phím cách",
     fTitle: "Mọi thứ bạn cần. Không thừa thứ gì",
@@ -786,7 +786,7 @@ const MORE = {
     safe3h: "Cảnh báo khi chạy lần đầu là bình thường", safe3p: "Bản beta chưa có chữ ký có phí của Apple hay Microsoft. Mac: «Xong» → Cài đặt Hệ thống → Quyền riêng tư & Bảo mật → «Vẫn mở». Windows: «Thông tin thêm» → «Vẫn chạy».",
     menabled: "Bật", mauto: "Tự động sửa", msound: "Âm thanh", mapp: "Ứng dụng: ", mexclude: "Không hoạt động trong ứng dụng này", mappLang: "Ngôn ngữ cho ứng dụng này", mexclusions: "Ngoại lệ", mbindings: "Gán ngôn ngữ" },
 
-  tg: { name: "Тоҷикӣ", title: "AURA Switcher — тарҳбандии клавиатура худаш ислоҳ мешавад", badge: "Бета 0.11 · ройгон · бе сабти ном",
+  tg: { name: "Тоҷикӣ", title: "AURA Switcher — тарҳбандии клавиатура худаш ислоҳ мешавад", badge: "Бета 0.11.1 · ройгон · бе сабти ном",
     h1: "Танҳо нависед.<br><span class=\"hl\">AURA</span> тарҳбандиро ислоҳ мекунад", lead: "Ба ҷои «привіт» «ghbdsn» навиштед? AURA инро мебинад ва фавран пас аз фосила ислоҳ мекунад. Барои macOS ва Windows.",
     dlMac: "Боргирӣ барои Mac", dlWin: "Барои Windows", demoWrong: "Тарҳбандии нодуруст…", demoFixed: "Пас аз фосила ислоҳ шуд",
     fTitle: "Ҳама чизи даркорӣ. Чизи зиёдатӣ не",
@@ -810,7 +810,7 @@ const MORE = {
     safe3h: "Огоҳӣ ҳангоми оғози аввал муқаррарӣ аст", safe3p: "Бета ҳанӯз имзои пулакии Apple ё Microsoft надорад. Mac: «Тайёр» → Танзимоти система → Махфият ва амният → «Ба ҳар ҳол кушодан». Windows: «Иттилооти бештар» → «Ба ҳар ҳол иҷро кардан».",
     menabled: "Фаъол", mauto: "Ислоҳи худкор", msound: "Овоз", mapp: "Барнома: ", mexclude: "Дар ин барнома кор накун", mappLang: "Забон барои ин барнома", mexclusions: "Истисноҳо", mbindings: "Пайвасткунии забонҳо" },
 
-  mn: { name: "Монгол", title: "AURA Switcher — гарын байрлал өөрөө засагддаг", badge: "Бета 0.11 · үнэгүй · бүртгэлгүй",
+  mn: { name: "Монгол", title: "AURA Switcher — гарын байрлал өөрөө засагддаг", badge: "Бета 0.11.1 · үнэгүй · бүртгэлгүй",
     h1: "Зүгээр л бичээрэй.<br><span class=\"hl\">AURA</span> байрлалыг засна", lead: "«привіт» гэхийн оронд «ghbdsn» гэж бичсэн үү? AURA үүнийг анзаарч, зай авмагц засна. macOS болон Windows-д зориулсан.",
     dlMac: "Mac-д татах", dlWin: "Windows-д", demoWrong: "Буруу байрлал…", demoFixed: "Зайны дараа засагдсан",
     fTitle: "Хэрэгтэй бүхэн. Илүүц зүйлгүй",
@@ -834,7 +834,7 @@ const MORE = {
     safe3h: "Анх нээхэд гарах анхааруулга хэвийн зүйл", safe3p: "Бета хувилбарт Apple, Microsoft-ын төлбөртэй гарын үсэг хараахан байхгүй. Mac: «Болсон» → Системийн тохиргоо → Нууцлал ба аюулгүй байдал → «Ямартай ч нээх». Windows: «Нэмэлт мэдээлэл» → «Ямартай ч ажиллуулах».",
     menabled: "Идэвхтэй", mauto: "Автомат засвар", msound: "Дуу", mapp: "Апп: ", mexclude: "Энэ аппад ажиллахгүй", mappLang: "Энэ аппын хэл", mexclusions: "Үл хамаарах зүйлс", mbindings: "Хэлний холболтууд" },
 
-  tt: { name: "Татарча", title: "AURA Switcher — клавиатура рәвеше үзе төзәлә", badge: "Бета 0.11 · бушлай · теркәлүсез",
+  tt: { name: "Татарча", title: "AURA Switcher — клавиатура рәвеше үзе төзәлә", badge: "Бета 0.11.1 · бушлай · теркәлүсез",
     h1: "Гади генә языгыз.<br><span class=\"hl\">AURA</span> рәвешне төзәтә", lead: "«привіт» урынына «ghbdsn» яздыгызмы? AURA моны абайлый һәм бушлыктан соң ук төзәтә. macOS һәм Windows өчен.",
     dlMac: "Mac өчен йөкләү", dlWin: "Windows өчен", demoWrong: "Дөрес булмаган рәвеш…", demoFixed: "Бушлыктан соң төзәтелде",
     fTitle: "Кирәкле барысы да. Артык берни дә юк",
@@ -858,7 +858,7 @@ const MORE = {
     safe3h: "Беренче кабызганда кисәтү булу — гадәти хәл", safe3p: "Бетада әлегә Apple яки Microsoft'ның түләүле имзасы юк. Mac: «Әзер» → Система көйләүләре → Хосусыйлык һәм куркынычсызлык → «Барыбер ачарга». Windows: «Тулырак мәгълүмат» → «Барыбер эшләтергә».",
     menabled: "Кабызылган", mauto: "Автоматик төзәтү", msound: "Тавыш", mapp: "Кушымта: ", mexclude: "Бу кушымтада эшләмәскә", mappLang: "Бу кушымта өчен тел", mexclusions: "Аерымлыклар", mbindings: "Телләр бәйләнеше" },
 
-  uz: { name: "Oʻzbek", title: "AURA Switcher — klaviatura terilishi oʻzi tuzaladi", badge: "Beta 0.11 · bepul · roʻyxatdan oʻtmasdan",
+  uz: { name: "Oʻzbek", title: "AURA Switcher — klaviatura terilishi oʻzi tuzaladi", badge: "Beta 0.11.1 · bepul · roʻyxatdan oʻtmasdan",
     h1: "Shunchaki yozing.<br><span class=\"hl\">AURA</span> terilishni tuzatadi", lead: "«привіт» oʻrniga «ghbdsn» yozdingizmi? AURA buni payqaydi va probeldan keyin darrov tuzatadi. macOS va Windows uchun.",
     dlMac: "Mac uchun yuklab olish", dlWin: "Windows uchun", demoWrong: "Notoʻgʻri terilish…", demoFixed: "Probeldan keyin tuzatildi",
     fTitle: "Kerakli hamma narsa. Ortiqchasi yoʻq",
@@ -882,7 +882,7 @@ const MORE = {
     safe3h: "Birinchi ishga tushirishda ogohlantirish chiqishi odatiy hol", safe3p: "Betada hali Apple yoki Microsoft’ning pullik imzosi yoʻq. Mac: «Tayyor» → Tizim sozlamalari → Maxfiylik va xavfsizlik → «Baribir ochish». Windows: «Batafsil» → «Baribir ishga tushirish».",
     menabled: "Yoqilgan", mauto: "Avtomatik tuzatish", msound: "Tovush", mapp: "Ilova: ", mexclude: "Bu ilovada ishlamasin", mappLang: "Bu ilova uchun til", mexclusions: "Istisnolar", mbindings: "Til bogʻlanishlari" },
 
-  ga: { name: "Gaeilge", title: "AURA Switcher — ceartaíonn leagan amach an mhéarchláir é féin", badge: "Béite 0.11 · saor in aisce · gan chlárú",
+  ga: { name: "Gaeilge", title: "AURA Switcher — ceartaíonn leagan amach an mhéarchláir é féin", badge: "Béite 0.11.1 · saor in aisce · gan chlárú",
     h1: "Clóscríobh go simplí.<br>Ceartóidh <span class=\"hl\">AURA</span> an leagan amach", lead: "Ar chlóscríobh tú «ghbdsn» in ionad «привіт»? Tugann AURA faoi deara é agus ceartaíonn sé láithreach tar éis an spáis. Do macOS agus Windows.",
     dlMac: "Íoslódáil do Mac", dlWin: "Do Windows", demoWrong: "Leagan amach mícheart…", demoFixed: "Ceartaithe tar éis an spáis",
     fTitle: "Gach rud a theastaíonn uait. Gan aon rud breise",
@@ -906,7 +906,7 @@ const MORE = {
     safe3h: "Tá rabhadh ag an gcéad sheoladh gnáth", safe3p: "Níl síniú íoctha Apple ná Microsoft ag an mbéite go fóill. Mac: «Done» → Socruithe an Chórais → Príobháideacht & Slándáil → «Open Anyway». Windows: «More info» → «Run anyway».",
     menabled: "Cumasaithe", mauto: "Ceartú uathoibríoch", msound: "Fuaim", mapp: "Aip: ", mexclude: "Ná oibrigh san aip seo", mappLang: "Teanga don aip seo", mexclusions: "Eisceachtaí", mbindings: "Naisc teanga" },
 
-  mt: { name: "Malti", title: "AURA Switcher — it-tqassim tat-tastiera jikkoreġi ruħu", badge: "Beta 0.11 · b’xejn · mingħajr reġistrazzjoni",
+  mt: { name: "Malti", title: "AURA Switcher — it-tqassim tat-tastiera jikkoreġi ruħu", badge: "Beta 0.11.1 · b’xejn · mingħajr reġistrazzjoni",
     h1: "Ikteb biss.<br><span class=\"hl\">AURA</span> tikkoreġi t-tqassim", lead: "Ktibt «ghbdsn» minflok «привіт»? AURA tinduna u tikkoreġih eżatt wara l-ispazju. Għal macOS u Windows.",
     dlMac: "Niżżel għal Mac", dlWin: "Għal Windows", demoWrong: "Tqassim ħażin…", demoFixed: "Ikkoreġut wara l-ispazju",
     fTitle: "Dak kollu li għandek bżonn. Xejn żejjed",
@@ -930,7 +930,7 @@ const MORE = {
     safe3h: "Twissija fl-ewwel tnedija hija normali", safe3p: "Il-beta għad m’għandhiex il-firma bi ħlas ta’ Apple jew Microsoft. Mac: «Done» → Settings tas-Sistema → Privatezza u Sigurtà → «Iftaħ xorta waħda». Windows: «Aktar informazzjoni» → «Mexxi xorta waħda».",
     menabled: "Attivat", mauto: "Korrezzjoni awtomatika", msound: "Ħoss", mapp: "Applikazzjoni: ", mexclude: "Taħdimx f’din l-applikazzjoni", mappLang: "Lingwa għal din l-applikazzjoni", mexclusions: "Eċċezzjonijiet", mbindings: "Rabtiet tal-lingwi" },
 
-  cy: { name: "Cymraeg", title: "AURA Switcher — mae cynllun y bysellfwrdd yn cywiro ei hun", badge: "Beta 0.11 · am ddim · dim cofrestru",
+  cy: { name: "Cymraeg", title: "AURA Switcher — mae cynllun y bysellfwrdd yn cywiro ei hun", badge: "Beta 0.11.1 · am ddim · dim cofrestru",
     h1: "Teipiwch yn unig.<br>Mae <span class=\"hl\">AURA</span> yn trwsio’r cynllun", lead: "Wedi teipio «ghbdsn» yn lle «привіт»? Mae AURA yn sylwi ac yn ei gywiro’n syth ar ôl y bylchwr. Ar gyfer macOS a Windows.",
     dlMac: "Lawrlwytho ar gyfer Mac", dlWin: "Ar gyfer Windows", demoWrong: "Cynllun anghywir…", demoFixed: "Wedi’i gywiro ar ôl y bylchwr",
     fTitle: "Popeth sydd ei angen arnoch. Dim byd diangen",
