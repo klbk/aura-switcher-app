@@ -982,10 +982,28 @@ static bool isCopiedLine(const wstring& s) {
     return s.find_first_of(L"\r\n") == end;
 }
 
-// cmd / PowerShell (conhost), Windows Terminal, Git Bash (mintty): Ctrl+C without a selection is an interrupt
+// UI Automation client, made once on first use (the hook thread, COM initialized in wWinMain)
+static IUIAutomation* uiaClient() {
+    static IUIAutomation* uia = nullptr;
+    static const GUID clsid = {0xff48dba4, 0x60ef, 0x4201, {0xaa, 0x87, 0x54, 0x10, 0x3e, 0xef, 0x59, 0x4e}};  // CUIAutomation
+    static const GUID iid = {0x30cbe57d, 0xd9d0, 0x452a, {0xab, 0x13, 0x7a, 0xc5, 0xac, 0x48, 0x25, 0xee}};    // IUIAutomation
+    if (!uia && FAILED(CoCreateInstance(clsid, nullptr, CLSCTX_INPROC_SERVER, iid, (void**)&uia))) uia = nullptr;
+    return uia;
+}
+
+// cmd / PowerShell (conhost), Windows Terminal, Git Bash (mintty): Ctrl+C without a selection is an interrupt.
+// The terminal inside VS Code (and other xterm.js apps: Cursor, Hyper, Tabby) is a web page in an editor window:
+// its input is a hidden textarea with the class «xterm-helper-textarea», which Chromium reports as the UIA class name
 static bool fgIsConsole() {
     wchar_t cls[64] = L""; GetClassNameW(GetForegroundWindow(), cls, 64);
-    return !wcscmp(cls, L"ConsoleWindowClass") || !wcscmp(cls, L"CASCADIA_HOSTING_WINDOW_CLASS") || !wcscmp(cls, L"mintty");
+    if (!wcscmp(cls, L"ConsoleWindowClass") || !wcscmp(cls, L"CASCADIA_HOSTING_WINDOW_CLASS") || !wcscmp(cls, L"mintty")) return true;
+    IUIAutomation* uia = uiaClient(); IUIAutomationElement* el = nullptr; bool xterm = false;
+    if (uia && SUCCEEDED(uia->GetFocusedElement(&el)) && el) {
+        BSTR c = nullptr;
+        if (SUCCEEDED(el->get_CurrentClassName(&c)) && c) { xterm = wcsstr(c, L"xterm-helper-textarea") != nullptr; SysFreeString(c); }
+        el->Release();
+    }
+    return xterm;
 }
 static void cycleLayout() { if (!layouts.empty()) selectLayout(layouts[(layoutIndex(fgLayout()) + 1) % layouts.size()]); }
 
@@ -1116,10 +1134,7 @@ static int pairFixTarget(const vector<Key>& keys, const vector<Key>& before) {
 // Windows lets a keyboard hook see what's typed into password fields too: never touch a word there
 // (UI Automation's IsPassword; asked only when a fix is about to happen)
 static bool focusIsPassword() {
-    static IUIAutomation* uia = nullptr;
-    static const GUID clsid = {0xff48dba4, 0x60ef, 0x4201, {0xaa, 0x87, 0x54, 0x10, 0x3e, 0xef, 0x59, 0x4e}};  // CUIAutomation
-    static const GUID iid = {0x30cbe57d, 0xd9d0, 0x452a, {0xab, 0x13, 0x7a, 0xc5, 0xac, 0x48, 0x25, 0xee}};    // IUIAutomation
-    if (!uia && FAILED(CoCreateInstance(clsid, nullptr, CLSCTX_INPROC_SERVER, iid, (void**)&uia))) { uia = nullptr; return false; }
+    IUIAutomation* uia = uiaClient(); if (!uia) return false;
     IUIAutomationElement* el = nullptr; BOOL pw = FALSE;
     if (SUCCEEDED(uia->GetFocusedElement(&el)) && el) { el->get_CurrentIsPassword(&pw); el->Release(); }
     if (pw) return true;
@@ -1139,10 +1154,7 @@ static bool focusIsPassword() {
 static unsigned emptySeq = 0;
 static const UINT_PTR TIMER_EMPTY = 0x7e57;
 static bool focusIsEmpty() {
-    static IUIAutomation* uia = nullptr;
-    static const GUID clsid = {0xff48dba4, 0x60ef, 0x4201, {0xaa, 0x87, 0x54, 0x10, 0x3e, 0xef, 0x59, 0x4e}};
-    static const GUID iid = {0x30cbe57d, 0xd9d0, 0x452a, {0xab, 0x13, 0x7a, 0xc5, 0xac, 0x48, 0x25, 0xee}};
-    if (!uia && FAILED(CoCreateInstance(clsid, nullptr, CLSCTX_INPROC_SERVER, iid, (void**)&uia))) { uia = nullptr; return false; }
+    IUIAutomation* uia = uiaClient(); if (!uia) return false;
     IUIAutomationElement* el = nullptr; bool empty = false;
     if (SUCCEEDED(uia->GetFocusedElement(&el)) && el) {
         BOOL pw = FALSE; el->get_CurrentIsPassword(&pw);
