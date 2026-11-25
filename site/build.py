@@ -11,7 +11,7 @@ BASE = "https://klbk.github.io/aura-switcher/"
 COUNTER = '<script data-goatcounter="https://aura-switcher.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>'
 CHROME = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
 SRC = Path(__file__).resolve().parent
-ASSETS = ["icon.svg", "og.jpg", "latest.js", "i18n-more.js", "seo.js", "shared.js", "google8a7be41a4753a620.html", "f9834e666c1005df874f5c53d176ecc3.txt"]  # last two: Search Console + IndexNow (Bing) keys, keep
+ASSETS = ["icon.svg", "favicon-48.png", "favicon-96.png", "favicon-192.png", "apple-touch-icon.png", "og.jpg", "latest.js", "i18n-more.js", "seo.js", "shared.js", "google8a7be41a4753a620.html", "f9834e666c1005df874f5c53d176ecc3.txt"]  # last two: Search Console + IndexNow (Bing) keys, keep
 
 out = Path(sys.argv[1]).resolve()
 VERSION = re.search(r'version: "([^"]+)"', (SRC / "latest.js").read_text()).group(1)
