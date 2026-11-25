@@ -1077,7 +1077,16 @@ static bool fgIsConsole() {
     primed = fg; Sleep(250);
     return focusedIsXterm();
 }
-static void cycleLayout() { if (!layouts.empty()) selectLayout(layouts[(layoutIndex(fgLayout()) + 1) % layouts.size()]); }
+// the switch is asynchronous (WM_INPUTLANGCHANGEREQUEST): wait until the window really has the layout, so the keys held
+// back meanwhile (holdKeys) are sent on into the new one and not into the old one
+static void waitForLayout(const Layout& l) {
+    for (int i = 0; i < 40 && GetKeyboardLayout(GetWindowThreadProcessId(focusWindow(), nullptr)) != l.hkl; i++) pauseMs(5);
+}
+static void cycleLayout() {
+    if (layouts.empty()) return;
+    const Layout& n = layouts[(layoutIndex(fgLayout()) + 1) % layouts.size()];
+    selectLayout(n); waitForLayout(n);
+}
 
 static void convertSelection(wstring text) {
     if (layouts.empty()) return;
@@ -1142,6 +1151,38 @@ static void playSound(const vector<BYTE>& s) {
 }
 
 static bool focusIsPassword();
+// Is anything selected in the focused field? UI Automation answers in a few ms where Ctrl+C waits up to 0.4 s for
+// nothing. 0 = nothing selected (a caret only), 1 = a selection, -1 = the field can't tell (copy and see)
+static int uiaSelectionState() {
+    IUIAutomation* uia = uiaClient(); if (!uia) return -1;
+    IUIAutomationElement* el = nullptr; int state = -1;
+    if (SUCCEEDED(uia->GetFocusedElement(&el)) && el) {
+        IUnknown* p = nullptr;
+        if (SUCCEEDED(el->GetCurrentPattern(UIA_TextPatternId, &p)) && p) {
+            IUIAutomationTextPattern* tp = nullptr; IUIAutomationTextRangeArray* arr = nullptr;
+            if (SUCCEEDED(p->QueryInterface(__uuidof(IUIAutomationTextPattern), (void**)&tp)) && tp && SUCCEEDED(tp->GetSelection(&arr)) && arr) {
+                int n = 0; arr->get_Length(&n);
+                if (n == 0) state = 0;
+                else {
+                    state = 0;
+                    for (int i = 0; i < n && state == 0; i++) {
+                        IUIAutomationTextRange* r = nullptr; BSTR t = nullptr;
+                        if (SUCCEEDED(arr->GetElement(i, &r)) && r) {
+                            if (SUCCEEDED(r->GetText(1, &t)) && t && SysStringLen(t) > 0) state = 1;
+                            if (t) SysFreeString(t);
+                            r->Release();
+                        }
+                    }
+                }
+                arr->Release();
+            }
+            if (tp) tp->Release();
+            p->Release();
+        }
+        el->Release();
+    }
+    return state;
+}
 static void onDoubleShift(Snapshot* s) {
     if (layouts.empty()) return;
     playSound(sndShift);
@@ -1176,7 +1217,11 @@ static void onDoubleShift(Snapshot* s) {
         replaceIn(int(cur.text(s->keys).size()) + s->trailing, textKeepingEdges(s->keys, orig, n, lead, tail) + wstring(s->trailing, L' '), n);
         return;
     }
+    // no word: from here to the end the user's keys wait (the copy below takes up to 0.4 s, the layout change a bit more),
+    // so what they type right after the double tap lands in the new layout, not scattered over the old and the new
+    holdKeys();
     if (fgIsConsole()) { cycleLayout(); return; }  // Ctrl+C there would interrupt the running command
+    if (uiaSelectionState() == 0) { cycleLayout(); return; }  // nothing selected: no need to wait for a copy that won't come
     wstring sel;
     if (copySelection(sel) && !isCopiedLine(sel)) convertSelection(sel); else cycleLayout();
 }
