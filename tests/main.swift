@@ -246,6 +246,18 @@ for c in [CGKeyCode(5), 4, 49, 5, 4, 11] { press(c) }; for _ in 0..<4 { press(51
 if !engine.handsOff { mustFail += 1; print("MUST FAIL: Backspace into an earlier word must be handsOff") }
 engine.reset(); engine.fieldEmpty = { Engine.axFieldEmpty() }
 
+// the first word after a manual layout change stays as typed, only with the option on (off by default): the space that
+// ends it doesn't queue autoCorrect; the next word is checked again. Off, both words are queued.
+engine.layouts = [layout(US), layout("com.apple.keylayout.Ukrainian-PC")]; engine.reliable = [:]; engine.codes = engine.allCodes
+let typedWord: [CGKeyCode] = [5, 4, 11, 2, 17, 45]  // «ghbdtn» on the keys: «привіт» in Ukrainian
+for (on, want) in [(false, [1, 2]), (true, [0, 1])] {
+    engine.skipOverride = on; engine.reset(); engine.fieldEmpty = { false }; engine.noteManualSwitch()
+    engine.autoChecksQueued = 0
+    var queued: [Int] = []
+    for _ in 0..<2 { for c in typedWord { press(c) }; press(49); queued.append(engine.autoChecksQueued) }
+    if queued != want { mustFail += 1; print("MUST FAIL: first word after a manual switch, option \(on ? "on" : "off"): queued \(queued), expected \(want)") }
+}
+engine.skipOverride = nil; engine.reset(); engine.fieldEmpty = { Engine.axFieldEmpty() }
 // report and compare with the baseline
 let out = results.map { String(format: "%@\t%.1f%%\t%d/%d", $0.0, 100 * Double($0.1) / Double(max($0.2, 1)), $0.1, $0.2) }
 if CommandLine.arguments.contains("-v") { for l in out { print(l) } }

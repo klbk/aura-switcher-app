@@ -232,6 +232,17 @@ int wmain(int argc, wchar_t** argv) {
     }
     recentLang.clear(); recentAt = 0;
 
+    // the first word after a manual layout change stays as typed, only with the option on (off by default). Tests the
+    // decision kbHook makes at the word's space (the hook itself needs the live keyboard: not run here)
+    {
+        S.skipFirst = false; noteManualSwitch();
+        if (takeSkipNextWord()) { mustFail++; printf("MUST FAIL: skip with the option off\n"); }
+        S.skipFirst = true; noteManualSwitch();
+        if (!takeSkipNextWord()) { mustFail++; printf("MUST FAIL: first word after a manual switch not skipped\n"); }
+        if (takeSkipNextWord()) { mustFail++; printf("MUST FAIL: the skip is used up by one word only\n"); }
+        S.skipFirst = false;
+    }
+
     std::string out;
     for (auto& r : results) {
         char line[256]; snprintf(line, sizeof line, "%s\t%.1f%%\t%d/%d\n", r.name.c_str(), 100.0 * r.ok / (r.total ? r.total : 1), r.ok, r.total);
