@@ -46,9 +46,6 @@
 using std::wstring;
 using std::vector;
 
-#include <cstdio>
-#define DBGLOG(...) do { wchar_t b_[200]; _snwprintf(b_, 200, __VA_ARGS__); wchar_t t_[MAX_PATH]; GetTempPathW(MAX_PATH, t_); wcscat(t_, L"aura-dshift.log"); \
-    if (FILE* f_ = _wfopen(t_, L"ab")) { fwprintf(f_, L"%llu %ls\n", GetTickCount64(), b_); fclose(f_); } } while (0)  // TEMP diagnostics
 static const ULONG_PTR kMagic = 0x4B535754;  // marks our own synthetic input
 static const ULONG_PTR kReplay = 0x4B535755;  // marks the user's own keys that were held back and are sent on (see holdKeys)
 // all synthetic input goes through here: tests put a sink in, to see what reaches the app and in which order
@@ -421,7 +418,6 @@ static Key readKey(const KBDLLHOOKSTRUCT* k) {
 static LRESULT CALLBACK kbHook(int code, WPARAM wp, LPARAM lp) {
     auto* k = (KBDLLHOOKSTRUCT*)lp;
     if (code != HC_ACTION || k->dwExtraInfo == kMagic || !active) return CallNextHookEx(nullptr, code, wp, lp);
-    if (k->vkCode == VK_LSHIFT || k->vkCode == VK_RSHIFT || k->vkCode == VK_SHIFT) DBGLOG(L"hook shift vk=%x %ls extra=%llx hold=%d", (unsigned)k->vkCode, (wp == WM_KEYUP || wp == WM_SYSKEYUP) ? L"up" : L"down", (unsigned long long)k->dwExtraInfo, (int)holdingKeys.load());
     if (k->dwExtraInfo != kReplay && holdingKeys.load() && holdKey(k, wp == WM_KEYUP || wp == WM_SYSKEYUP)) return 1;  // a word is being replaced
     if (resetReq.exchange(false)) resetState();
     bool down = wp == WM_KEYDOWN || wp == WM_SYSKEYDOWN;
@@ -1229,13 +1225,9 @@ static void onDoubleShift(Snapshot* s) {
     // so what they type right after the double tap lands in the new layout, not scattered over the old and the new
     holdKeys();
     if (fgIsConsole()) { cycleLayout(); return; }  // Ctrl+C there would interrupt the running command
-    int uiaSel = uiaSelectionState();
-    DBGLOG(L"dshift no word: uia=%d", uiaSel);
-    if (uiaSel == 0) { cycleLayout(); return; }  // nothing selected: no need to wait for a copy that won't come
+    if (uiaSelectionState() == 0) { cycleLayout(); return; }  // nothing selected: no need to wait for a copy that won't come
     wstring sel;
-    bool copied = copySelection(sel);
-    DBGLOG(L"copy=%d len=%d line=%d", (int)copied, (int)sel.size(), (int)isCopiedLine(sel));
-    if (copied && !isCopiedLine(sel)) convertSelection(sel); else cycleLayout();
+    if (copySelection(sel) && !isCopiedLine(sel)) convertSelection(sel); else cycleLayout();
 }
 
 // one-letter words: a single letter before a fixed word is fixed too («z буду» → «я буду»),
