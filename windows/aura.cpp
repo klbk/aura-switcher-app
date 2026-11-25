@@ -446,6 +446,9 @@ static LRESULT CALLBACK kbHook(int code, WPARAM wp, LPARAM lp) {
             }
             if (mods) lastShiftTap = 0;
         } else {
+            // a Shift release with no press seen is not a tap: Windows adds fake Shift releases around the Shift+arrow keys
+            // AURA types (reselecting the converted text), which were held and sent on and made a «double tap» by themselves
+            if (!shiftHeld) return CallNextHookEx(nullptr, code, wp, lp);
             shiftHeld = false;
             if (sawOther || mods || now - shiftDownAt > 300) lastShiftTap = 0;
             else if (lastShiftTap && now - lastShiftTap < 450) {
