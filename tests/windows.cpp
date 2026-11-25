@@ -89,6 +89,35 @@ static void check(const std::string& name, const vector<Case>& cases) {
     results.push_back({name, ok, total});
 }
 
+// the "app" of the typing-during-replacement test (see wmain): a text field fed by our synthetic input
+struct App {
+    static void key(WORD vk, WORD scan, DWORD flags) {
+        if (flags & KEYEVENTF_KEYUP) return;
+        if (flags & KEYEVENTF_UNICODE) text += wchar_t(scan);
+        else if (vk == VK_BACK) { if (!text.empty()) text.pop_back(); }
+        else if (vk >= 'A' && vk <= 'Z') text += wchar_t(vk - 'A' + 'a');
+    }
+    static bool hookPasses(WORD vk, bool up, ULONG_PTR extra) {
+        KBDLLHOOKSTRUCT k{}; k.vkCode = vk; k.scanCode = MapVirtualKeyW(vk, MAPVK_VK_TO_VSC); k.dwExtraInfo = extra;
+        return kbHook(HC_ACTION, up ? WM_KEYUP : WM_KEYDOWN, (LPARAM)&k) != 1;
+    }
+    static void userTypes(wchar_t c) {   // the user presses and releases a letter
+        WORD vk = WORD(c - 'a' + 'A');
+        for (bool up : {false, true}) if (hookPasses(vk, up, 0)) key(vk, 0, up ? KEYEVENTF_KEYUP : 0);
+    }
+    static void sink(const INPUT* in, UINT n) {
+        for (UINT i = 0; i < n; i++) {
+            const KEYBDINPUT& k = in[i].ki;
+            if (k.dwExtraInfo == kReplay && !hookPasses(k.wVk, k.dwFlags & KEYEVENTF_KEYUP, kReplay)) continue;  // replayed keys go through the hook too
+            key(k.wVk, k.wScan, k.dwFlags);
+        }
+        calls++;
+        if (calls == 3) userTypes(L'n');    // during the Backspaces
+        if (calls == 10) userTypes(L's');   // during the new text
+    }
+    static inline wstring text; static inline int calls = 0;
+};
+
 int wmain(int argc, wchar_t** argv) {
     if (argc < 2) { printf("usage: aura-test <repo> [--update] [-v]\n"); return 2; }
     root = argv[1];
@@ -231,6 +260,25 @@ int wmain(int argc, wchar_t** argv) {
         if (got != (want == 0 ? L"ты\x01" : L"ті\x01")) { mustFail++; printf("MUST FAIL (RU,UK,EN): ns after %s word -> %s\n", want ? "uk" : "ru", got.empty() ? "unchanged" : utf8(got).c_str()); }
     }
     recentLang.clear(); recentAt = 0;
+
+    // Typing during a replacement (Win11 Notepad, ~60 ms per key: «ghbdtn ns » → «тпривет і»): the user's keys must not land
+    // between our Backspaces and the new letters. The "app" here is a text field that takes our synthetic input from the
+    // sink; a user's key reaches it only if the hook lets it through (returns 0), exactly as in Windows. Nothing is
+    // lost or reordered: the whole replacement first, then the keys pressed meanwhile, in the order pressed.
+    {
+        HKL savedForced = forcedLayout;
+        layouts = {layout(US), layout(L"00000422")}; reliable.clear(); forcedLayout = layouts[1].hkl;
+        resetState(); holdingKeys = false; held.clear(); App::text = L"ghbdtn "; App::calls = 0; testSink = App::sink;
+        replaceIn(7, L"привет ", layouts[1]);   // 7 Backspaces, then 7 characters: «ghbdtn » → «привет »
+        releaseKeys();                           // what wndProc does at the end of the message
+        testSink = nullptr;
+        if (App::text != L"привет ns") { mustFail++; printf("MUST FAIL: typing during a replacement: «ghbdtn » + n, s -> «%s», expected «привет ns»\n", utf8(App::text).c_str()); }
+        if (word.size() != 2) { mustFail++; printf("MUST FAIL: the keys held back didn't reach the hook again (word has %d keys, expected 2)\n", int(word.size())); }
+        if (holdingKeys.load() || !held.empty()) { mustFail++; printf("MUST FAIL: the hold is not released after the replacement\n"); }
+        if (!App::hookPasses('X', false, 0) || !App::hookPasses('X', true, 0)) { mustFail++; printf("MUST FAIL: a key typed after the replacement is still held back\n"); }
+        resetState(); forcedLayout = savedForced;
+        layouts = {layout(L"00000419"), layout(L"00000422"), layout(US)}; reliable.clear();
+    }
 
     std::string out;
     for (auto& r : results) {

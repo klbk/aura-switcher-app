@@ -25,6 +25,8 @@
 #include <algorithm>
 #include <cmath>
 #include <atomic>
+#include <deque>
+#include <mutex>
 #include <ctime>
 #include <map>
 #include <set>
@@ -45,6 +47,10 @@ using std::wstring;
 using std::vector;
 
 static const ULONG_PTR kMagic = 0x4B535754;  // marks our own synthetic input
+static const ULONG_PTR kReplay = 0x4B535755;  // marks the user's own keys that were held back and are sent on (see holdKeys)
+// all synthetic input goes through here: tests put a sink in, to see what reaches the app and in which order
+static void (*testSink)(const INPUT*, UINT) = nullptr;
+static void injectInput(const INPUT* in, UINT n) { if (testSink) testSink(in, n); else SendInput(n, const_cast<INPUT*>(in), sizeof(INPUT)); }
 enum { WM_TRAY = WM_APP + 1, WM_AUTO, WM_DSHIFT, WM_UPDATE, WM_UPDATE_READY, WM_ENTER, WM_EMPTYCHK };
 enum { ID_ENABLED = 1, ID_AUTO, ID_SOUND, ID_WORDS, ID_DONATE, ID_REPORT, ID_UPDATE, ID_EXCLUDE, ID_NOBIND, ID_LOGIN, ID_UI_SYS, ID_QUIT,
        ID_BIND0 = 100, ID_HK0 = 600, ID_EXDEL0 = 200, ID_BDDEL0 = 300, ID_RECENT0 = 400, ID_UI0 = 500 };
@@ -378,6 +384,22 @@ static bool returnHeld = false;  // Return held for a moment to fix the word bef
 static std::atomic<DWORD> returnScan{0}, returnFlags{0};  // the held Return's scan code and extended flag (numpad Enter)
 static void resetState() { word.clear(); lastWord.clear(); before.clear(); trailing = 0; handsOff = false; }
 
+// A word is replaced by the main thread (Backspaces, then the new text: 0.2–0.4 s) while the user goes on typing. Keys
+// that land in the field in between shift the Backspaces and slip between the new letters («ghbdtn ns » → «тпривет і»).
+// So from the moment a replacement starts the hook keeps the user's keys back (swallows them) and, once the replacement
+// is over, they are sent on in the order pressed (releaseKeys), through the hook like any other key.
+struct HeldKey { WORD vk, scan; DWORD flags; bool up; };
+static std::atomic<bool> holdingKeys{false};
+static std::mutex heldMx;
+static std::deque<HeldKey> held;
+static void holdKeys() { std::lock_guard<std::mutex> g(heldMx); holdingKeys = true; }
+static bool holdKey(const KBDLLHOOKSTRUCT* k, bool up) {   // hook thread: true = the key is kept back
+    std::lock_guard<std::mutex> g(heldMx);
+    if (!holdingKeys) return false;
+    held.push_back({WORD(k->vkCode), WORD(k->scanCode), k->flags, up});
+    return true;
+}
+
 static Key readKey(const KBDLLHOOKSTRUCT* k) {
     bool shift = (GetAsyncKeyState(VK_SHIFT) & 0x8000) != 0;
     bool caps = (GetKeyState(VK_CAPITAL) & 1) != 0;
@@ -387,6 +409,7 @@ static Key readKey(const KBDLLHOOKSTRUCT* k) {
 static LRESULT CALLBACK kbHook(int code, WPARAM wp, LPARAM lp) {
     auto* k = (KBDLLHOOKSTRUCT*)lp;
     if (code != HC_ACTION || k->dwExtraInfo == kMagic || !active) return CallNextHookEx(nullptr, code, wp, lp);
+    if (k->dwExtraInfo != kReplay && holdingKeys.load() && holdKey(k, wp == WM_KEYUP || wp == WM_SYSKEYUP)) return 1;  // a word is being replaced
     if (resetReq.exchange(false)) resetState();
     bool down = wp == WM_KEYDOWN || wp == WM_SYSKEYDOWN;
     BYTE vk = BYTE(k->vkCode);
@@ -497,7 +520,7 @@ static void sendKey(WORD vk, bool shift = false) {
     if (shift) add(VK_SHIFT, false);
     add(vk, false); add(vk, true);
     if (shift) add(VK_SHIFT, true);
-    SendInput(UINT(in.size()), in.data(), sizeof(INPUT));
+    injectInput(in.data(), UINT(in.size()));
 }
 // Sleep(2) really sleeps a whole timer tick (~15.6 ms); a high-resolution waitable timer (Windows 10 1803+)
 // keeps short pauses short. Older systems fall back to Sleep.
@@ -510,6 +533,23 @@ static void pauseMs(int ms) {
     LARGE_INTEGER due; due.QuadPart = -10000LL * ms;
     if (SetWaitableTimer(t, &due, 0, nullptr, nullptr, FALSE)) WaitForSingleObject(t, 100); else Sleep(ms);
 }
+// the keys the hook kept back during a replacement go to the app now, in the order pressed (and the ones pressed
+// meanwhile queue up behind them), at a person's pace; the hook sees them as the user's own keys (kReplay)
+static void releaseKeys() {
+    if (!holdingKeys.load()) return;
+    for (;;) {
+        HeldKey h;
+        {
+            std::lock_guard<std::mutex> g(heldMx);
+            if (held.empty()) { holdingKeys = false; return; }
+            h = held.front(); held.pop_front();
+        }
+        INPUT i{}; i.type = INPUT_KEYBOARD; i.ki.wVk = h.vk; i.ki.wScan = h.scan; i.ki.dwExtraInfo = kReplay;
+        i.ki.dwFlags = (h.up ? KEYEVENTF_KEYUP : 0) | ((h.flags & LLKHF_EXTENDED) ? KEYEVENTF_EXTENDEDKEY : 0);
+        injectInput(&i, 1);
+        pauseMs(h.up ? 4 : 10);
+    }
+}
 // One character per SendInput with a short pause: the Windows 11 Notepad (WinUI + TSF) turns a solid burst of
 // VK_PACKET characters into spaces — «ghbdsn » became 7 spaces. Classic edit boxes don't care either way.
 static void typeText(const wstring& s) {
@@ -521,7 +561,7 @@ static void typeText(const wstring& s) {
             if (c == L'\n' || c == L'\r') { i.ki.wVk = VK_RETURN; i.ki.dwFlags = up ? KEYEVENTF_KEYUP : 0; }  // line break = Enter
             else { i.ki.wScan = c; i.ki.dwFlags = KEYEVENTF_UNICODE | (up ? KEYEVENTF_KEYUP : 0); }
         }
-        SendInput(2, in, sizeof(INPUT));
+        injectInput(in, 2);
         // a space inside the text («я удалил»): Win11 Notepad handles a word end (its spell check) and drops or
         // repeats the next letters if they come right away
         pauseMs(c == L' ' && n + 1 < s.size() ? 40 : 3);
@@ -545,16 +585,19 @@ static void typeKeysIn(const wstring& s, HKL hkl) {
         if (shift) add(VK_SHIFT, false);
         add(vk, false); add(vk, true);
         if (shift) add(VK_SHIFT, true);
-        SendInput(n, in, sizeof(INPUT));
+        injectInput(in, n);
         // a person's pace, not a burst: Win11 Notepad loses real keys 5 ms apart in a longer replacement
         // («я удалил» → «я удил»), and after a word's space it's busy for a moment (its spell check)
         pauseMs(c == L' ' && at + 1 < s.size() ? 40 : 12);
     }
 }
 static void replaceIn(int count, const wstring& s, const Layout& l) {
-    selectLayout(l);
+    holdKeys();   // the user's keys wait until the message is handled (releaseKeys in wndProc)
     bool switched = false;
-    for (int i = 0; i < 40 && !(switched = GetKeyboardLayout(GetWindowThreadProcessId(focusWindow(), nullptr)) == l.hkl); i++) pauseMs(5);
+    if (!forcedLayout) {   // (tests don't touch the system's layout)
+        selectLayout(l);
+        for (int i = 0; i < 40 && !(switched = GetKeyboardLayout(GetWindowThreadProcessId(focusWindow(), nullptr)) == l.hkl); i++) pauseMs(5);
+    }
     // let the app finish the user's own space first (Notepad dropped a whole Backspace burst right after it), and
     // apply the Backspaces before the text («ыыло» instead of «было» in Notepad)
     pauseMs(25);
@@ -1047,6 +1090,7 @@ static void convertSelection(wstring text) {
     int lead = 0, tail = 0;
     int dst = again ? int((src + 1) % layouts.size()) : selectionTarget(text, src, lead, tail);
     wstring out = selectionText(text, src, dst);
+    holdKeys();   // the user's keys wait until the message is handled
     // Like a replaced word: switch to the target layout first and type its real keys at a person's pace. A solid run of
     // VK_PACKET characters after a comma lost the space and repeated letters in the Win11 Notepad
     // («ghbdsn, rjvg» → «привіт,ппппп»); a single word survived it.
@@ -1238,7 +1282,9 @@ static void onAuto(Snapshot* s) {
     // «b yt»: both «и не» (ru) and «не» alone (uk) fit; the pair that makes both words a language wins
     int lead, tail;
     int j = autoFixRemember(s->keys, pairFixTarget(s->keys, s->before), lead, tail);
-    if (j < 0 || seq.load() != s->seq) return;  // user kept typing meanwhile — skip
+    if (j < 0) return;
+    holdKeys();   // the check below sees every key typed before this point, the hold every one after it
+    if (seq.load() != s->seq) return;  // user kept typing meanwhile — skip (the held keys go on at the end of the message)
     applyFix(j, s, 1, lead, tail);
 }
 
@@ -1256,7 +1302,7 @@ static void onEnter(Snapshot* s) {
         i.ki.wScan = WORD(returnScan ? returnScan.load() : MapVirtualKeyW(VK_RETURN, MAPVK_VK_TO_VSC));
         i.ki.dwFlags = (returnFlags ? KEYEVENTF_EXTENDEDKEY : 0) | (up ? KEYEVENTF_KEYUP : 0);
     }
-    SendInput(2, in, sizeof(INPUT));
+    injectInput(in, 2);
 }
 
 // MARK: - Tray
@@ -1831,10 +1877,10 @@ static LRESULT CALLBACK wndProc(HWND h, UINT msg, WPARAM wp, LPARAM lp) {
     case WM_TRAY:
         if (LOWORD(lp) == WM_RBUTTONUP || LOWORD(lp) == WM_LBUTTONUP) showMenu();
         return 0;
-    case WM_AUTO: { auto* s = (Snapshot*)lp; if (active) onAuto(s); delete s; return 0; }
-    case WM_DSHIFT: { auto* s = (Snapshot*)lp; if (active) onDoubleShift(s); delete s; return 0; }
+    case WM_AUTO: { auto* s = (Snapshot*)lp; if (active) onAuto(s); delete s; releaseKeys(); return 0; }
+    case WM_DSHIFT: { auto* s = (Snapshot*)lp; if (active) onDoubleShift(s); delete s; releaseKeys(); return 0; }
     case WM_EMPTYCHK: emptySeq = unsigned(lp); SetTimer(h, TIMER_EMPTY, 60, nullptr); return 0;
-    case WM_ENTER: { auto* s = (Snapshot*)lp; onEnter(s); delete s; return 0; }  // always sends Return on
+    case WM_ENTER: { auto* s = (Snapshot*)lp; onEnter(s); delete s; releaseKeys(); return 0; }  // always sends Return on
     case WM_UPDATE: onUpdateInfo((UpdateInfo*)lp); return 0;
     case WM_UPDATE_READY: onUpdateReady((UpdateInfo*)lp); return 0;
     case WM_TIMER:
