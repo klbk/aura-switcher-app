@@ -1867,7 +1867,7 @@ static LRESULT CALLBACK wndProc(HWND h, UINT msg, WPARAM wp, LPARAM lp) {
         vector<HKL> now(list, list + std::max(n, 0));
         if (now != known) { known = now; layouts = loadLayouts(); lastSelOut.clear(); warmUpDictionaries(); }
         if (msg == WM_INPUTLANGCHANGE && ownHkl && PRIMARYLANGID(LOWORD((UINT_PTR)fgLayout())) != PRIMARYLANGID(LOWORD((UINT_PTR)ownHkl))) {
-            ownHkl = nullptr; noteManualSwitch();  // the user switched the layout (not AURA's selectLayout)
+            ownHkl = fgLayout(); noteManualSwitch();  // the user switched the layout (not AURA's selectLayout); remember it so the next switch is seen too
         }
         updateTray(true); return 0;
     }
@@ -1891,6 +1891,7 @@ int WINAPI wWinMain(HINSTANCE inst, HINSTANCE, PWSTR, int) {
     WNDCLASSW wc = {}; wc.lpfnWndProc = wndProc; wc.hInstance = inst; wc.lpszClassName = L"AURA";
     RegisterClassW(&wc);
     hwndMain = CreateWindowW(L"AURA", L"AURA", 0, 0, 0, 0, 0, nullptr, nullptr, inst, nullptr);
+    if (!ownHkl) ownHkl = fgLayout();  // baseline: the first user switch is detected too
 
     layouts = loadLayouts();
     disableStickyPrompt();
