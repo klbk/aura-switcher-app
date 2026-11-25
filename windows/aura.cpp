@@ -450,6 +450,7 @@ static LRESULT CALLBACK kbHook(int code, WPARAM wp, LPARAM lp) {
                 // the double tap only switches the layout. In the user's own word it converts what was typed since the edit
                 bool cur = !word.empty();
                 auto* s = new Snapshot{cur ? word : trailing == 1 ? lastWord : vector<Key>(), cur ? 0 : trailing, seq.load()};
+                holdKeys();   // from this very moment: keys typed before the main thread picks the message up must wait too
                 PostMessageW(hwndMain, WM_DSHIFT, 0, (LPARAM)s);
             } else lastShiftTap = now;
         }
@@ -1151,6 +1152,8 @@ static void playSound(const vector<BYTE>& s) {
 }
 
 static bool focusIsPassword();
+#define DBGLOG(...) do { wchar_t b_[200]; _snwprintf(b_, 200, __VA_ARGS__); wchar_t t_[MAX_PATH]; GetTempPathW(MAX_PATH, t_); wcscat(t_, L"aura-dshift.log"); \
+    if (FILE* f_ = _wfopen(t_, L"ab")) { fwprintf(f_, L"%llu %ls\n", GetTickCount64(), b_); fclose(f_); } } while (0)  // TEMP diagnostics
 // Is anything selected in the focused field? UI Automation answers in a few ms where Ctrl+C waits up to 0.4 s for
 // nothing. 0 = nothing selected (a caret only), 1 = a selection, -1 = the field can't tell (copy and see)
 static int uiaSelectionState() {
@@ -1221,9 +1224,13 @@ static void onDoubleShift(Snapshot* s) {
     // so what they type right after the double tap lands in the new layout, not scattered over the old and the new
     holdKeys();
     if (fgIsConsole()) { cycleLayout(); return; }  // Ctrl+C there would interrupt the running command
-    if (uiaSelectionState() == 0) { cycleLayout(); return; }  // nothing selected: no need to wait for a copy that won't come
+    int uiaSel = uiaSelectionState();
+    DBGLOG(L"dshift no word: uia=%d", uiaSel);
+    if (uiaSel == 0) { cycleLayout(); return; }  // nothing selected: no need to wait for a copy that won't come
     wstring sel;
-    if (copySelection(sel) && !isCopiedLine(sel)) convertSelection(sel); else cycleLayout();
+    bool copied = copySelection(sel);
+    DBGLOG(L"copy=%d len=%d line=%d", (int)copied, (int)sel.size(), (int)isCopiedLine(sel));
+    if (copied && !isCopiedLine(sel)) convertSelection(sel); else cycleLayout();
 }
 
 // one-letter words: a single letter before a fixed word is fixed too («z буду» → «я буду»),
