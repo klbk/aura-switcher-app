@@ -160,6 +160,8 @@ final class Settings {
     /// the correction key (double tap, either side): "shift" (default), "ctrl", "alt" or "off"
     var hotkey: String { get { d.string(forKey: "hotkey") ?? "shift" } set { d.set(newValue, forKey: "hotkey") } }
     var sound: Bool { get { d.object(forKey: "sound") as? Bool ?? true } set { d.set(newValue, forKey: "sound") } }
+    /// the first word after a manual layout change (double ⇧ or the layout key) stays as typed: not checked (off by default)
+    var skipFirstAfterSwitch: Bool { get { d.object(forKey: "skipFirstAfterSwitch") as? Bool ?? false } set { d.set(newValue, forKey: "skipFirstAfterSwitch") } }
     /// user's words that are never auto-corrected (slang like «хз», «ща»), stored lowercased
     var words: [String] { get { d.stringArray(forKey: "words") ?? [] } set { d.set(newValue, forKey: "words") } }
     /// when the user last opened the releases page (seconds since 1970), 0 = never
@@ -297,6 +299,7 @@ let uiStrings: [String: [String]] = [ // key: one string per uiLangs
     "hotkey": ["Correction key", "Клавіша виправлення", "Klawisz poprawiania", "Korrekturtaste", "Tecla de corrección", "Touche de correction", "Tasto di correzione", "Tecla de correção", "Düzeltme tuşu", "Correctietoets", "Klávesa opravy", "Korrigeringstangent", "Korjausnäppäin", "Tasta de corectare", "Javítás gombja", "Πλήκτρο διόρθωσης", "Клавиш за поправка", "מקש תיקון", "مفتاح التصحيح", "सुधार कुंजी", "수정 키", "Клавіша выпраўлення", "Түзету пернесі", "Оңдоо баскычы", "შესწორების კლავიში", "Ուղղման ստեղն", "Düzəliş düyməsi", "Тастер исправке", "Копче за исправка", "Kláves opravy", "Tipka ispravka", "Tipka popravka", "Taisymo klavišas", "Labošanas taustiņš", "Parandusklahv", "Rettetast", "Rettetast", "Leiðréttingartakki", "Tasti i korrigjimit", "کلید اصلاح", "Phím sửa", "Тугмаи ислоҳ", "Засах товч", "Төзәтү төймәсе", "Tuzatish tugmasi", "Eochair cheartúcháin", "Ċavetta tal-korrezzjoni", "Allwedd cywiro"],
     "off": ["Off", "Вимкнено", "Wyłączone", "Aus", "Desactivado", "Désactivé", "Disattivato", "Desativado", "Kapalı", "Uit", "Vypnuto", "Av", "Pois", "Dezactivat", "Ki", "Ανενεργό", "Изключено", "כבוי", "متوقف", "बंद", "끔", "Выключана", "Өшірулі", "Өчүк", "გამორთული", "Անջատված", "Söndürülüb", "Искључено", "Исклучено", "Vypnuté", "Isključeno", "Izklopljeno", "Išjungta", "Izslēgts", "Väljas", "Fra", "Av", "Slökkt", "Joaktiv", "خاموش", "Tắt", "Хомӯш", "Унтраасан", "Сүндерелгән", "Oʻchiq", "As", "Mitfi", "I ffwrdd"],
     "settings": ["Settings", "Налаштування", "Ustawienia", "Einstellungen", "Ajustes", "Réglages", "Impostazioni", "Definições", "Ayarlar", "Instellingen", "Nastavení", "Inställningar", "Asetukset", "Setări", "Beállítások", "Ρυθμίσεις", "Настройки", "הגדרות", "الإعدادات", "सेटिंग्स", "설정", "Налады", "Параметрлер", "Жөндөөлөр", "პარამეტრები", "Կարգավորումներ", "Ayarlar", "Подешавања", "Поставки", "Nastavenia", "Postavke", "Nastavitve", "Nustatymai", "Iestatījumi", "Seaded", "Indstillinger", "Innstillinger", "Stillingar", "Cilësimet", "تنظیمات", "Cài đặt", "Танзимот", "Тохиргоо", "Көйләүләр", "Sozlamalar", "Socruithe", "Settings", "Gosodiadau"],
+    "skipAfterSwitch": ["Keep first word after manual layout switch", "Не виправляти перше слово після ручної зміни мови", "Nie poprawiaj pierwszego słowa po ręcznej zmianie układu", "Erstes Wort nach manuellem Layoutwechsel nicht ändern", "No corregir la primera palabra tras cambiar el teclado a mano", "Ne pas corriger le premier mot après un changement manuel de disposition", "Non correggere la prima parola dopo un cambio manuale di layout", "Não corrigir a primeira palavra após mudar o layout manualmente", "Manuel düzen değişikliğinden sonraki ilk kelimeyi düzeltme", "Eerste woord na handmatig wisselen van indeling niet corrigeren", "Neopravovat první slovo po ručním přepnutí rozložení", "Rätta inte första ordet efter manuellt byte av layout", "Älä korjaa ensimmäistä sanaa manuaalisen asettelun vaihdon jälkeen", "Nu corecta primul cuvânt după schimbarea manuală a layout-ului", "Az első szó ne javuljon kézi billentyűzetkiosztás-váltás után", "Να μη διορθώνεται η πρώτη λέξη μετά από χειροκίνητη αλλαγή διάταξης", "Да не се поправя първата дума след ръчна смяна на езика", "Keep first word after manual layout switch", "Keep first word after manual layout switch", "Keep first word after manual layout switch", "Keep first word after manual layout switch", "Keep first word after manual layout switch", "Keep first word after manual layout switch", "Keep first word after manual layout switch", "Keep first word after manual layout switch", "Keep first word after manual layout switch", "Keep first word after manual layout switch", "Не исправљај прву реч после ручне промене распореда", "Keep first word after manual layout switch", "Neopravovať prvé slovo po ručnom prepnutí rozloženia", "Ne ispravljaj prvu riječ nakon ručne promjene rasporeda", "Ne popravljaj prve besede po ročni spremembi postavitve", "Nekeisti pirmo žodžio po rankinio išdėstymo perjungimo", "Nelabot pirmo vārdu pēc manuālas izkārtojuma maiņas", "Ära paranda esimest sõna pärast käsitsi paigutuse vahetamist", "Ret ikke første ord efter manuel skift af layout", "Ikke rett første ord etter manuell bytte av layout", "Keep first word after manual layout switch", "Keep first word after manual layout switch", "Keep first word after manual layout switch", "Keep first word after manual layout switch", "Keep first word after manual layout switch", "Keep first word after manual layout switch", "Keep first word after manual layout switch", "Keep first word after manual layout switch", "Keep first word after manual layout switch", "Keep first word after manual layout switch", "Keep first word after manual layout switch"],
 ]
 // END menu strings
 
@@ -372,6 +375,14 @@ final class Engine {
     /// the layout AURA selected itself, until the user switches to another one (see handleKey)
     var ownLang: String?
     func select(_ l: Layout) { ownLang = l.lang; TISSelectInputSource(l.source) }
+
+    /// the first word finished after a manual layout change (double ⇧, or the user's own layout switch) is not checked
+    /// when the option is on. noteManualSwitch sets it; the space that ends the next word uses it up (handleKey)
+    var skipNextWord = false
+    var skipOverride: Bool?  // tests only: nil = the setting
+    func noteManualSwitch() { skipNextWord = skipOverride ?? settings.skipFirstAfterSwitch }
+    func takeSkipNextWord() -> Bool { guard skipNextWord else { return false }; skipNextWord = false; return true }
+    var autoChecksQueued = 0  // how many words went on to autoCorrect (tests)
 
     /// The first spell check in a language loads its dictionary (can take a moment). If that happens
     /// while the user types on, the correction is skipped — so load all dictionaries up front.
@@ -488,10 +499,12 @@ final class Engine {
             else { reset(); handsOff = true; releaseIfFieldEmpty() }
         case 49: // space (already delivered to the app)
             typedCount += 1
-            if handsOff { reset(); return }  // the end of the user's own word: leave it as it is
+            if handsOff { if !word.isEmpty { _ = takeSkipNextWord() }; reset(); return }  // the end of the user's own word: leave it as it is
             if !word.isEmpty {
                 lastWord = word; word = []; trailing = 1
-                if settings.auto, settings.bindings[frontBundle] == nil {
+                let kept = takeSkipNextWord()  // the first word after a manual layout change: left as typed
+                if settings.auto, settings.bindings[frontBundle] == nil, !kept {
+                    autoChecksQueued += 1
                     let keys = lastWord, pre = before, at = ProcessInfo.processInfo.systemUptime
                     DispatchQueue.main.async { self.autoCorrect(keys, before: pre, spaceAt: at) }
                 }
@@ -831,6 +844,7 @@ final class Engine {
 
     func doubleShift() {
         Sounds.play(Sounds.shift)
+        noteManualSwitch()
         // a password field: the typed keys are not converted and nothing is copied; the double tap only switches the layout
         if focusIsSecure() { cycleLayout(); return }
         let sel = axSelectedText()
