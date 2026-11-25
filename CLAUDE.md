@@ -26,5 +26,3 @@ Menu-bar app for macOS + Windows: fixes text typed in the wrong keyboard layout.
 - Numbers that go stale — version, language count (49 in `lang/`, 48 menu languages), beta label — live in `build.sh`, `windows/build.sh`, `lang/`; grep `0.10`, `49`, `48`, `alpha` across README, `docs/`, `translations/`, `site/` when bumping.
 - Release order: tests green on the release commit (CI + local + Mac live + Windows live) → both builds → `tools/update_manifest.py <version>` → GitHub release (tag `v<version>-beta`) → site (`site/latest.js`, badges) → Store.
 - Project history and decisions are in the Obsidian vault (`AURA Switcher/`, hub note `AURA Switcher.md`), not in this repo.
-
-- Whenever a release changes or adds user-visible text (menu, site, update page), offer the user to post an update on the public proofreading issue (klbk/aura-switcher-app #6) and list which strings changed; post only after their yes.
