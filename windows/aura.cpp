@@ -52,7 +52,7 @@ static const ULONG_PTR kReplay = 0x4B535755;  // marks the user's own keys that 
 static void (*testSink)(const INPUT*, UINT) = nullptr;
 static void injectInput(const INPUT* in, UINT n) { if (testSink) testSink(in, n); else SendInput(n, const_cast<INPUT*>(in), sizeof(INPUT)); }
 enum { WM_TRAY = WM_APP + 1, WM_AUTO, WM_DSHIFT, WM_UPDATE, WM_UPDATE_READY, WM_ENTER, WM_EMPTYCHK };
-enum { ID_ENABLED = 1, ID_AUTO, ID_SOUND, ID_WORDS, ID_DONATE, ID_REPORT, ID_UPDATE, ID_EXCLUDE, ID_NOBIND, ID_LOGIN, ID_UI_SYS, ID_QUIT,
+enum { ID_ENABLED = 1, ID_AUTO, ID_SOUND, ID_WORDS, ID_DONATE, ID_REPORT, ID_UPDATE, ID_EXCLUDE, ID_NOBIND, ID_LOGIN, ID_UI_SYS, ID_QUIT, ID_SKIPFIRST,
        ID_BIND0 = 100, ID_HK0 = 600, ID_EXDEL0 = 200, ID_BDDEL0 = 300, ID_RECENT0 = 400, ID_UI0 = 500 };
 
 // MARK: - Settings (HKCU\Software\AURA)
@@ -89,6 +89,7 @@ struct Settings {
     bool enabled = regGet(L"enabled", L"1") == L"1";
     bool autoFix = regGet(L"auto", L"1") == L"1";
     bool sound = regGet(L"sound", L"1") == L"1";
+    bool skipFirst = regGet(L"skipFirst", L"0") == L"1";  // the first word after a manual layout change stays as typed
     wstring hotkey = regGet(L"hotkey", L"shift");       // shift | ctrl | alt | off
     wstring uiLang = regGet(L"uiLang", L"");            // "" = system
     vector<wstring> excluded = split(regGet(L"excluded", L""));
@@ -97,7 +98,7 @@ struct Settings {
     Settings() { hkVk = hkFromName(hotkey); for (auto& p : split(regGet(L"bindings", L""))) { size_t e = p.find(L'='); if (e != wstring::npos) bindings[p.substr(0, e)] = p.substr(e + 1); } }
     void save() {
         hkVk = hkFromName(hotkey); regSet(L"hotkey", hotkey);
-        regSet(L"enabled", enabled ? L"1" : L"0"); regSet(L"auto", autoFix ? L"1" : L"0"); regSet(L"sound", sound ? L"1" : L"0");
+        regSet(L"enabled", enabled ? L"1" : L"0"); regSet(L"auto", autoFix ? L"1" : L"0"); regSet(L"sound", sound ? L"1" : L"0"); regSet(L"skipFirst", skipFirst ? L"1" : L"0");
         regSet(L"uiLang", uiLang); regSet(L"excluded", join(excluded)); regSet(L"words", join(words));
         vector<wstring> b; for (auto& kv : bindings) b.push_back(kv.first + L"=" + kv.second); regSet(L"bindings", join(b));
     }
@@ -190,6 +191,7 @@ static const wchar_t* const UI_STR[][UI_N] = { // row: English first, then the o
     {L"Correction key", L"Клавіша виправлення", L"Klawisz poprawiania", L"Korrekturtaste", L"Tecla de corrección", L"Touche de correction", L"Tasto di correzione", L"Tecla de correção", L"Düzeltme tuşu", L"Correctietoets", L"Klávesa opravy", L"Korrigeringstangent", L"Korjausnäppäin", L"Tasta de corectare", L"Javítás gombja", L"Πλήκτρο διόρθωσης", L"Клавиш за поправка", L"מקש תיקון", L"مفتاح التصحيح", L"सुधार कुंजी", L"수정 키", L"Клавіша выпраўлення", L"Түзету пернесі", L"Оңдоо баскычы", L"შესწორების კლავიში", L"Ուղղման ստեղն", L"Düzəliş düyməsi", L"Тастер исправке", L"Копче за исправка", L"Kláves opravy", L"Tipka ispravka", L"Tipka popravka", L"Taisymo klavišas", L"Labošanas taustiņš", L"Parandusklahv", L"Rettetast", L"Rettetast", L"Leiðréttingartakki", L"Tasti i korrigjimit", L"کلید اصلاح", L"Phím sửa", L"Тугмаи ислоҳ", L"Засах товч", L"Төзәтү төймәсе", L"Tuzatish tugmasi", L"Eochair cheartúcháin", L"Ċavetta tal-korrezzjoni", L"Allwedd cywiro"},
     {L"Off", L"Вимкнено", L"Wyłączone", L"Aus", L"Desactivado", L"Désactivé", L"Disattivato", L"Desativado", L"Kapalı", L"Uit", L"Vypnuto", L"Av", L"Pois", L"Dezactivat", L"Ki", L"Ανενεργό", L"Изключено", L"כבוי", L"متوقف", L"बंद", L"끔", L"Выключана", L"Өшірулі", L"Өчүк", L"გამორთული", L"Անջատված", L"Söndürülüb", L"Искључено", L"Исклучено", L"Vypnuté", L"Isključeno", L"Izklopljeno", L"Išjungta", L"Izslēgts", L"Väljas", L"Fra", L"Av", L"Slökkt", L"Joaktiv", L"خاموش", L"Tắt", L"Хомӯш", L"Унтраасан", L"Сүндерелгән", L"Oʻchiq", L"As", L"Mitfi", L"I ffwrdd"},
     {L"Settings", L"Налаштування", L"Ustawienia", L"Einstellungen", L"Ajustes", L"Réglages", L"Impostazioni", L"Definições", L"Ayarlar", L"Instellingen", L"Nastavení", L"Inställningar", L"Asetukset", L"Setări", L"Beállítások", L"Ρυθμίσεις", L"Настройки", L"הגדרות", L"الإعدادات", L"सेटिंग्स", L"설정", L"Налады", L"Параметрлер", L"Жөндөөлөр", L"პარამეტრები", L"Կարգավորումներ", L"Ayarlar", L"Подешавања", L"Поставки", L"Nastavenia", L"Postavke", L"Nastavitve", L"Nustatymai", L"Iestatījumi", L"Seaded", L"Indstillinger", L"Innstillinger", L"Stillingar", L"Cilësimet", L"تنظیمات", L"Cài đặt", L"Танзимот", L"Тохиргоо", L"Көйләүләр", L"Sozlamalar", L"Socruithe", L"Settings", L"Gosodiadau"},
+    {L"Keep first word after manual layout switch", L"Не виправляти перше слово після ручної зміни мови", L"Nie poprawiaj pierwszego słowa po ręcznej zmianie układu", L"Erstes Wort nach manuellem Layoutwechsel nicht ändern", L"No corregir la primera palabra tras cambiar el teclado a mano", L"Ne pas corriger le premier mot après un changement manuel de disposition", L"Non correggere la prima parola dopo un cambio manuale di layout", L"Não corrigir a primeira palavra após mudar o layout manualmente", L"Manuel düzen değişikliğinden sonraki ilk kelimeyi düzeltme", L"Eerste woord na handmatig wisselen van indeling niet corrigeren", L"Neopravovat první slovo po ručním přepnutí rozložení", L"Rätta inte första ordet efter manuellt byte av layout", L"Älä korjaa ensimmäistä sanaa manuaalisen asettelun vaihdon jälkeen", L"Nu corecta primul cuvânt după schimbarea manuală a layout-ului", L"Az első szó ne javuljon kézi billentyűzetkiosztás-váltás után", L"Να μη διορθώνεται η πρώτη λέξη μετά από χειροκίνητη αλλαγή διάταξης", L"Да не се поправя първата дума след ръчна смяна на езика", L"Keep first word after manual layout switch", L"Keep first word after manual layout switch", L"Keep first word after manual layout switch", L"Keep first word after manual layout switch", L"Keep first word after manual layout switch", L"Keep first word after manual layout switch", L"Keep first word after manual layout switch", L"Keep first word after manual layout switch", L"Keep first word after manual layout switch", L"Keep first word after manual layout switch", L"Не исправљај прву реч после ручне промене распореда", L"Keep first word after manual layout switch", L"Neopravovať prvé slovo po ručnom prepnutí rozloženia", L"Ne ispravljaj prvu riječ nakon ručne promjene rasporeda", L"Ne popravljaj prve besede po ročni spremembi postavitve", L"Nekeisti pirmo žodžio po rankinio išdėstymo perjungimo", L"Nelabot pirmo vārdu pēc manuālas izkārtojuma maiņas", L"Ära paranda esimest sõna pärast käsitsi paigutuse vahetamist", L"Ret ikke første ord efter manuel skift af layout", L"Ikke rett første ord etter manuell bytte av layout", L"Keep first word after manual layout switch", L"Keep first word after manual layout switch", L"Keep first word after manual layout switch", L"Keep first word after manual layout switch", L"Keep first word after manual layout switch", L"Keep first word after manual layout switch", L"Keep first word after manual layout switch", L"Keep first word after manual layout switch", L"Keep first word after manual layout switch", L"Keep first word after manual layout switch", L"Keep first word after manual layout switch"},
 };
 // END menu strings
 
@@ -351,7 +353,9 @@ static int layoutIndex(HKL h) {
     for (size_t i = 0; i < layouts.size(); i++) if (PRIMARYLANGID(LOWORD((UINT_PTR)layouts[i].hkl)) == PRIMARYLANGID(LOWORD((UINT_PTR)h))) return int(i);
     return 0;
 }
+static HKL ownHkl = nullptr;  // the layout AURA selected last: another one after it means the user switched
 static void selectLayout(const Layout& l) {
+    ownHkl = l.hkl;
     PostMessageW(focusWindow(), WM_INPUTLANGCHANGEREQUEST, 0, (LPARAM)l.hkl);
 }
 static wstring fgExe() {
@@ -370,6 +374,11 @@ static vector<Key> word, lastWord, before;  // before: one-letter word right bef
 static int trailing = 0;
 static std::atomic<unsigned> seq{0};            // bumps on every real key; main thread uses it to detect typing
 static std::atomic<bool> resetReq{false}, active{true};
+// the first word finished after a manual layout change (double ⇧, or the user's own layout switch) stays as typed when
+// the option is on: noteManualSwitch sets it, the space that ends the next word uses it up. Both run on the main thread.
+static bool skipNextWord = false;
+static void noteManualSwitch() { skipNextWord = S.skipFirst; }
+static bool takeSkipNextWord() { if (!skipNextWord) return false; skipNextWord = false; return true; }
 static ULONGLONG shiftDownAt = 0, lastShiftTap = 0; static bool sawOther = false, shiftHeld = false;
 
 struct Snapshot { vector<Key> keys; int trailing; unsigned seq; vector<Key> before; };
@@ -485,11 +494,11 @@ static LRESULT CALLBACK kbHook(int code, WPARAM wp, LPARAM lp) {
     } else if (handsOff) {
         // the user's own word: not checked, but its keys are kept — double ⇧ is an explicit command and converts it
         if (isLetterVk(vk)) word.push_back(readKey(k));
-        else resetState();  // a space, Return, Tab…: the user's word is over
+        else { if (vk == VK_SPACE && !word.empty()) takeSkipNextWord(); resetState(); }  // a space, Return, Tab…: the user's word is over
     } else if (vk == VK_SPACE) {
         if (!word.empty()) {
             lastWord = word; word.clear(); trailing = 1;
-            PostMessageW(hwndMain, WM_AUTO, 0, (LPARAM)new Snapshot{lastWord, 1, seq.load(), before});
+            if (!takeSkipNextWord()) PostMessageW(hwndMain, WM_AUTO, 0, (LPARAM)new Snapshot{lastWord, 1, seq.load(), before});
         } else if (!lastWord.empty()) trailing++;
     } else if (isLetterVk(vk)) {
         if (word.empty()) before = lastWord.size() == 1 && trailing == 1 ? lastWord : vector<Key>();
@@ -1136,6 +1145,7 @@ static bool focusIsPassword();
 static void onDoubleShift(Snapshot* s) {
     if (layouts.empty()) return;
     playSound(sndShift);
+    noteManualSwitch();
     // a password field: its characters are never read, copied or changed — the double tap only switches the layout
     // (to type the password in another one), as it does on Mac
     if (focusIsPassword()) { cycleLayout(); return; }
@@ -1680,6 +1690,7 @@ static void showMenu() {
     tog(m, ID_ENABLED, L_(L"Enabled", L"Увімкнено"), S.enabled);
     tog(m, ID_AUTO, L_(L"Auto-correction", L"Автовиправлення"), S.autoFix, S.enabled);
     tog(m, ID_SOUND, L_(L"Sound", L"Звук"), S.sound, S.enabled);
+    tog(m, ID_SKIPFIRST, L_(L"Keep first word after manual layout switch", L"Не виправляти перше слово після ручної зміни мови"), S.skipFirst, S.enabled && S.autoFix);
     // Store version: login start is the package's startup task, switched in Windows Settings → Apps → Startup
     tog(m, ID_LOGIN, L_(L"Launch at login", L"Запускати під час входу"), packaged() || loginEnabled());
     // one line: the hint with the chosen key's symbol in place of the translated ⇧; «Correction key: off» when it is off
@@ -1773,6 +1784,7 @@ static void showMenu() {
     if (cmd == ID_ENABLED) { S.enabled = !S.enabled; }
     else if (cmd == ID_AUTO) { S.autoFix = !S.autoFix; }
     else if (cmd == ID_SOUND) { S.sound = !S.sound; playSound(sndAuto); }
+    else if (cmd == ID_SKIPFIRST) { S.skipFirst = !S.skipFirst; }
     else if (cmd == ID_EXCLUDE) toggleExcluded(menuExe);
     else if (cmd >= ID_RECENT0 && cmd < ID_RECENT0 + recentExe.size()) toggleExcluded(recentExe[cmd - ID_RECENT0]);
     else if (cmd == ID_NOBIND) S.bindings.erase(menuExe);
@@ -1900,6 +1912,9 @@ static LRESULT CALLBACK wndProc(HWND h, UINT msg, WPARAM wp, LPARAM lp) {
         HKL list[64]; int n = GetKeyboardLayoutList(64, list);
         vector<HKL> now(list, list + std::max(n, 0));
         if (now != known) { known = now; layouts = loadLayouts(); lastSelOut.clear(); warmUpDictionaries(); }
+        if (msg == WM_INPUTLANGCHANGE && ownHkl && PRIMARYLANGID(LOWORD((UINT_PTR)fgLayout())) != PRIMARYLANGID(LOWORD((UINT_PTR)ownHkl))) {
+            ownHkl = fgLayout(); noteManualSwitch();  // the user switched the layout (not AURA's selectLayout); remember it so the next switch is seen too
+        }
         updateTray(true); return 0;
     }
     case WM_DESTROY: PostQuitMessage(0); return 0;
@@ -1922,6 +1937,7 @@ int WINAPI wWinMain(HINSTANCE inst, HINSTANCE, PWSTR, int) {
     WNDCLASSW wc = {}; wc.lpfnWndProc = wndProc; wc.hInstance = inst; wc.lpszClassName = L"AURA";
     RegisterClassW(&wc);
     hwndMain = CreateWindowW(L"AURA", L"AURA", 0, 0, 0, 0, 0, nullptr, nullptr, inst, nullptr);
+    if (!ownHkl) ownHkl = fgLayout();  // baseline: the first user switch is detected too
 
     layouts = loadLayouts();
     disableStickyPrompt();

@@ -9,7 +9,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 KEYS = ["enabled", "auto", "sound", "access", "app", "exclude", "game", "appLang", "noBinding", "exclusions", "recent",
         "bindings", "empty", "login", "words", "wordsTitle", "wordsInfo", "save", "cancel", "uiLang", "allLangs", "regEurope", "regCaucasus", "regMiddleEast", "regAsia", "system", "hint",
-        "report", "reportBody", "update", "updateDue", "donate", "quit", "updNew", "updLatest", "updNotes", "updNow", "updLater", "updFail", "firstRun", "hotkey", "off", "settings"]
+        "report", "reportBody", "update", "updateDue", "donate", "quit", "updNew", "updLatest", "updNotes", "updNow", "updLater", "updFail", "firstRun", "hotkey", "off", "settings", "skipAfterSwitch"]
 # code, native name, then one line per key (in KEYS order)
 LANGS = """
 en English
@@ -2231,14 +2231,44 @@ NEW = {
         "mt": "Settings",
         "cy": "Gosodiadau",
     },
+    "skipAfterSwitch": {
+        "en": "Keep first word after manual layout switch",
+        "uk": "Не виправляти перше слово після ручної зміни мови",
+        "pl": "Nie poprawiaj pierwszego słowa po ręcznej zmianie układu",
+        "de": "Erstes Wort nach manuellem Layoutwechsel nicht ändern",
+        "es": "No corregir la primera palabra tras cambiar el teclado a mano",
+        "fr": "Ne pas corriger le premier mot après un changement manuel de disposition",
+        "it": "Non correggere la prima parola dopo un cambio manuale di layout",
+        "pt": "Não corrigir a primeira palavra após mudar o layout manualmente",
+        "tr": "Manuel düzen değişikliğinden sonraki ilk kelimeyi düzeltme",
+        "nl": "Eerste woord na handmatig wisselen van indeling niet corrigeren",
+        "cs": "Neopravovat první slovo po ručním přepnutí rozložení",
+        "sv": "Rätta inte första ordet efter manuellt byte av layout",
+        "fi": "Älä korjaa ensimmäistä sanaa manuaalisen asettelun vaihdon jälkeen",
+        "ro": "Nu corecta primul cuvânt după schimbarea manuală a layout-ului",
+        "hu": "Az első szó ne javuljon kézi billentyűzetkiosztás-váltás után",
+        "el": "Να μη διορθώνεται η πρώτη λέξη μετά από χειροκίνητη αλλαγή διάταξης",
+        "bg": "Да не се поправя първата дума след ръчна смяна на езика",
+        "sk": "Neopravovať prvé slovo po ručnom prepnutí rozloženia",
+        "hr": "Ne ispravljaj prvu riječ nakon ručne promjene rasporeda",
+        "sl": "Ne popravljaj prve besede po ročni spremembi postavitve",
+        "sr": "Не исправљај прву реч после ручне промене распореда",
+        "lt": "Nekeisti pirmo žodžio po rankinio išdėstymo perjungimo",
+        "lv": "Nelabot pirmo vārdu pēc manuālas izkārtojuma maiņas",
+        "et": "Ära paranda esimest sõna pärast käsitsi paigutuse vahetamist",
+        "da": "Ret ikke første ord efter manuel skift af layout",
+        "nb": "Ikke rett første ord etter manuell bytte av layout",
+    },
 }
 
 langs = []  # (code, name, [strings])
 for block in LANGS.strip().split("\n\n"):
     head, *lines = block.split("\n")
     code, name = head.split(" ", 1)
-    assert len(lines) == len(KEYS) - 3, (code, len(lines))
+    assert len(lines) == len(KEYS) - 4, (code, len(lines))
     lines += [NEW[k][code] for k in ("hotkey", "off", "settings")]
+    # added later than the others: languages without a translation yet get the English text (stated in the release notes)
+    lines += [NEW["skipAfterSwitch"].get(code, NEW["skipAfterSwitch"]["en"])]
     lines[KEYS.index("app")] = NEW["app"][code] + " "  # "App: " + app name
     langs.append((code, name, lines))
 

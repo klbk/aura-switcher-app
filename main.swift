@@ -38,6 +38,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             let now = currentLang()
             if now != engine.ownLang {  // the user switched: key events carry the right letters again
                 engine.ownLang = nil
+                engine.noteManualSwitch()
                 // …in the middle of a word: they're mixing layouts on purpose («RghРак») — it's their word
                 // (macOS sometimes repeats or delays the notice: only a real change from the word's layout counts)
                 if !engine.word.isEmpty, now != engine.wordStartLang { engine.reset(); engine.handsOff = true }
@@ -163,6 +164,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         toggle(m, L("enabled"), s.enabled) { self.s.enabled.toggle(); self.updateTitle() }
         toggle(m, L("auto"), s.auto, enabled: s.enabled) { self.s.auto.toggle() }
         toggle(m, L("sound"), s.sound, enabled: s.enabled) { self.s.sound.toggle(); if self.s.sound { Sounds.play(Sounds.auto) } }
+        toggle(m, L("skipAfterSwitch"), s.skipFirstAfterSwitch, enabled: s.enabled && s.auto) { self.s.skipFirstAfterSwitch.toggle() }
         let login = SMAppService.mainApp.status == .enabled
         toggle(m, L("login"), login) {
             if login { try? SMAppService.mainApp.unregister() } else { try? SMAppService.mainApp.register() }
